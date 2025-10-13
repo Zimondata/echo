@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  entry_type: MyString
+  content: MyText
+  transcript: MyText
+  audio_url: MyString
+  audio_file_id: MyString
+  metadata: 
+  embedding: 
+  status: MyString
+  priority: 1
+  occurred_at: 2025-10-13 10:47:36
+
+two:
+  user: two
+  entry_type: MyString
+  content: MyText
+  transcript: MyText
+  audio_url: MyString
+  audio_file_id: MyString
+  metadata: 
+  embedding: 
+  status: MyString
+  priority: 1
+  occurred_at: 2025-10-13 10:47:36

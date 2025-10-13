@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  entry: one
+  reminder_type: MyString
+  remind_at: 2025-10-13 10:47:58
+  status: MyString
+  message: MyText
+  sent_at: 2025-10-13 10:47:58
+  metadata: 
+
+two:
+  user: two
+  entry: two
+  reminder_type: MyString
+  remind_at: 2025-10-13 10:47:58
+  status: MyString
+  message: MyText
+  sent_at: 2025-10-13 10:47:58
+  metadata: 
