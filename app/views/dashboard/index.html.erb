@@ -11,15 +11,87 @@
     </div>
   </div>
 
-  <!-- Calendar Widget - Simplified -->
+  <!-- Timeline with Alerts -->
+  <div class="bg-white shadow rounded-lg mb-6">
+    <div class="px-6 py-5">
+      <!-- Time markers across full width -->
+      <div class="grid grid-cols-7 gap-2 mb-2">
+        <% 7.times do %>
+          <div class="flex justify-between items-center text-xs text-gray-400 font-mono px-2">
+            <% [6, 10, 14, 18, 22].each do |hour| %>
+              <span><%= sprintf('%02d', hour) %></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Timeline with Reminders for each day -->
+      <div class="grid grid-cols-7 gap-2">
+        <% 
+          start_of_week = Date.current.beginning_of_week(:monday)
+          (0..6).each do |day_offset|
+            current_day = start_of_week + day_offset.days
+            is_today = current_day == Date.current
+        %>
+          <div class="relative h-6 bg-gray-100 rounded-full">
+            <%
+              # Get reminders for this specific day
+              day_start = current_day.beginning_of_day.in_time_zone('Europe/Berlin')
+              day_end = current_day.end_of_day.in_time_zone('Europe/Berlin')
+              current_time = Time.current.in_time_zone('Europe/Berlin')
+              
+              # Only future reminders
+              day_reminders = @user.reminders.where(remind_at: day_start..day_end)
+                                             .where('remind_at > ?', current_time)
+              
+              day_reminders.each do |reminder|
+                reminder_time = reminder.remind_at.in_time_zone('Europe/Berlin')
+                # Position from 6:00 to 22:00 (16 hours span)
+                if reminder_time.hour >= 6 && reminder_time.hour <= 22
+                  hour_offset = reminder_time.hour - 6  # 0-16 range
+                  minute_offset = reminder_time.min / 60.0
+                  position = ((hour_offset + minute_offset) / 16.0 * 100).round(2)
+                  
+                  # Only blue for future reminders
+                  bell_color = 'text-blue-500'
+            %>
+              <div class="absolute top-0 transform -translate-x-1/2 -translate-y-1 cursor-pointer hover:scale-125 transition-transform"
+                   style="left: <%= position %>%;"
+                   onclick="showReminderModal('<%= reminder.id %>', '<%= reminder.message.gsub("'", "\\'") %>', '<%= reminder_time.strftime('%H:%M') %>', event); event.stopPropagation();"
+                   title="🔔 <%= reminder.message %> (<%= reminder_time.strftime('%H:%M') %>)">
+                <span class="<%= bell_color %> text-lg hover:drop-shadow-md">🔔</span>
+              </div>
+            <% 
+                end
+              end
+            %>
+            
+            <!-- Current time indicator (only for today) -->
+            <% if current_day == Date.current %>
+              <%
+                current_hour = Time.current.in_time_zone('Europe/Berlin')
+                if current_hour.hour >= 6 && current_hour.hour <= 22
+                  current_offset = current_hour.hour - 6
+                  current_minute_offset = current_hour.min / 60.0
+                  current_position = ((current_offset + current_minute_offset) / 16.0 * 100).round(2)
+              %>
+                <div class="absolute top-0 bottom-0 w-1 bg-red-400 rounded-full transform -translate-x-1/2"
+                     style="left: <%= current_position %>%;"
+                     title="Сейчас: <%= current_hour.strftime('%H:%M') %>">
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week Calendar -->
   <div class="bg-white shadow rounded-lg">
     <div class="px-6 py-5">
-      <h3 class="text-xl leading-6 font-bold text-gray-900 mb-6">
-        📅 Календарь на неделю
-      </h3>
-      
       <!-- Week Calendar Grid -->
-      <div class="grid grid-cols-7 gap-4 mb-6" style="min-height: 420px;">
+      <div class="grid grid-cols-7 gap-1 mb-4" style="min-height: 580px;">
         <!-- Week Headers -->
         <% 
           weekdays = [
@@ -37,12 +109,10 @@
             current_day = start_of_week + index.days
             is_today = current_day == Date.current
         %>
-          <div class="text-center pb-3 border-b border-gray-200">
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              <%= day[:short] %>
-            </div>
-            <div class="text-lg font-bold mt-1 <%= is_today ? 'text-indigo-600' : 'text-gray-900' %>">
-              <%= current_day.day %>
+          <div class="text-center pb-1">
+            <div class="flex items-center justify-center space-x-1">
+              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide"><%= day[:short] %></span>
+              <span class="text-lg font-bold <%= is_today ? 'text-indigo-600' : 'text-gray-900' %>"><%= current_day.day %></span>
             </div>
             <% if is_today %>
               <div class="text-xs text-indigo-600 font-medium">
@@ -58,7 +128,7 @@
             current_day = start_of_week + day_offset.days
             day_events = @week_events.select { |event| event.start_date == current_day }
         %>
-          <div class="min-h-[360px] p-3 <%= day_offset.even? ? 'bg-white' : 'bg-slate-25' %> rounded-xl border border-gray-100 drop-zone"
+          <div class="min-h-[520px] p-3 <%= day_offset.even? ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100' : 'bg-gradient-to-br from-slate-50 via-white to-slate-100' %> rounded-2xl border border-gray-200 drop-zone shadow-sm hover:shadow-md transition-all duration-300"
                data-date="<%= current_day.iso8601 %>"
                ondrop="handleEventDrop(event)"
                ondragover="handleDragOver(event)"
@@ -66,64 +136,140 @@
                ondragleave="handleDragLeave(event)"
                onclick="openDayModal('<%= current_day.iso8601 %>', '<%= current_day.strftime('%d %B') %>', event)">
             
+            
             <!-- Events for this day -->
-            <div class="space-y-2">
+            <div class="space-y-1">
               <% 
                 current_time = Time.current.in_time_zone('Europe/Berlin')
                 upcoming_events = day_events.select { |e| e.start_time.in_time_zone('Europe/Berlin') >= current_time }
               %>
               
-              <!-- Only Upcoming Events -->
-              <% upcoming_events.first(5).each do |event| %>
-                <div class="event-card text-xs p-3 rounded-lg border-l-3 transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-move draggable-event" 
-                     style="background: linear-gradient(145deg, <%= hex_to_rgba(event.display_color, 0.08) %>, <%= hex_to_rgba(event.display_color, 0.12) %>); border-left-color: <%= event.display_color %>; border: 1px solid <%= hex_to_rgba(event.display_color, 0.2) %>;"
-                     draggable="true"
-                     ondragstart="handleEventDragStart(event)"
-                     ondragend="handleEventDragEnd(event)"
-                     onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
-                     data-event-id="<%= event.id %>"
-                     data-event-title="<%= event.title.gsub('"', '&quot;') %>"
-                     data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
-                     data-event-start="<%= event.start_time.iso8601 %>"
-                     data-event-end="<%= event.end_time&.iso8601 %>"
-                     data-event-type="<%= event.event_type %>"
-                     data-event-priority="<%= event.priority %>"
-                     data-event-all-day="<%= event.all_day? %>"
-                     data-event-color="<%= event.display_color %>">
-                  
-                  <div class="font-semibold text-sm mb-2 text-gray-800">
-                    <%= event.title %>
+              <%
+                # Разделяем события на временные и плавающие
+                timed_events = upcoming_events.select { |e| !e.all_day? }.sort_by(&:start_time)
+                floating_events = upcoming_events.select { |e| e.all_day? }
+              %>
+              
+              <!-- Floating Plans (без времени) -->
+              <% if floating_events.any? %>
+                <div class="mb-2">
+                  <div class="text-xs text-gray-600 font-bold mb-2 flex items-center bg-gradient-to-r from-gray-100 to-gray-50 px-2 py-1 rounded-md">
+                    <span class="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mr-2 animate-pulse"></span>
+                    📋 Планы
                   </div>
-                  <% unless event.all_day? %>
-                    <div class="text-xs text-gray-500">
-                      <%= event.start_time.strftime('%H:%M') %>
-                      <% if event.end_time && event.end_time != event.start_time %>
-                        - <%= event.end_time.strftime('%H:%M') %>
-                      <% end %>
-                    </div>
-                  <% else %>
-                    <div class="text-xs text-gray-400 italic">
-                      Весь день
+                  <% floating_events.each do |event| %>
+                    <%
+                      # Определяем цвета по типу события для планов
+                      if event.event_type == 'reminder'
+                        float_bg_color = "rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%"
+                        float_border_color = "rgba(239, 68, 68, 0.3)"
+                        float_shadow_color = "rgba(239, 68, 68, 0.1)"
+                        float_icon = "🔔"
+                      else
+                        float_bg_color = "rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%"
+                        float_border_color = "rgba(168, 85, 247, 0.3)"
+                        float_shadow_color = "rgba(168, 85, 247, 0.1)"
+                        float_icon = "📋"
+                      end
+                    %>
+                    <div class="event-card text-xs p-2 rounded-lg border mb-1.5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-move draggable-event transform hover:-translate-y-0.5 relative" 
+                         style="background: linear-gradient(135deg, <%= float_bg_color %>); border: 1px solid <%= float_border_color %>; box-shadow: 0 2px 4px <%= float_shadow_color %>;"
+                         draggable="true"
+                         ondragstart="handleEventDragStart(event)"
+                         ondragend="handleEventDragEnd(event)"
+                         onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                         data-event-id="<%= event.id %>"
+                         data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                         data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                         data-event-start="<%= event.start_time.iso8601 %>"
+                         data-event-end="<%= event.end_time&.iso8601 %>"
+                         data-event-type="<%= event.event_type %>"
+                         data-event-priority="<%= event.priority %>"
+                         data-event-all-day="<%= event.all_day? %>"
+                         data-event-color="<%= event.display_color %>">
+                      
+                      <!-- Type icon in corner -->
+                      <div class="absolute top-0.5 right-0.5 text-xs opacity-70"><%= float_icon %></div>
+                      
+                      <div class="flex items-start space-x-2">
+                        <input type="checkbox" 
+                               class="w-3 h-3 text-emerald-600 bg-white border-2 border-gray-300 rounded-md focus:ring-emerald-500 focus:ring-2 cursor-pointer transition-all duration-200 hover:border-emerald-400 flex-shrink-0 mt-0.5"
+                               <%= 'checked' if event.done? %>
+                               onchange="toggleEventDone('<%= event.id %>', this.checked)"
+                               onclick="event.stopPropagation();">
+                        <div class="font-semibold text-gray-800 text-xs <%= 'line-through text-gray-500' if event.done? %> flex-1 leading-relaxed pr-8">
+                          <%= event.title %>
+                        </div>
+                      </div>
                     </div>
                   <% end %>
-                  
-                  <!-- Category Badge -->
-                  <div class="flex items-center justify-between mt-2">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
-                          style="background-color: <%= event.display_color %>15; color: <%= event.display_color %>;">
-                      <%= event.category_info[:label] %>
-                    </span>
-                    <% if event.done? %>
-                      <span class="text-green-500 text-xs">✓</span>
-                    <% end %>
-                  </div>
                 </div>
+              <% end %>
+
+              <!-- Timed Events (с временем) -->
+              <% if timed_events.any? %>
+                
+                <% timed_events.first(8).each do |event| %>
+                  <%
+                    # Определяем цвета по типу события
+                    if event.event_type == 'reminder'
+                      bg_color = "rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%"
+                      border_color = "rgba(239, 68, 68, 0.3)"
+                      shadow_color = "rgba(239, 68, 68, 0.1)"
+                      icon = "🔔"
+                    else
+                      bg_color = "rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%"
+                      border_color = "rgba(59, 130, 246, 0.3)"
+                      shadow_color = "rgba(59, 130, 246, 0.1)"
+                      icon = "⏰"
+                    end
+                  %>
+                  <div class="event-card text-xs p-2 rounded-lg border mb-1.5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-move draggable-event relative transform hover:-translate-y-0.5" 
+                       style="background: linear-gradient(135deg, <%= bg_color %>); border: 1px solid <%= border_color %>; box-shadow: 0 2px 4px <%= shadow_color %>;"
+                       draggable="true"
+                       ondragstart="handleEventDragStart(event)"
+                       ondragend="handleEventDragEnd(event)"
+                       onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                       data-event-id="<%= event.id %>"
+                       data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                       data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                       data-event-start="<%= event.start_time.iso8601 %>"
+                       data-event-end="<%= event.end_time&.iso8601 %>"
+                       data-event-type="<%= event.event_type %>"
+                       data-event-priority="<%= event.priority %>"
+                       data-event-all-day="<%= event.all_day? %>"
+                       data-event-color="<%= event.display_color %>">
+                    
+                    <!-- Type icon in left corner -->
+                    <div class="absolute top-0.5 left-0.5 text-xs opacity-60">
+                      <%= icon %>
+                    </div>
+                    
+                    <!-- Compact time only -->
+                    <div class="absolute top-0.5 right-0.5 text-[9px] font-mono text-gray-500 bg-white bg-opacity-90 px-1 py-0.5 rounded-sm font-bold leading-none">
+                      <%= event.start_time.strftime('%H:%M') %>
+                    </div>
+                    
+                    <div class="pt-3">
+                      <div class="flex items-start space-x-2">
+                        <input type="checkbox" 
+                               class="w-3 h-3 text-emerald-600 bg-white border-2 border-gray-300 rounded-md focus:ring-emerald-500 focus:ring-2 cursor-pointer transition-all duration-200 hover:border-emerald-400 flex-shrink-0 mt-0.5"
+                               <%= 'checked' if event.done? %>
+                               onchange="toggleEventDone('<%= event.id %>', this.checked)"
+                               onclick="event.stopPropagation();">
+                        <div class="font-semibold text-xs text-gray-800 <%= 'line-through text-gray-500' if event.done? %> flex-1 leading-relaxed pr-12">
+                          <%= event.title %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
               <% end %>
               
               <!-- Empty state -->
               <% if upcoming_events.empty? %>
-                <div class="text-xs text-gray-400 text-center py-4 italic">
-                  Нет предстоящих событий
+                <div class="text-xs text-gray-400 text-center py-2 italic">
+                  Нет событий
                 </div>
               <% end %>
             </div>
@@ -297,6 +443,53 @@
   </div>
 </div>
 
+<!-- Reminder Modal -->
+<div id="reminderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Редактировать напоминание</h3>
+      
+      <input type="hidden" id="reminderId">
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Сообщение</label>
+        <input type="text" id="reminderMessage" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Дата</label>
+        <input type="date" id="reminderDate" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Время</label>
+        <input type="time" id="reminderTime" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      
+      <div class="flex justify-between">
+        <button onclick="deleteReminder()" 
+                class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+          🗑️ Удалить
+        </button>
+        
+        <div class="space-x-2">
+          <button onclick="closeReminderModal()" 
+                  class="bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium py-2 px-4 rounded-md transition-colors">
+            Отмена
+          </button>
+          <button onclick="saveReminder()" 
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+            💾 Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   .border-l-3 {
     border-left-width: 3px;
@@ -316,20 +509,36 @@
   }
   
   .draggable-event:hover::after {
-    content: "🔄";
+    content: "✨";
     position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #3b82f6;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  
+  .event-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .drop-zone:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
   }
 </style>
 
@@ -600,4 +809,161 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// Event Toggle Done Function
+function toggleEventDone(eventId, isChecked) {
+  console.log('Toggling event:', eventId, 'to:', isChecked);
+  
+  fetch(`/api/calendar/events/${eventId}/toggle_done`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({
+      done: isChecked
+    })
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('API Response:', data);
+    if (data.event) {
+      console.log('Event status updated:', data.event.done);
+      // Reload page to reflect changes
+      location.reload();
+    } else {
+      console.error('No event in response:', data);
+      alert('Ошибка при обновлении статуса: ' + (data.error || 'Неизвестная ошибка'));
+      // Find the checkbox and revert its state
+      const checkbox = document.querySelector(`input[onchange*="${eventId}"]`);
+      if (checkbox) checkbox.checked = !isChecked;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при обновлении статуса: ' + error.message);
+    // Find the checkbox and revert its state
+    const checkbox = document.querySelector(`input[onchange*="${eventId}"]`);
+    if (checkbox) checkbox.checked = !isChecked;
+  });
+}
+
+// Reminder Modal Functions
+function showReminderModal(reminderId, message, time, event) {
+  event.stopPropagation();
+  
+  // Fetch full reminder data
+  fetch(`/api/v1/reminders/${reminderId}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('Reminder API Response:', data);
+      if (data.reminder) {
+        const reminder = data.reminder;
+        // Parse Berlin time correctly
+        const remindAt = new Date(reminder.remind_at);
+        
+        document.getElementById('reminderId').value = reminder.id;
+        document.getElementById('reminderMessage').value = reminder.message;
+        
+        // Format date for input (YYYY-MM-DD)
+        const year = remindAt.getFullYear();
+        const month = String(remindAt.getMonth() + 1).padStart(2, '0');
+        const day = String(remindAt.getDate()).padStart(2, '0');
+        document.getElementById('reminderDate').value = `${year}-${month}-${day}`;
+        
+        // Format time for input (HH:MM)
+        const hours = String(remindAt.getHours()).padStart(2, '0');
+        const minutes = String(remindAt.getMinutes()).padStart(2, '0');
+        document.getElementById('reminderTime').value = `${hours}:${minutes}`;
+        
+        document.getElementById('reminderModal').classList.remove('hidden');
+      } else {
+        alert('Ошибка при загрузке напоминания: ' + (data.error || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при загрузке напоминания: ' + error.message);
+    });
+}
+
+function closeReminderModal() {
+  document.getElementById('reminderModal').classList.add('hidden');
+}
+
+function saveReminder() {
+  const reminderId = document.getElementById('reminderId').value;
+  const message = document.getElementById('reminderMessage').value;
+  const date = document.getElementById('reminderDate').value;
+  const time = document.getElementById('reminderTime').value;
+  
+  if (!message.trim()) {
+    alert('Укажите сообщение напоминания');
+    return;
+  }
+  
+  // Create date in Berlin timezone
+  const berlinerTime = new Date(date + 'T' + time + ':00+02:00').toISOString();
+  
+  console.log('Saving reminder:', { reminderId, message, date, time, berlinerTime });
+  
+  fetch(`/api/v1/reminders/${reminderId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      reminder: {
+        message: message,
+        remind_at: berlinerTime
+      }
+    })
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    return response.json();
+  })
+  .then(data => {
+    console.log('API Response:', data);
+    if (data.reminder) {
+      alert('Напоминание обновлено!');
+      closeReminderModal();
+      location.reload();
+    } else {
+      alert('Ошибка: ' + (data.error || data.errors || JSON.stringify(data)));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при обновлении напоминания: ' + error.message);
+  });
+}
+
+function deleteReminder() {
+  const reminderId = document.getElementById('reminderId').value;
+  
+  if (!confirm('Удалить напоминание?')) {
+    return;
+  }
+  
+  fetch(`/api/v1/reminders/${reminderId}`, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert('Напоминание удалено');
+    closeReminderModal();
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при удалении напоминания');
+  });
+}
 </script>
