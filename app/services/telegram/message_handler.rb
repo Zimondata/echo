@@ -38,6 +38,30 @@ module Telegram
         handle_settings_command
       when "/status"
         handle_status_command
+      when "/calendar"
+        handle_calendar_command
+      when "/today"
+        handle_today_command
+      when "/week"
+        handle_week_command
+      when "/add_event"
+        handle_add_event_command
+      when "/insights"
+        handle_insights_command
+      when "/digest"
+        handle_digest_command
+      when "/daily"
+        handle_daily_summary_command
+      when "/stats"
+        handle_detailed_stats_command
+      when "/plan"
+        handle_plan_command
+      when "/optimize"
+        handle_optimize_command
+      when "/suggest"
+        handle_suggest_command
+      when "/autoplan"
+        handle_autoplan_command
       else
         send_reply("Неизвестная команда. Используй /help для списка команд.")
       end
@@ -71,13 +95,31 @@ module Telegram
         /help — Показать это сообщение
         /settings — Настройки
         /status — Статистика твоих записей
+        
+        *Календарь:*
+        /calendar — Просмотр календаря
+        /today — События на сегодня
+        /week — События на неделю
+        /add_event — Быстрое создание события
+        
+        *Аналитика и инсайты:*
+        /insights — Последние инсайты
+        /digest — Недельный дайджест
+        /daily — Резюме за сегодня
+        /stats — Подробная статистика
+        
+        *Автоматическое планирование:*
+        /plan — Создать план на день/неделю
+        /optimize — Оптимизировать расписание
+        /suggest — Умные предложения задач
+        /autoplan — Полное автопланирование
 
         *Как использовать:*
 
         1️⃣ *Отправь сообщение* (текст или голос)
         Я автоматически определю, что это: дневник, идея или план.
 
-        2️⃣ *Если это план с датой*, я создам событие в Google Calendar
+        2️⃣ *Если это план с датой*, я создам событие в календаре
 
         3️⃣ *Настрой напоминания*, и я буду присылать уведомления
 
@@ -103,7 +145,6 @@ module Telegram
         Текущие настройки:
         🌍 Язык: #{user.language}
         🕐 Часовой пояс: #{user.timezone}
-        📅 Google Calendar: #{user.google_connected? ? "✅ Подключен" : "❌ Не подключен"}
 
         Для изменения настроек напиши мне, что хочешь изменить.
       TEXT
@@ -159,31 +200,41 @@ module Telegram
     end
 
     def process_content(text, audio_file_id: nil)
-      # Analyze content with AI
-      analysis = Ai::ContentAnalyzer.analyze(text, user: user)
+      # Use multi-plan analyzer to extract multiple plans from one message
+      analyses = Ai::MultiPlanAnalyzer.analyze(text, user: user)
+      
+      created_entries = []
+      
+      analyses.each do |analysis|
+        # Create entry for each analyzed plan/content
+        entry = user.entries.create!(
+          entry_type: analysis[:type],
+          content: analysis[:content] || analysis[:summary] || text,
+          transcript: text,
+          audio_file_id: audio_file_id,
+          priority: analysis[:priority] || 0,
+          metadata: (analysis[:metadata] || {}).merge({
+            multi_plan_source: analyses.count > 1,
+            plan_index: analyses.index(analysis) + 1,
+            total_plans: analyses.count
+          })
+        )
+        
+        created_entries << entry
 
-      # Create entry
-      entry = user.entries.create!(
-        entry_type: analysis[:type],
-        content: analysis[:summary] || text,
-        transcript: text,
-        audio_file_id: audio_file_id,
-        priority: analysis[:priority] || 0,
-        metadata: analysis[:metadata] || {}
-      )
+        # Create calendar event if needed
+        if analysis[:create_calendar_event] && analysis[:event_time]
+          create_calendar_event(entry, analysis)
+        end
 
-      # Send confirmation
-      send_entry_confirmation(entry, analysis)
-
-      # Create calendar event if needed
-      if analysis[:create_calendar_event] && analysis[:event_time]
-        create_calendar_event(entry, analysis)
+        # Create reminder if needed
+        if analysis[:create_reminder] && analysis[:reminder_time]
+          create_reminder(entry, analysis)
+        end
       end
 
-      # Create reminder if needed
-      if analysis[:create_reminder] && analysis[:reminder_time]
-        create_reminder(entry, analysis)
-      end
+      # Send comprehensive confirmation
+      send_multi_entry_confirmation(created_entries, analyses, text)
 
     rescue StandardError => e
       Rails.logger.error "Error processing content: #{e.message}"
@@ -202,11 +253,69 @@ module Telegram
         #{type_emoji} *Записал!*
 
         *Тип:* #{entry_type_name(entry.entry_type)}
-        *Дата:* #{I18n.l(entry.occurred_at, format: :long)}
+        *Дата:* #{entry.occurred_at.strftime('%d %B %Y, %H:%M')}
 
         *Резюме:*
         #{entry.content}
       TEXT
+
+      send_reply(confirmation_text)
+    end
+
+    def send_multi_entry_confirmation(entries, analyses, original_text)
+      if entries.count == 1
+        # Single entry - use standard confirmation
+        send_entry_confirmation(entries.first, analyses.first)
+        return
+      end
+
+      # Multiple entries - send comprehensive confirmation
+      confirmation_text = <<~TEXT
+        🎯 *Отлично! Обработал твое сообщение*
+
+        Из твоего сообщения я извлек *#{entries.count} записей*:
+      TEXT
+
+      entries.each_with_index do |entry, index|
+        type_emoji = case entry.entry_type
+        when "diary" then "📔"
+        when "idea" then "💡" 
+        when "plan" then "📅"
+        else "📝"
+        end
+
+        confirmation_text += "\n#{index + 1}. #{type_emoji} *#{entry_type_name(entry.entry_type)}*\n"
+        confirmation_text += "   └ #{entry.content.truncate(100)}\n"
+        
+        # Add timing info if it's a plan with time
+        if entry.entry_type == 'plan' && entry.calendar_event
+          event_time = entry.calendar_event.start_time.strftime('%d.%m в %H:%M')
+          confirmation_text += "   📅 #{event_time}\n"
+        end
+      end
+
+      confirmation_text += "\n💡 *Статистика:*\n"
+      
+      type_counts = entries.group_by(&:entry_type).transform_values(&:count)
+      type_counts.each do |type, count|
+        type_emoji = case type
+        when "diary" then "📔"
+        when "idea" then "💡"
+        when "plan" then "📅"
+        else "📝"
+        end
+        confirmation_text += "#{type_emoji} #{entry_type_name(type)}: #{count}\n"
+      end
+
+      calendar_events_count = entries.count { |e| e.calendar_event.present? }
+      if calendar_events_count > 0
+        confirmation_text += "\n📅 Создано событий в календаре: #{calendar_events_count}"
+      end
+
+      reminders_count = entries.sum { |e| e.reminders.count }
+      if reminders_count > 0
+        confirmation_text += "\n🔔 Создано напоминаний: #{reminders_count}"
+      end
 
       send_reply(confirmation_text)
     end
@@ -221,33 +330,658 @@ module Telegram
     end
 
     def create_calendar_event(entry, analysis)
-      # TODO: Implement Google Calendar integration
-      # For now, just create a local calendar event
       event = user.calendar_events.create!(
         entry: entry,
         title: analysis[:event_title] || entry.content.truncate(100),
         description: entry.content,
         start_time: analysis[:event_time],
-        end_time: analysis[:event_end_time] || (analysis[:event_time] + 1.hour),
+        end_time: analysis[:event_end_time],
         event_type: "plan"
       )
 
-      send_reply("📅 Создал событие в календаре на #{I18n.l(event.start_time, format: :short)}")
+      send_reply("📅 Создал событие в календаре на #{event.start_time.strftime('%d.%m в %H:%M')}")
     rescue StandardError => e
       Rails.logger.error "Error creating calendar event: #{e.message}"
     end
 
     def create_reminder(entry, analysis)
-      reminder = user.reminders.create!(
-        entry: entry,
-        reminder_type: "one_time",
-        remind_at: analysis[:reminder_time],
-        message: analysis[:reminder_message] || entry.content.truncate(200)
-      )
+      # Check if it's a recurring reminder request
+      if analysis[:recurring_pattern]
+        create_recurring_reminder(entry, analysis)
+      else
+        reminder = user.reminders.create!(
+          entry: entry,
+          reminder_type: "one_time",
+          remind_at: analysis[:reminder_time],
+          message: analysis[:reminder_message] || entry.content.truncate(200)
+        )
 
-      send_reply("🔔 Напомню тебе #{I18n.l(reminder.remind_at, format: :short)}")
+        send_reply("🔔 Напомню тебе #{reminder.remind_at.strftime('%d.%m в %H:%M')}")
+      end
     rescue StandardError => e
       Rails.logger.error "Error creating reminder: #{e.message}"
+    end
+
+    def create_recurring_reminder(entry, analysis)
+      pattern = analysis[:recurring_pattern]
+      
+      # Parse recurring pattern like "каждые 3 часа до 22:00"
+      interval_hours = pattern[:interval_hours] || 3
+      end_time = pattern[:end_time] || "22:00"
+      start_time = analysis[:reminder_time] || Time.current + 1.hour
+      
+      # Create first reminder
+      reminder = user.reminders.create!(
+        entry: entry,
+        reminder_type: "recurring",
+        remind_at: start_time,
+        message: analysis[:reminder_message] || entry.content.truncate(200),
+        metadata: {
+          interval_hours: interval_hours,
+          end_time: end_time,
+          created_from: "telegram_message"
+        }
+      )
+
+      send_reply(<<~TEXT)
+        🔔 *Создал повторяющееся напоминание!*
+        
+        ⏰ Первое: #{reminder.remind_at.strftime('%d.%m в %H:%M')}
+        🔄 Интервал: каждые #{interval_hours} ч.
+        🛑 До: #{end_time}
+        
+        💡 Напоминания будут приходить автоматически до указанного времени каждый день
+      TEXT
+    rescue StandardError => e
+      Rails.logger.error "Error creating recurring reminder: #{e.message}"
+      send_reply("Ошибка создания повторяющегося напоминания: #{e.message}")
+    end
+
+    def handle_calendar_command
+      events = user.calendar_events.for_week.active.order(:start_time)
+      
+      if events.empty?
+        send_reply("📅 У тебя нет событий на эту неделю. Создай новое событие командой /add_event")
+        return
+      end
+
+      calendar_text = "📅 *Календарь на неделю*\n\n"
+      
+      events.group_by(&:start_date).each do |date, day_events|
+        calendar_text += "*#{date.strftime('%d %B %Y')}*\n"
+        
+        day_events.each do |event|
+          status_emoji = event.done? ? "✅" : "⏰"
+          time_str = event.all_day? ? "весь день" : event.start_time.strftime("%H:%M")
+          
+          calendar_text += "#{status_emoji} #{time_str} - #{event.title}\n"
+        end
+        
+        calendar_text += "\n"
+      end
+
+      send_reply(calendar_text)
+    end
+
+    def handle_today_command
+      today = Date.current
+      events = user.calendar_events.for_date_range(today.beginning_of_day, today.end_of_day).active.order(:start_time)
+      
+      if events.empty?
+        send_reply("📅 На сегодня событий нет. Отличный день для отдыха! 😊")
+        return
+      end
+
+      today_text = "📅 *События на сегодня (#{today.strftime('%d %B %Y')})*\n\n"
+      
+      events.each do |event|
+        status_emoji = event.done? ? "✅" : "⏰"
+        time_str = event.all_day? ? "весь день" : event.start_time.strftime("%H:%M")
+        priority_emoji = case event.priority
+        when 'urgent' then '🔴'
+        when 'high' then '🟡'
+        when 'medium' then '🟢'
+        else '⚪'
+        end
+        
+        today_text += "#{status_emoji} #{priority_emoji} #{time_str} - #{event.title}\n"
+        today_text += "   #{event.description}\n\n" if event.description.present?
+      end
+
+      send_reply(today_text)
+    end
+
+    def handle_week_command
+      handle_calendar_command
+    end
+
+    def handle_add_event_command
+      send_reply(<<~TEXT)
+        📅 *Быстрое создание события*
+        
+        Отправь мне сообщение в формате:
+        
+        *Заголовок события*
+        Дата и время
+        Описание (опционально)
+        
+        *Примеры:*
+        
+        💬 "Встреча с клиентом завтра в 15:00"
+        💬 "Поездка к родителям в субботу весь день"
+        💬 "Звонок врачу 25 октября в 10:30"
+        
+        Или просто отправь описание события с датой/временем, и я сам создам событие! ✨
+      TEXT
+    end
+
+    def handle_insights_command
+      recent_insights = user.insights.active.recent.limit(3)
+      
+      if recent_insights.empty?
+        send_reply("🧠 У тебя пока нет инсайтов. Продолжай добавлять записи, и я создам для тебя полезные аналитические отчеты!")
+        return
+      end
+
+      insights_text = "🧠 *Последние инсайты*\n\n"
+      
+      recent_insights.each do |insight|
+        icon = case insight.insight_type
+        when 'daily_summary' then '📊'
+        when 'weekly_digest' then '📈'
+        when 'trend_analysis' then '📉'
+        when 'productivity_insight' then '⚡'
+        else '💡'
+        end
+        
+        insights_text += "#{icon} *#{insight.title}*\n"
+        insights_text += "#{insight.content.truncate(150)}\n"
+        insights_text += "_#{insight.generated_at.strftime('%d.%m в %H:%M')}_\n\n"
+      end
+      
+      insights_text += "💡 Хочешь получить свежий анализ? Используй /digest или /daily"
+
+      send_reply(insights_text)
+    end
+
+    def handle_digest_command
+      send_reply("📈 Генерирую недельный дайджест... Это займет немного времени.")
+      
+      # Запускаем генерацию недельного дайджеста
+      GenerateInsightJob.perform_later(user.id, 'weekly_digest')
+      
+      send_reply(<<~TEXT)
+        ✨ Твой недельный дайджест будет готов через несколько минут!
+        
+        В нем ты увидишь:
+        📊 Статистику активности за неделю
+        🎯 Твои главные достижения  
+        💡 Инсайты и паттерны поведения
+        🚀 Цели на следующую неделю
+        
+        Используй /insights чтобы посмотреть результат.
+      TEXT
+    end
+
+    def handle_daily_summary_command
+      send_reply("📊 Анализирую твой день...")
+      
+      # Запускаем генерацию дневного резюме
+      GenerateInsightJob.perform_later(user.id, 'daily_summary', { date: Date.current })
+      
+      send_reply(<<~TEXT)
+        🌟 Создаю резюме твоего дня!
+        
+        Скоро увидишь:
+        📝 Краткий обзор всех записей
+        🎯 Ключевые моменты дня
+        😊 Анализ настроения
+        🏷 Главные темы и идеи
+        
+        Проверь /insights через минутку!
+      TEXT
+    end
+
+    def handle_detailed_stats_command
+      stats = Analytics::UserStatsCollector.weekly_stats(user)
+      
+      stats_text = <<~TEXT
+        📊 *Подробная статистика*
+        
+        *За эту неделю:*
+        📝 Записей: #{stats[:total_entries]}
+        ⚡ Продуктивность: #{stats[:productivity_score]}%
+        ✅ Выполнено событий: #{stats[:completion_rate]}%
+        
+        *Динамика роста:*
+        📈 Рост записей: #{stats.dig(:growth_metrics, :entries_growth) || 0}%
+        🎯 Консистентность: #{stats.dig(:growth_metrics, :consistency_score) || 0}%
+        
+        *Настроение:*
+        😊 Общий балл: #{stats.dig(:mood_trends, :mood_score) || 50}/100
+        ➕ Позитивные индикаторы: #{stats.dig(:mood_trends, :positive_indicators) || 0}
+        ➖ Негативные индикаторы: #{stats.dig(:mood_trends, :negative_indicators) || 0}
+        
+        *Топ категории:*
+      TEXT
+      
+      if stats[:top_categories] && !stats[:top_categories].empty?
+        stats[:top_categories].each do |category, count|
+          stats_text += "• #{category}: #{count}\n"
+        end
+      else
+        stats_text += "• Пока недостаточно данных\n"
+      end
+      
+      stats_text += "\n💡 Используй /digest для получения персональных рекомендаций!"
+
+      send_reply(stats_text)
+    rescue StandardError => e
+      Rails.logger.error "Error generating detailed stats: #{e.message}"
+      send_reply("Произошла ошибка при генерации статистики. Попробуй позже.")
+    end
+
+    def handle_plan_command
+      command_parts = message.text.split
+      plan_type = command_parts[1] || 'daily' # daily или weekly
+      
+      case plan_type.downcase
+      when 'weekly', 'неделя', 'неделю'
+        handle_weekly_plan_command
+      else
+        handle_daily_plan_command
+      end
+    end
+
+    def handle_daily_plan_command
+      send_reply("🧠 Создаю умный план на сегодня...")
+      
+      begin
+        plan_data = Ai::AutoPlanner.generate_daily_plan(
+          user: user,
+          options: { include_context: true }
+        )
+        
+        if plan_data[:scheduled_tasks].empty?
+          send_reply(<<~TEXT)
+            📋 *План на сегодня*
+            
+            У тебя пока нет активных задач для планирования.
+            
+            💡 *Что можно сделать:*
+            • Добавь идеи или планы через обычные сообщения
+            • Используй /suggest для получения предложений
+            • Попробуй /autoplan для полного планирования
+          TEXT
+          return
+        end
+        
+        plan_text = format_daily_plan(plan_data)
+        send_reply(plan_text)
+        
+        # Если есть рекомендации, отправляем их отдельно
+        if plan_data[:recommendations]&.any?
+          recs_text = format_recommendations(plan_data[:recommendations])
+          send_reply(recs_text)
+        end
+        
+      rescue StandardError => e
+        Rails.logger.error "Error generating daily plan: #{e.message}"
+        send_reply("Произошла ошибка при создании плана. Попробуй позже или добавь задачи вручную.")
+      end
+    end
+
+    def handle_weekly_plan_command
+      send_reply("📅 Создаю план на неделю... Это может занять немного времени.")
+      
+      begin
+        plan_data = Ai::AutoPlanner.generate_weekly_plan(
+          user: user,
+          options: { detailed_analysis: true }
+        )
+        
+        if plan_data[:daily_plans].empty?
+          send_reply("📋 Недостаточно данных для создания недельного плана. Попробуй сначала /plan для дневного планирования.")
+          return
+        end
+        
+        weekly_text = format_weekly_plan(plan_data)
+        send_reply(weekly_text)
+        
+      rescue StandardError => e
+        Rails.logger.error "Error generating weekly plan: #{e.message}"
+        send_reply("Произошла ошибка при создании недельного плана. Попробуй позже.")
+      end
+    end
+
+    def handle_optimize_command
+      send_reply("⚡ Оптимизирую твое расписание...")
+      
+      begin
+        # Получаем текущие незавершенные задачи
+        pending_plans = user.entries.plans
+                           .where(dashboard_status: ['new', 'triaged'])
+                           .recent
+                           .limit(10)
+        
+        if pending_plans.empty?
+          send_reply(<<~TEXT)
+            🤔 Нет задач для оптимизации!
+            
+            💡 *Что можно сделать:*
+            • Добавь планы через сообщения
+            • Используй /autoplan для создания задач из идей
+            • Попробуй /suggest для получения предложений
+          TEXT
+          return
+        end
+        
+        # Конвертируем в формат для оптимизатора
+        tasks_for_optimization = pending_plans.map do |entry|
+          {
+            id: entry.id,
+            title: entry.content.truncate(50),
+            estimated_time: 60, # Default 1 hour
+            priority: entry.priority > 0 ? 'high' : 'medium',
+            category: entry.category || 'work'
+          }
+        end
+        
+        optimization_result = Ai::ScheduleOptimizer.call(
+          user: user,
+          tasks: tasks_for_optimization
+        )
+        
+        optimization_text = format_optimization_result(optimization_result)
+        send_reply(optimization_text)
+        
+      rescue StandardError => e
+        Rails.logger.error "Error optimizing schedule: #{e.message}"
+        send_reply("Произошла ошибка при оптимизации. Попробуй позже.")
+      end
+    end
+
+    def handle_suggest_command
+      send_reply("💡 Анализирую контекст и генерирую предложения...")
+      
+      begin
+        suggestions = Ai::AutoPlanner.suggest_next_actions(
+          user: user,
+          options: { include_context: true }
+        )
+        
+        suggestions_text = format_suggestions(suggestions)
+        send_reply(suggestions_text)
+        
+      rescue StandardError => e
+        Rails.logger.error "Error generating suggestions: #{e.message}"
+        send_reply("Произошла ошибка при генерации предложений. Попробуй позже.")
+      end
+    end
+
+    def handle_autoplan_command
+      send_reply("🤖 Запускаю полное автоматическое планирование...")
+      
+      begin
+        # Анализируем идеи и создаем из них планы
+        recent_ideas = user.entries.ideas
+                          .where(dashboard_status: ['new', 'triaged'])
+                          .where(created_at: 7.days.ago..Time.current)
+                          .recent
+                          .limit(5)
+        
+        created_plans = 0
+        
+        recent_ideas.each do |idea|
+          plan_data = Ai::PlanGenerator.call(
+            user: user,
+            idea_content: idea.content,
+            context: "Автоматическое планирование"
+          )
+          
+          # Создаем записи для каждой задачи из плана
+          plan_data[:tasks].each do |task|
+            user.entries.create!(
+              entry_type: 'plan',
+              content: "#{task[:title]}: #{task[:description]}",
+              category: task[:category] || 'projects',
+              priority: task[:priority] == 'high' ? 10 : (task[:priority] == 'medium' ? 5 : 1),
+              dashboard_status: 'new',
+              metadata: {
+                estimated_time: task[:estimated_time],
+                source: 'ai_generated',
+                source_idea_id: idea.id,
+                auto_generated: true
+              }
+            )
+            created_plans += 1
+          end
+          
+          # Помечаем идею как обработанную
+          idea.update!(dashboard_status: 'processed')
+        end
+        
+        if created_plans > 0
+          send_reply(<<~TEXT)
+            ✨ *Автопланирование завершено!*
+            
+            📋 Создано #{created_plans} новых задач из ваших идей
+            🧠 AI проанализировал #{recent_ideas.count} идей
+            
+            💡 *Что дальше:*
+            • Используй /plan для создания расписания
+            • Попробуй /optimize для оптимизации времени
+            • Команда /today покажет события на сегодня
+            
+            Все новые задачи появятся в твоем планировщике!
+          TEXT
+          
+          # Автоматически создаем дневной план
+          handle_daily_plan_command
+        else
+          send_reply(<<~TEXT)
+            🤔 *Автопланирование завершено*
+            
+            К сожалению, не нашел подходящих идей для превращения в планы.
+            
+            💡 *Рекомендации:*
+            • Добавь больше идей через голосовые или текстовые сообщения
+            • Попробуй /suggest для получения предложений
+            • Используй /plan для работы с существующими задачами
+          TEXT
+        end
+        
+      rescue StandardError => e
+        Rails.logger.error "Error in autoplan: #{e.message}"
+        send_reply("Произошла ошибка при автоматическом планировании. Попробуй позже.")
+      end
+    end
+
+    private
+
+    def format_daily_plan(plan_data)
+      text = "📋 *#{plan_data[:summary]}*\n\n"
+      
+      if plan_data[:context_insights]&.any?
+        text += "🔍 *Контекст:*\n"
+        plan_data[:context_insights].each do |insight|
+          text += "• #{insight[:message]}\n"
+        end
+        text += "\n"
+      end
+      
+      if plan_data[:priorities]&.any?
+        text += "🎯 *Приоритеты:*\n"
+        plan_data[:priorities].first(3).each do |priority|
+          text += "• #{priority[:title]} (важность: #{(priority[:weight] * 100).round}%)\n"
+        end
+        text += "\n"
+      end
+      
+      if plan_data[:scheduled_tasks]&.any?
+        text += "⏰ *Расписание задач:*\n"
+        plan_data[:scheduled_tasks].each do |task|
+          time_str = ""
+          if task[:suggested_start_time]
+            time_str = " в #{task[:suggested_start_time].strftime('%H:%M')}"
+          end
+          
+          confidence_emoji = case task[:confidence_score]
+                           when 80..100 then "🎯"
+                           when 60..79 then "✅"
+                           else "⚠️"
+                           end
+          
+          text += "#{confidence_emoji} *#{task[:title]}*#{time_str}\n"
+          text += "   └ #{task[:estimated_time] || 30} мин, #{task[:priority]} приоритет\n"
+          
+          if task[:reasoning]
+            text += "   💡 #{task[:reasoning]}\n"
+          end
+          text += "\n"
+        end
+      end
+      
+      text += "🎯 *Вероятность успеха:* #{plan_data[:success_probability] || 70}%\n"
+      text += "⏱ *Общее время:* ~#{plan_data[:estimated_total_time] || 0} ч.\n\n"
+      text += "💡 Используй /optimize для улучшения расписания"
+      
+      text
+    end
+
+    def format_weekly_plan(plan_data)
+      text = "📅 *#{plan_data[:summary]}*\n\n"
+      
+      if plan_data[:focus_themes]&.any?
+        text += "🎯 *Основные темы недели:*\n"
+        plan_data[:focus_themes].each do |theme|
+          text += "• #{theme}\n"
+        end
+        text += "\n"
+      end
+      
+      if plan_data[:weekly_goals]&.any?
+        text += "🏆 *Цели на неделю:*\n"
+        plan_data[:weekly_goals].each do |goal|
+          text += "• #{goal[:title]} (#{goal[:category]})\n"
+        end
+        text += "\n"
+      end
+      
+      text += "📊 *Распределение нагрузки:*\n"
+      if plan_data[:workload_balance]
+        wb = plan_data[:workload_balance]
+        text += "• Всего: #{wb[:total_hours]} ч.\n"
+        text += "• В среднем в день: #{wb[:average_daily]} ч.\n"
+        text += "• Пиковый день: #{wb[:peak_day]}\n"
+        text += "• Легкий день: #{wb[:lightest_day]}\n"
+        text += "• Баланс: #{wb[:balance_score]}/100\n"
+      end
+      
+      text += "\n💡 Используй /plan для детального планирования отдельных дней"
+      
+      text
+    end
+
+    def format_optimization_result(result)
+      text = "⚡ *Оптимизация расписания*\n\n"
+      
+      if result[:optimized_tasks]&.any?
+        text += "📋 *Оптимизированные задачи:*\n"
+        result[:optimized_tasks].each do |task|
+          start_time = task[:suggested_start_time]&.strftime('%H:%M') || "время не определено"
+          confidence_emoji = case task[:confidence_score]
+                           when 80..100 then "🎯"
+                           when 60..79 then "✅" 
+                           else "⚠️"
+                           end
+          
+          text += "#{confidence_emoji} *#{task[:title]}*\n"
+          text += "   ⏰ Рекомендуемое время: #{start_time}\n"
+          text += "   🎚 Уверенность: #{task[:confidence_score] || 50}%\n"
+          
+          if task[:reasoning]
+            text += "   💡 #{task[:reasoning]}\n"
+          end
+          text += "\n"
+        end
+      end
+      
+      if result[:workload_analysis]
+        wa = result[:workload_analysis]
+        text += "📊 *Анализ нагрузки:*\n"
+        text += "• Общее время: #{wa[:total_hours]} ч.\n"
+        text += "• Категории: #{wa[:category_distribution].keys.join(', ')}\n\n"
+      end
+      
+      if result[:user_patterns]
+        up = result[:user_patterns]
+        text += "📈 *Ваши паттерны:*\n"
+        text += "• Пиковые часы: #{up[:peak_hours]&.map { |h| h[:hour] }&.join(', ')}\n"
+        text += "• Продуктивные дни: #{up[:productive_days]&.map { |d| d[:day] }&.join(', ')}\n\n"
+      end
+      
+      text += "💡 Планы автоматически адаптированы под ваш стиль работы!"
+      
+      text
+    end
+
+    def format_suggestions(suggestions)
+      text = "💡 *Умные предложения*\n\n"
+      
+      text += "📍 *Текущий контекст:*\n"
+      text += "#{suggestions[:context_summary]}\n\n"
+      
+      if suggestions[:immediate_suggestions]&.any?
+        text += "⚡ *Рекомендации сейчас:*\n"
+        suggestions[:immediate_suggestions].each do |suggestion|
+          priority_emoji = case suggestion[:priority]
+                          when 'high' then "🔥"
+                          when 'medium' then "📝"
+                          else "💭"
+                          end
+          
+          text += "#{priority_emoji} #{suggestion[:message]}\n"
+        end
+        text += "\n"
+      end
+      
+      if suggestions[:optimal_actions]&.any?
+        text += "🎯 *Оптимальные действия:*\n"
+        suggestions[:optimal_actions].first(3).each do |action|
+          confidence_bar = "█" * (action[:confidence] * 5).to_i + "░" * (5 - (action[:confidence] * 5).to_i)
+          text += "• #{action[:action].humanize}\n"
+          text += "  #{confidence_bar} #{(action[:confidence] * 100).round}%\n"
+        end
+        text += "\n"
+      end
+      
+      if suggestions[:recommended_next_steps]&.any?
+        text += "👉 *Следующие шаги:*\n"
+        suggestions[:recommended_next_steps].first(3).each do |step|
+          text += "• #{step[:description]}\n"
+        end
+      end
+      
+      text
+    end
+
+    def format_recommendations(recommendations)
+      return "" if recommendations.empty?
+      
+      text = "🔍 *Рекомендации:*\n\n"
+      
+      recommendations.each do |rec|
+        priority_emoji = case rec[:priority]
+                        when 'high' then "🔥"
+                        when 'medium' then "💡"
+                        else "ℹ️"
+                        end
+        
+        text += "#{priority_emoji} #{rec[:message]}\n"
+      end
+      
+      text
     end
 
     def send_reply(text)

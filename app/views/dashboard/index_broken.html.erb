@@ -1,0 +1,1534 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="md:flex md:items-center md:justify-between">
+    <div class="flex-1 min-w-0">
+      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+        Dashboard
+      </h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Добро пожаловать, <%= @user.full_name %>! 👋
+      </p>
+    </div>
+  </div>
+
+
+  <!-- Calendar Widget - Main Block -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-5">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-4">
+          <h3 class="text-xl leading-6 font-bold text-gray-900 flex items-center">
+            📅 Календарь на неделю
+          </h3>
+          
+          <!-- View Switcher -->
+          <div class="flex bg-gray-100 rounded-lg p-1">
+            <button onclick="setCalendarView('week')" id="weekViewBtn" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all bg-white text-orange-700 shadow-sm">
+              📅 Неделя
+            </button>
+            <button onclick="setCalendarView('month')" id="monthViewBtn" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              📊 Месяц
+            </button>
+            <button onclick="setCalendarView('day')" id="dayViewBtn" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50">
+              📅 День
+            </button>
+          </div>
+        </div>
+        
+        <button onclick="expandCalendar()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+          Развернуть календарь →
+        </button>
+      </div>
+      
+      <!-- Week Calendar Grid -->
+      <div id="weekView" class="calendar-week-grid grid grid-cols-7 gap-4 mb-6" style="grid-template-rows: auto 1fr; min-height: 420px;">
+        <!-- Week Headers -->
+        <% 
+          weekdays = [
+            { short: 'ПН', full: 'Понедельник' },
+            { short: 'ВТ', full: 'Вторник' }, 
+            { short: 'СР', full: 'Среда' },
+            { short: 'ЧТ', full: 'Четверг' },
+            { short: 'ПТ', full: 'Пятница' },
+            { short: 'СБ', full: 'Суббота' },
+            { short: 'ВС', full: 'Воскресенье' }
+          ]
+          
+          start_of_week = Date.current.beginning_of_week(:monday)
+          weekdays.each_with_index do |day, index|
+            current_day = start_of_week + index.days
+            is_today = current_day == Date.current
+        %>
+          <div class="text-center pb-3 border-b border-gray-200">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <%= day[:short] %>
+            </div>
+            <div class="text-lg font-bold mt-1 <%= is_today ? 'text-indigo-600' : 'text-gray-900' %>">
+              <%= current_day.day %>
+            </div>
+            <% if is_today %>
+              <div class="text-xs text-indigo-600 font-medium flex items-center justify-center gap-1">
+                <% current_hour = Time.current.hour %>
+                <% time_emoji = case current_hour
+                   when 5..11 then "🌅" # Утро
+                   when 12..17 then "☀️" # День
+                   when 18..22 then "🌆" # Вечер
+                   else "🌙" # Ночь
+                   end %>
+                <%= time_emoji %> Сегодня
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+        
+        <!-- Week Days with Events -->
+        <% 
+          (0..6).each do |day_offset|
+            current_day = start_of_week + day_offset.days
+            day_events = @week_events.select { |event| event.start_date == current_day }
+            is_today = current_day == Date.current
+        %>
+          <div class="calendar-day min-h-[360px] cursor-pointer hover:bg-gray-25 rounded-xl p-3 transition-all duration-200 border border-gray-100 hover:border-gray-200 hover:shadow-sm <%= day_events.empty? ? 'calendar-empty-day' : '' %> <%= day_offset.even? ? 'bg-white' : 'bg-slate-25' %> drop-zone"
+               onclick="openDayModal('<%= current_day.iso8601 %>', '<%= current_day.strftime('%d %B') %>', event)"
+               data-date="<%= current_day.iso8601 %>"
+               ondrop="handleEventDrop(event)"
+               ondragover="handleDragOver(event)"
+               ondragenter="handleDragEnter(event)"
+               ondragleave="handleDragLeave(event)">
+            
+            <!-- Current Time Indicator -->
+            <% if is_today %>
+              <div class="relative mb-2" id="currentTimeMarker<%= current_day.strftime('%w') %>">
+                <!-- This will be populated by JavaScript -->
+              </div>
+            <% end %>
+            
+            <!-- Events for this day -->
+            <div class="space-y-2">
+              <% 
+                current_time = Time.current.in_time_zone('Europe/Berlin')
+                upcoming_events = day_events.select { |e| e.start_time.in_time_zone('Europe/Berlin') >= current_time }
+              %>
+              
+              <!-- Upcoming Events Only -->
+              <% upcoming_events.first(5).each do |event| %>
+                <div class="group relative event-item">
+                  <div class="event-card text-xs p-3 rounded-lg border-l-3 transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-move draggable-event" 
+                       style="background: linear-gradient(145deg, <%= hex_to_rgba(event.display_color, 0.08) %>, <%= hex_to_rgba(event.display_color, 0.12) %>); border-left-color: <%= event.display_color %>; border: 1px solid <%= hex_to_rgba(event.display_color, 0.2) %>;"
+                       draggable="true"
+                       ondragstart="handleEventDragStart(event)"
+                       ondragend="handleEventDragEnd(event)"
+                       onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                       title="<%= event.description.present? ? event.description : event.title %> · <%= event.start_time.strftime('%H:%M') unless event.all_day? %>"
+                       data-event-id="<%= event.id %>"
+                       data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                       data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                       data-event-start="<%= event.start_time.iso8601 %>"
+                       data-event-end="<%= event.end_time&.iso8601 %>"
+                       data-event-type="<%= event.event_type %>"
+                       data-event-priority="<%= event.priority %>"
+                       data-event-all-day="<%= event.all_day? %>"
+                       data-event-color="<%= event.display_color %>">
+                    
+                    <!-- Event Title -->
+                    <div class="font-semibold text-sm mb-2 text-gray-800 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em;">
+                      <%= event.title %>
+                    </div>
+                    
+                    <!-- Event Time - Lighter and Smaller -->
+                    <% unless event.all_day? %>
+                      <div class="text-xs text-gray-500 font-normal leading-relaxed">
+                        <%= event.start_time.strftime('%H:%M') %>
+                        <% if event.end_time && event.end_time != event.start_time %>
+                          - <%= event.end_time.strftime('%H:%M') %>
+                        <% end %>
+                      </div>
+                    <% else %>
+                      <div class="text-xs text-gray-400 font-normal italic">
+                        Весь день
+                      </div>
+                    <% end %>
+                    
+                    <!-- Category Badge with Left Border -->
+                    <div class="flex items-center justify-between mt-2">
+                      <div class="flex items-center">
+                        <!-- Category Icon -->
+                        <div class="w-4 h-4 flex items-center justify-center mr-2" style="color: <%= event.display_color %>;">
+                          <%= event.category_info[:label].match(/^[🔔📋💡📔⚡]/)[0] if event.category_info[:label].match(/^[🔔📋💡📔⚡]/) %>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border-l-2" 
+                              style="background-color: <%= event.display_color %>15; color: <%= event.display_color %>; border-left-color: <%= event.display_color %>;">
+                          <%= event.category_info[:label].gsub(/^[🔔📋💡📔⚡]\s*/, '') %>
+                        </span>
+                      </div>
+                      
+                      <% if event.done? %>
+                        <span class="text-green-500 text-xs">✓</span>
+                      <% end %>
+                    </div>
+                  </div>
+                  
+                  <!-- Hover Tooltip -->
+                  <div class="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-2 px-3 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full whitespace-nowrap shadow-lg">
+                    <div class="font-medium"><%= event.title %></div>
+                    <% if event.description.present? %>
+                      <div class="text-gray-300 mt-1"><%= event.description.truncate(50) %></div>
+                    <% end %>
+                    <div class="text-gray-400 mt-1">
+                      <%= event.all_day? ? 'Весь день' : event.start_time.strftime('%H:%M') %>
+                    </div>
+                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </div>
+                <% end %>
+              <% end %>
+              
+              <!-- Hidden events -->
+              <% visible_count = upcoming_events.first(5).count %>
+              <% if day_events.count > visible_count %>
+                <div class="hidden-events" style="display: none;">
+                  <% day_events.drop(visible_count).each do |event| %>
+                    <div class="group relative event-item">
+                      <div class="event-card text-xs p-3 rounded-lg border-l-4 transition-all hover:shadow-lg cursor-move draggable-event" 
+                           style="background-color: <%= hex_to_rgba(event.display_color, 0.2) %>; border-left-color: <%= event.display_color %>; border: 1px solid <%= hex_to_rgba(event.display_color, 0.3) %>; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 2px 0;"
+                           draggable="true"
+                           ondragstart="handleEventDragStart(event)"
+                           ondragend="handleEventDragEnd(event)"
+                           onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                           title="<%= event.description.present? ? event.description : event.title %> · <%= event.start_time.strftime('%H:%M') unless event.all_day? %>"
+                           data-event-id="<%= event.id %>"
+                           data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                           data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                           data-event-start="<%= event.start_time.iso8601 %>"
+                           data-event-end="<%= event.end_time&.iso8601 %>"
+                           data-event-type="<%= event.event_type %>"
+                           data-event-priority="<%= event.priority %>"
+                           data-event-all-day="<%= event.all_day? %>"
+                           data-event-color="<%= event.display_color %>">
+                        
+                        <!-- Event Title - Smart Layout -->
+                        <div class="event-title-container mb-2" data-event-id="<%= event.id %>">
+                          <% if event.title.length <= 15 %>
+                            <!-- Short title - centered -->
+                            <div class="font-bold leading-tight text-sm text-center" style="color: #4F46E5; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">
+                              <%= event.title %>
+                            </div>
+                          <% else %>
+                            <!-- Long title - expandable -->
+                            <div class="expandable-title" data-expanded="false">
+                              <div class="font-bold leading-tight text-sm collapsed-title" style="color: #4F46E5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer;" 
+                                   onclick="toggleEventTitle(this, event)" 
+                                   title="Нажмите чтобы раскрыть">
+                                <%= event.title %>
+                              </div>
+                              <div class="font-bold leading-tight text-sm expanded-title hidden" style="color: #4F46E5; cursor: pointer;" 
+                                   onclick="toggleEventTitle(this.parentNode, event)"
+                                   title="Нажмите чтобы свернуть">
+                                <%= event.title %>
+                              </div>
+                            </div>
+                          <% end %>
+                        </div>
+                        
+                        <!-- Event Time - Lighter and Smaller -->
+                        <% unless event.all_day? %>
+                          <div class="text-xs text-gray-500 font-normal leading-relaxed">
+                            <%= event.start_time.strftime('%H:%M') %>
+                            <% if event.end_time && event.end_time != event.start_time %>
+                              - <%= event.end_time.strftime('%H:%M') %>
+                            <% end %>
+                          </div>
+                        <% else %>
+                          <div class="text-xs text-gray-400 font-normal italic">
+                            Весь день
+                          </div>
+                        <% end %>
+                        
+                        <!-- Category Badge with Left Border -->
+                        <div class="flex items-center justify-between mt-2">
+                          <div class="flex items-center">
+                            <!-- Category Icon -->
+                            <div class="w-4 h-4 flex items-center justify-center mr-2" style="color: <%= event.display_color %>;">
+                              <%= event.category_info[:label].match(/^[🔔📋💡📔⚡]/)[0] if event.category_info[:label].match(/^[🔔📋💡📔⚡]/) %>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border-l-2" 
+                                  style="background-color: <%= event.display_color %>15; color: <%= event.display_color %>; border-left-color: <%= event.display_color %>;">
+                              <%= event.category_info[:label].gsub(/^[🔔📋💡📔⚡]\s*/, '') %>
+                            </span>
+                          </div>
+                          
+                          <% if event.done? %>
+                            <span class="text-green-500 text-xs">✓</span>
+                          <% end %>
+                        </div>
+                      </div>
+                      
+                      <!-- Hover Tooltip -->
+                      <div class="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-2 px-3 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full whitespace-nowrap shadow-lg">
+                        <div class="font-medium"><%= event.title %></div>
+                        <% if event.description.present? %>
+                          <div class="text-gray-300 mt-1"><%= event.description.truncate(50) %></div>
+                        <% end %>
+                        <div class="text-gray-400 mt-1">
+                          <%= event.all_day? ? 'Весь день' : event.start_time.strftime('%H:%M') %>
+                        </div>
+                        <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+              
+              <!-- Show more events indicator -->
+              <% if day_events.count > 3 %>
+                <button onclick="toggleDayEvents('<%= current_day.iso8601 %>', this, event)" 
+                        class="w-full text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-50 font-medium p-2 bg-gray-100 rounded text-center transition-colors"
+                        data-expanded="false"
+                        data-hidden-count="<%= day_events.count - visible_count %>">
+                  <span class="show-more">+ еще <%= day_events.count - visible_count %></span>
+                  <span class="show-less hidden">Скрыть</span>
+                </button>
+              <% end %>
+              
+              <!-- Empty state for days without events -->
+              <% if day_events.empty? %>
+                <div class="empty-day-content text-xs text-gray-400 text-center py-4 italic opacity-0 hover:opacity-100 transition-opacity duration-200">
+                  + добавить событие
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div> <!-- End weekView -->
+      
+      <!-- Month Calendar - Full Month Grid -->
+      <div id="monthView" class="calendar-month-grid hidden mb-6">
+        <!-- Month Header -->
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          <% ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'].each do |day| %>
+            <div class="text-center text-xs font-medium text-gray-500 uppercase py-2">
+              <%= day %>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Month Days Grid -->
+        <div class="grid grid-cols-7 gap-1" style="grid-template-rows: repeat(6, 100px);">
+          <% 
+            current_month = Date.current.beginning_of_month
+            month_start = current_month.beginning_of_week(:monday)
+            month_end = current_month.end_of_month.end_of_week(:monday)
+            
+            (month_start..month_end).each do |date|
+              day_events = @week_events.select { |event| event.start_date == date }
+              is_current_month = date.month == current_month.month
+              is_today = date == Date.current
+          %>
+            <div class="border border-gray-200 p-1 <%= is_current_month ? (((date - month_start).to_i).even? ? 'bg-white' : 'bg-gray-50') : 'bg-gray-100' %> <%= is_today ? 'ring-2 ring-orange-300' : '' %> hover:bg-gray-100 cursor-pointer transition-colors <%= day_events.empty? ? 'calendar-empty-month-day' : '' %>"
+                 onclick="openDayModal('<%= date.iso8601 %>', '<%= date.strftime('%d %B') %>', event)"
+                 data-date="<%= date.iso8601 %>">
+              
+              <!-- Date Number -->
+              <div class="text-right mb-1">
+                <span class="text-sm font-semibold <%= is_current_month ? 'text-gray-900' : 'text-gray-400' %> <%= is_today ? 'text-orange-600' : '' %>">
+                  <%= date.day %>
+                </span>
+              </div>
+              
+              <!-- Events (max 2 for month view) -->
+              <div class="space-y-0.5 overflow-hidden">
+                <% if day_events.empty? %>
+                  <div class="empty-month-day-content text-xs text-gray-400 text-center py-1 opacity-0 hover:opacity-100 transition-opacity duration-200">
+                    +
+                  </div>
+                <% end %>
+                <% day_events.first(2).each do |event| %>
+                  <div class="event-card text-xs px-1 py-0.5 rounded border-l-2 transition-all hover:shadow-sm cursor-pointer truncate" 
+                       style="background-color: <%= hex_to_rgba(event.display_color, 0.15) %>; border-left-color: <%= event.display_color %>; border: 1px solid <%= hex_to_rgba(event.display_color, 0.25) %>; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
+                       onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                       title="<%= event.description.present? ? event.description : event.title %> · <%= event.start_time.strftime('%H:%M') unless event.all_day? %>"
+                       data-event-id="<%= event.id %>"
+                       data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                       data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                       data-event-start="<%= event.start_time.iso8601 %>"
+                       data-event-end="<%= event.end_time&.iso8601 %>"
+                       data-event-type="<%= event.event_type %>"
+                       data-event-priority="<%= event.priority %>"
+                       data-event-all-day="<%= event.all_day? %>"
+                       data-event-color="<%= event.display_color %>">
+                    
+                    <div class="font-medium leading-tight truncate text-xs" style="color: #4F46E5;">
+                      <%= event.title.truncate(15) %>
+                      <% unless event.all_day? %>
+                        <span class="text-gray-600 ml-1"><%= event.start_time.strftime('%H:%M') %></span>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+                
+                <!-- Show more indicator -->
+                <% if day_events.count > 2 %>
+                  <div class="text-xs text-gray-500 text-center py-1">
+                    +<%= day_events.count - 2 %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div> <!-- End monthView -->
+      
+      <!-- Day View -->
+      <div id="dayView" class="calendar-day-view hidden mb-6">
+        <div class="bg-white border border-gray-200 rounded-lg">
+          <div class="p-4 border-b border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-900" id="dayViewDate">
+              Сегодня, <%= Date.current.strftime('%d %B %Y') %>
+            </h4>
+          </div>
+          
+          <div class="p-4 space-y-3" id="dayViewEvents">
+            <!-- Events will be populated by JavaScript -->
+          </div>
+        </div>
+      </div> <!-- End dayView -->
+      
+      <!-- Calendar Navigation -->
+      <div class="calendar-navigation flex justify-between items-center pt-4 border-t border-gray-200">
+        <div class="flex items-center space-x-2 text-sm text-gray-600">
+          <button onclick="previousWeek()" class="hover:text-gray-900">← Пред. неделя</button>
+          <span class="mx-2">|</span>
+          <button onclick="currentWeek()" class="hover:text-gray-900">Эта неделя</button>
+          <span class="mx-2">|</span>
+          <button onclick="nextWeek()" class="hover:text-gray-900">След. неделя →</button>
+        </div>
+        <div class="text-xs text-gray-500">
+          <%= Date.current.beginning_of_week(:monday).strftime('%d %b') %> - 
+          <%= Date.current.end_of_week(:monday).strftime('%d %b') %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Entries & Upcoming Events -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- Recent Entries -->
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+          Последние записи
+        </h3>
+        <div class="flow-root">
+          <ul role="list" class="-my-5 divide-y divide-gray-200">
+            <% @recent_entries.each do |entry| %>
+              <li class="py-4">
+                <div class="flex items-center space-x-4">
+                  <div class="flex-shrink-0">
+                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full <%= entry.entry_type == 'diary' ? 'bg-blue-100 text-blue-600' : entry.entry_type == 'idea' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600' %>">
+                      <%= entry.entry_type == 'diary' ? '📔' : entry.entry_type == 'idea' ? '💡' : '📋' %>
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">
+                      <%= entry.content.truncate(60) %>
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      <span class="local-time" data-utc="<%= entry.created_at.iso8601 %>"></span>
+                    </p>
+                  </div>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        <%= link_to "Смотреть все →", entries_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
+      </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+          Ближайшие события
+        </h3>
+        <% if @upcoming_events.any? %>
+          <div class="flow-root">
+            <ul role="list" class="-my-5 divide-y divide-gray-200">
+              <% @upcoming_events.each do |event| %>
+                <li class="py-4">
+                  <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                      <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-600">
+                        📅
+                      </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">
+                        <%= event.title %>
+                      </p>
+                      <p class="text-sm text-gray-500">
+                        <span class="local-time" data-utc="<%= event.start_time.iso8601 %>"></span>
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-500">Нет запланированных событий</p>
+        <% end %>
+        <%= link_to "Смотреть календарь →", calendar_events_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Reminders -->
+  <% if @pending_reminders.any? %>
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+          Активные напоминания
+        </h3>
+        <div class="flow-root">
+          <ul role="list" class="-my-5 divide-y divide-gray-200">
+            <% @pending_reminders.each do |reminder| %>
+              <% is_overdue = reminder.remind_at < Time.current %>
+              <li class="py-4 <%= 'opacity-60' if is_overdue %>">
+                <div class="flex items-center space-x-4">
+                  <div class="flex-shrink-0">
+                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full <%= is_overdue ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600' %>">
+                      <%= is_overdue ? '⏰' : '🔔' %>
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-medium text-gray-900">
+                        <%= reminder.message %>
+                      </p>
+                      <% if is_overdue %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                          Просрочено
+                        </span>
+                      <% end %>
+                    </div>
+                    <p class="text-sm text-gray-500">
+                      <span class="local-time" data-utc="<%= reminder.remind_at.iso8601 %>"></span>
+                    </p>
+                  </div>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        <%= link_to "Смотреть все →", reminders_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Event Edit Modal -->
+<div id="eventModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center pb-3">
+      <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Редактировать событие</h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Modal Form -->
+    <form id="eventForm" class="space-y-4">
+      <input type="hidden" id="eventId" />
+      
+      <!-- Title -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+        <input type="text" id="eventTitle" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+               required>
+      </div>
+      
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+        <textarea id="eventDescription" rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+      
+      <!-- Date and Time -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+          <input type="date" id="eventDate" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                 required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Время</label>
+          <input type="time" id="eventTime" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+      
+      <!-- All Day Toggle -->
+      <div class="flex items-center">
+        <input type="checkbox" id="eventAllDay" class="rounded border-gray-300 text-indigo-600">
+        <label for="eventAllDay" class="ml-2 text-sm text-gray-700">Весь день</label>
+      </div>
+      
+      <!-- Category -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+        <select id="eventType" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="meeting">Встреча</option>
+          <option value="task">Задача</option>
+          <option value="plan">План</option>
+          <option value="idea">Идея</option>
+          <option value="diary">Дневник</option>
+          <option value="reminder">Напоминание</option>
+        </select>
+      </div>
+      
+      <!-- Priority -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Приоритет</label>
+        <select id="eventPriority" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="low">Низкий</option>
+          <option value="medium">Средний</option>
+          <option value="high">Высокий</option>
+          <option value="urgent">Срочный</option>
+        </select>
+      </div>
+    </form>
+    
+    <!-- Modal Actions -->
+    <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
+      <!-- Delete Button -->
+      <button onclick="deleteEvent()" 
+              class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+        🗑️ Удалить
+      </button>
+      
+      <!-- Save/Cancel Buttons -->
+      <div class="flex space-x-3">
+        <button onclick="closeModal()" 
+                class="bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium py-2 px-4 rounded-md transition-colors">
+          Отмена
+        </button>
+        <button onclick="saveEvent()" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+          💾 Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .border-l-3 {
+    border-left-width: 3px;
+  }
+  
+  /* Mobile responsive calendar */
+  @media (max-width: 640px) {
+    .calendar-week-grid {
+      overflow-x: auto;
+      min-width: 700px;
+    }
+    
+    .calendar-day {
+      min-width: 100px;
+    }
+  }
+  
+  /* Smooth transitions */
+  .event-card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .event-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Calendar views container */
+  .calendar-container {
+    position: relative;
+  }
+  
+  /* Fix navigation positioning */
+  .calendar-navigation {
+    clear: both;
+    margin-top: 20px;
+  }
+  
+  /* Current time line */
+  .current-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #DC2626, #EF4444);
+    z-index: 10;
+    border-radius: 1px;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);
+  }
+  
+  .current-time-line::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    background: #DC2626;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px white, 0 0 0 3px #DC2626;
+  }
+  
+  /* Empty day styles */
+  .calendar-empty-day {
+    background: linear-gradient(145deg, #fafafa, #f9fafb);
+    border: 1px dashed #e2e8f0 !important;
+  }
+  
+  .calendar-empty-day:hover {
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+    border: 1px solid #cbd5e1 !important;
+    transform: scale(1.005);
+  }
+  
+  .calendar-empty-day:hover .empty-day-content {
+    opacity: 1;
+    color: #64748b;
+  }
+  
+  /* Empty month day styles */
+  .calendar-empty-month-day {
+    position: relative;
+  }
+  
+  .calendar-empty-month-day:hover .empty-month-day-content {
+    opacity: 1;
+    color: #9ca3af;
+  }
+  
+  /* Drag and Drop styles */
+  .draggable-event {
+    transition: all 0.2s ease;
+  }
+  
+  .draggable-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .drop-zone.drag-active {
+    background-color: #f0f9ff !important;
+    border-color: #3b82f6 !important;
+    border-style: dashed !important;
+  }
+  
+  .drop-zone.drag-over {
+    background-color: #dbeafe !important;
+    border-color: #1d4ed8 !important;
+    border-width: 2px !important;
+    transform: scale(1.02);
+  }
+  
+  .draggable-event:hover::after {
+    content: "🔄";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Expandable title styles */
+  .expandable-title .collapsed-title::after {
+    content: "...";
+    color: #9CA3AF;
+    font-weight: normal;
+  }
+  
+  .expandable-title .collapsed-title:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+  }
+  
+  .expandable-title .expanded-title {
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  .expandable-title .expanded-title:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+  }
+  
+  /* Past events styling */
+  .past-event {
+    opacity: 0.6;
+    filter: grayscale(0.3);
+  }
+  
+  .past-event-card {
+    background: linear-gradient(145deg, rgba(156, 163, 175, 0.04), rgba(156, 163, 175, 0.08)) !important;
+    border-left-color: #9CA3AF !important;
+    border-color: rgba(156, 163, 175, 0.2) !important;
+  }
+  
+  .past-event:hover {
+    opacity: 0.8;
+    filter: grayscale(0.1);
+  }
+  
+  /* Time separator */
+  .time-separator {
+    position: relative;
+    z-index: 5;
+  }
+  
+  .time-separator .h-px {
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.1);
+  }
+</style>
+
+<script>
+  // Calendar view management
+  let currentCalendarView = 'week';
+  
+  function setCalendarView(view) {
+    currentCalendarView = view;
+    
+    // Update button styles
+    const buttons = ['weekViewBtn', 'monthViewBtn', 'dayViewBtn'];
+    buttons.forEach(btnId => {
+      const btn = document.getElementById(btnId);
+      btn.className = 'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50';
+    });
+    
+    const activeBtn = document.getElementById(view + 'ViewBtn');
+    if (activeBtn) {
+      activeBtn.className = 'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all bg-white text-orange-700 shadow-sm';
+    }
+    
+    // Hide all views first
+    document.getElementById('weekView').classList.add('hidden');
+    document.getElementById('monthView').classList.add('hidden');
+    document.getElementById('dayView').classList.add('hidden');
+    
+    // Show selected view
+    if (view === 'week') {
+      document.getElementById('weekView').classList.remove('hidden');
+    } else if (view === 'month') {
+      document.getElementById('monthView').classList.remove('hidden');
+    } else if (view === 'day') {
+      document.getElementById('dayView').classList.remove('hidden');
+      loadDayView();
+    }
+  }
+  
+  function loadDayView() {
+    const dayEventsContainer = document.getElementById('dayViewEvents');
+    const today = new Date();
+    
+    // Get all events for today from the week view
+    const todaysEvents = [];
+    document.querySelectorAll(`[data-date="${today.toISOString().split('T')[0]}"] .event-card`).forEach(eventCard => {
+      const eventData = {
+        title: eventCard.dataset.eventTitle,
+        start: eventCard.dataset.eventStart,
+        description: eventCard.dataset.eventDescription,
+        type: eventCard.dataset.eventType,
+        color: eventCard.dataset.eventColor
+      };
+      todaysEvents.push(eventData);
+    });
+    
+    // Populate day view
+    if (todaysEvents.length === 0) {
+      dayEventsContainer.innerHTML = '<div class="text-gray-500 text-center py-8">Нет событий на сегодня</div>';
+    } else {
+      let eventsHtml = '';
+      todaysEvents.forEach(event => {
+        const startTime = new Date(event.start);
+        eventsHtml += `
+          <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-2 h-2 rounded-full mt-2" style="background-color: ${event.color}"></div>
+            <div class="flex-1">
+              <h5 class="font-medium text-gray-900">${event.title}</h5>
+              <p class="text-sm text-gray-600">${startTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</p>
+              ${event.description ? `<p class="text-sm text-gray-500 mt-1">${event.description}</p>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      dayEventsContainer.innerHTML = eventsHtml;
+    }
+  }
+  
+  // Toggle day events expansion
+  function toggleDayEvents(date, button, event) {
+    // Prevent triggering the day modal
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    const dayContainer = button.closest('.calendar-day');
+    const hiddenEvents = dayContainer.querySelector('.hidden-events');
+    const showMoreSpan = button.querySelector('.show-more');
+    const showLessSpan = button.querySelector('.show-less');
+    const isExpanded = button.dataset.expanded === 'true';
+    
+    if (isExpanded) {
+      // Collapse
+      hiddenEvents.style.display = 'none';
+      showMoreSpan.classList.remove('hidden');
+      showLessSpan.classList.add('hidden');
+      button.dataset.expanded = 'false';
+    } else {
+      // Expand
+      hiddenEvents.style.display = 'block';
+      showMoreSpan.classList.add('hidden');
+      showLessSpan.classList.remove('hidden');
+      button.dataset.expanded = 'true';
+    }
+  }
+
+  // Calendar Widget Functions
+  function expandCalendar() {
+    // TODO: Open full calendar modal or redirect to calendar page
+    alert('Полный календарь будет реализован в следующей итерации');
+  }
+
+  function openDayModal(date, dateFormatted, clickEvent) {
+    // Check if click was on an event (should not open day modal)
+    if (clickEvent.target.closest('.event-card')) {
+      return;
+    }
+    
+    // If we're in month view, switch to day view for this date
+    if (currentCalendarView === 'month') {
+      setCalendarView('day');
+      loadDayViewForDate(date, dateFormatted);
+      return;
+    }
+    
+    // For other views, open modal for adding new event
+    openNewEventModal(date, dateFormatted);
+  }
+  
+  function loadDayViewForDate(date, dateFormatted) {
+    const dayEventsContainer = document.getElementById('dayViewEvents');
+    const dayViewDateHeader = document.getElementById('dayViewDate');
+    
+    // Update date header
+    dayViewDateHeader.textContent = dateFormatted;
+    
+    // Get all events for this date
+    const dayEvents = [];
+    document.querySelectorAll(`[data-date="${date}"] .event-card`).forEach(eventCard => {
+      const eventData = {
+        title: eventCard.dataset.eventTitle,
+        start: eventCard.dataset.eventStart,
+        description: eventCard.dataset.eventDescription,
+        type: eventCard.dataset.eventType,
+        color: eventCard.dataset.eventColor
+      };
+      dayEvents.push(eventData);
+    });
+    
+    // Populate day view
+    if (dayEvents.length === 0) {
+      dayEventsContainer.innerHTML = '<div class="text-gray-500 text-center py-8">Нет событий на этот день</div>';
+    } else {
+      let eventsHtml = '';
+      dayEvents.forEach(event => {
+        const startTime = new Date(event.start);
+        eventsHtml += `
+          <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+            <div class="w-2 h-2 rounded-full mt-2" style="background-color: ${event.color}"></div>
+            <div class="flex-1">
+              <h5 class="font-medium text-gray-900">${event.title}</h5>
+              <p class="text-sm text-gray-600">${startTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</p>
+              ${event.description ? `<p class="text-sm text-gray-500 mt-1">${event.description}</p>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      dayEventsContainer.innerHTML = eventsHtml;
+    }
+  }
+
+  function openDiaryEntry() {
+    const content = prompt('Запись в дневник:');
+    if (!content) return;
+    
+    const now = new Date().toISOString();
+    
+    fetch('/api/calendar/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar_event: {
+          title: content,
+          start_time: now,
+          event_type: 'diary',
+          priority: 'medium',
+          all_day: true
+        }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.event) {
+        alert('Запись в дневник сохранена!');
+        location.reload();
+      } else {
+        alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при сохранении записи');
+    });
+  }
+
+  // New event creation function
+  function openNewEventModal(date, dateFormatted) {
+    // Clear modal form for new event
+    document.getElementById('eventId').value = '';
+    document.getElementById('eventTitle').value = '';
+    document.getElementById('eventDescription').value = '';
+    document.getElementById('eventDate').value = date;
+    document.getElementById('eventTime').value = '09:00';
+    document.getElementById('eventAllDay').checked = false;
+    document.getElementById('eventType').value = 'meeting';
+    document.getElementById('eventPriority').value = 'medium';
+    
+    // Update modal title
+    document.getElementById('modalTitle').textContent = `Новое событие на ${dateFormatted}`;
+    
+    // Hide delete button for new events
+    const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
+    if (deleteButton) {
+      deleteButton.style.display = 'none';
+    }
+    
+    // Show modal
+    document.getElementById('eventModal').classList.remove('hidden');
+  }
+
+  // Event editing functions
+  function editEvent(eventId, clickEvent) {
+    const eventCard = clickEvent.target.closest('[data-event-id]');
+    
+    // Get event data from data attributes
+    const eventData = {
+      id: eventCard.dataset.eventId,
+      title: eventCard.dataset.eventTitle,
+      description: eventCard.dataset.eventDescription,
+      start: eventCard.dataset.eventStart,
+      end: eventCard.dataset.eventEnd,
+      type: eventCard.dataset.eventType,
+      priority: eventCard.dataset.eventPriority,
+      allDay: eventCard.dataset.eventAllDay === 'true'
+    };
+    
+    // Fill modal form
+    document.getElementById('eventId').value = eventData.id;
+    document.getElementById('eventTitle').value = eventData.title;
+    document.getElementById('eventDescription').value = eventData.description;
+    
+    // Parse and set date/time
+    const startDate = new Date(eventData.start);
+    document.getElementById('eventDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('eventTime').value = startDate.toTimeString().split(' ')[0].substring(0, 5);
+    
+    document.getElementById('eventAllDay').checked = eventData.allDay;
+    document.getElementById('eventType').value = eventData.type;
+    document.getElementById('eventPriority').value = eventData.priority;
+    
+    // Show delete button for existing events
+    const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
+    if (deleteButton) {
+      deleteButton.style.display = 'block';
+    }
+    
+    // Show modal
+    document.getElementById('eventModal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('eventModal').classList.add('hidden');
+  }
+
+  function saveEvent() {
+    const eventId = document.getElementById('eventId').value;
+    const title = document.getElementById('eventTitle').value;
+    const description = document.getElementById('eventDescription').value;
+    const date = document.getElementById('eventDate').value;
+    const time = document.getElementById('eventTime').value;
+    const allDay = document.getElementById('eventAllDay').checked;
+    const eventType = document.getElementById('eventType').value;
+    const priority = document.getElementById('eventPriority').value;
+    
+    if (!title.trim()) {
+      alert('Укажите название события');
+      return;
+    }
+    
+    // Build start_time
+    let startTime;
+    if (allDay) {
+      startTime = new Date(date + 'T00:00:00.000Z').toISOString();
+    } else {
+      startTime = new Date(date + 'T' + time + ':00.000Z').toISOString();
+    }
+    
+    // Build end_time (only if explicitly provided)
+    let endTime = null;
+    
+    const eventData = {
+      calendar_event: {
+        title: title,
+        description: description,
+        start_time: startTime,
+        end_time: endTime,
+        event_type: eventType,
+        priority: priority,
+        all_day: allDay
+      }
+    };
+    
+    // Determine if creating new or updating existing
+    const isNewEvent = !eventId || eventId === '';
+    const url = isNewEvent ? '/api/calendar/events' : `/api/calendar/events/${eventId}`;
+    const method = isNewEvent ? 'POST' : 'PUT';
+    
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.event) {
+        const message = isNewEvent ? 'Событие создано!' : 'Событие обновлено!';
+        alert(message);
+        closeModal();
+        location.reload();
+      } else {
+        alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      const errorMessage = isNewEvent ? 'Ошибка при создании события' : 'Ошибка при обновлении события';
+      alert(errorMessage);
+    });
+  }
+
+  function deleteEvent() {
+    const eventId = document.getElementById('eventId').value;
+    const title = document.getElementById('eventTitle').value;
+    
+    if (!confirm(`Удалить событие "${title}"?`)) {
+      return;
+    }
+    
+    fetch(`/api/calendar/events/${eventId}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert('Событие удалено');
+      closeModal();
+      location.reload();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при удалении события');
+    });
+  }
+
+  // All day toggle handler
+  document.addEventListener('DOMContentLoaded', function() {
+    const allDayCheckbox = document.getElementById('eventAllDay');
+    const timeInput = document.getElementById('eventTime');
+    
+    allDayCheckbox.addEventListener('change', function() {
+      timeInput.disabled = this.checked;
+      if (this.checked) {
+        timeInput.value = '';
+      }
+    });
+    
+    // Close modal on outside click
+    document.getElementById('eventModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+  });
+
+  // Calendar navigation functions
+  function previousWeek() {
+    // TODO: Implement week navigation
+    alert('Навигация по неделям будет реализована в следующей итерации');
+  }
+
+  function currentWeek() {
+    location.reload(); // Simple reload to show current week
+  }
+
+  function nextWeek() {
+    // TODO: Implement week navigation
+    alert('Навигация по неделям будет реализована в следующей итерации');
+  }
+
+  function quickAddEvent() {
+    const title = prompt('Название события:');
+    if (!title) return;
+    
+    const date = prompt('Дата (YYYY-MM-DD):') || new Date().toISOString().split('T')[0];
+    const time = prompt('Время (HH:MM):') || '09:00';
+    
+    const startTime = new Date(`${date}T${time}:00.000Z`).toISOString();
+    const endTime = null; // No automatic end time
+    
+    fetch('/api/calendar/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar_event: {
+          title: title,
+          start_time: startTime,
+          end_time: endTime,
+          event_type: 'meeting',
+          priority: 'medium'
+        }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.event) {
+        alert('Событие создано!');
+        location.reload(); // Refresh page to show new event
+      } else {
+        alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при создании события');
+    });
+  }
+
+  function quickAddIdea() {
+    const title = prompt('Описание идеи:');
+    if (!title) return;
+    
+    const now = new Date().toISOString();
+    
+    fetch('/api/calendar/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar_event: {
+          title: title,
+          start_time: now,
+          event_type: 'idea',
+          priority: 'medium',
+          all_day: true
+        }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.event) {
+        alert('Идея сохранена!');
+        location.reload();
+      } else {
+        alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при сохранении идеи');
+    });
+  }
+
+  function quickAddReminder() {
+    const title = prompt('Текст напоминания:');
+    if (!title) return;
+    
+    const date = prompt('Дата напоминания (YYYY-MM-DD):') || new Date().toISOString().split('T')[0];
+    const time = prompt('Время напоминания (HH:MM):') || '09:00';
+    
+    const remindTime = new Date(`${date}T${time}:00.000Z`).toISOString();
+    
+    fetch('/api/calendar/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar_event: {
+          title: title,
+          start_time: remindTime,
+          event_type: 'reminder',
+          priority: 'high',
+          reminder_minutes: 5
+        }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.event) {
+        alert('Напоминание создано!');
+        location.reload();
+      } else {
+        alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Ошибка при создании напоминания');
+    });
+  }
+  
+  // Drag and Drop Variables
+  let draggedEvent = null;
+  let draggedEventId = null;
+  
+  // Drag and Drop Functions
+  function handleEventDragStart(e) {
+    // Prevent click handler during drag
+    e.stopPropagation();
+    
+    draggedEvent = e.target.closest('.event-card');
+    draggedEventId = draggedEvent.dataset.eventId;
+    
+    // Store event data
+    e.dataTransfer.setData('text/plain', draggedEventId);
+    e.dataTransfer.effectAllowed = 'move';
+    
+    // Add dragging visual feedback
+    draggedEvent.style.opacity = '0.5';
+    draggedEvent.style.transform = 'rotate(2deg)';
+    
+    // Add visual feedback to all drop zones
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.classList.add('drag-active');
+    });
+  }
+  
+  function handleEventDragEnd(e) {
+    // Reset visual feedback
+    if (draggedEvent) {
+      draggedEvent.style.opacity = '';
+      draggedEvent.style.transform = '';
+    }
+    
+    // Remove drop zone highlighting
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.classList.remove('drag-active', 'drag-over');
+    });
+    
+    draggedEvent = null;
+    draggedEventId = null;
+  }
+  
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+  
+  function handleDragEnter(e) {
+    e.preventDefault();
+    if (draggedEvent) {
+      const dropZone = e.target.closest('.drop-zone');
+      if (dropZone) {
+        dropZone.classList.add('drag-over');
+      }
+    }
+  }
+  
+  function handleDragLeave(e) {
+    const dropZone = e.target.closest('.drop-zone');
+    if (!dropZone) return;
+    
+    // Check if we're actually leaving the drop zone
+    if (!e.relatedTarget || !dropZone.contains(e.relatedTarget)) {
+      dropZone.classList.remove('drag-over');
+    }
+  }
+  
+  function handleEventDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const dropZone = e.target.closest('.drop-zone');
+    if (!dropZone) return;
+    
+    const newDate = dropZone.dataset.date;
+    
+    if (!draggedEventId || !newDate) return;
+    
+    // Visual feedback
+    dropZone.classList.remove('drag-over');
+    
+    // Show loading state
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'text-xs text-gray-600 p-2 bg-gray-100 rounded border-l-4 border-blue-500';
+    loadingDiv.innerHTML = '⏳ Перемещаю событие...';
+    
+    const spaceDiv = dropZone.querySelector('.space-y-2');
+    if (spaceDiv) {
+      spaceDiv.appendChild(loadingDiv);
+    }
+    
+    // Update event via API
+    updateEventDate(draggedEventId, newDate)
+      .then(() => {
+        // Success - reload page to show updated calendar
+        location.reload();
+      })
+      .catch(error => {
+        // Error - remove loading and show error
+        if (loadingDiv && loadingDiv.parentNode) {
+          loadingDiv.remove();
+        }
+        alert('Ошибка при перемещении события: ' + error.message);
+        console.error('Drag & drop error:', error);
+      });
+  }
+  
+  // API call to update event date
+  async function updateEventDate(eventId, newDate) {
+    const response = await fetch(`/api/calendar/events/${eventId}/move`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        new_date: newDate
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Неизвестная ошибка');
+    }
+    
+    return response.json();
+  }
+
+  // Initialize current time line (removed - using CSS only now)
+  
+  // Event title toggle functionality
+  function toggleEventTitle(element, clickEvent) {
+    // Prevent event propagation to avoid opening edit modal
+    if (clickEvent) {
+      clickEvent.stopPropagation();
+    }
+    
+    const expandableTitle = element.closest('.expandable-title');
+    const collapsedTitle = expandableTitle.querySelector('.collapsed-title');
+    const expandedTitle = expandableTitle.querySelector('.expanded-title');
+    const isExpanded = expandableTitle.dataset.expanded === 'true';
+    
+    if (isExpanded) {
+      // Collapse
+      collapsedTitle.classList.remove('hidden');
+      expandedTitle.classList.add('hidden');
+      expandableTitle.dataset.expanded = 'false';
+    } else {
+      // Expand
+      collapsedTitle.classList.add('hidden');
+      expandedTitle.classList.remove('hidden');
+      expandableTitle.dataset.expanded = 'true';
+    }
+  }
+  
+  // Convert UTC times to local time
+  function formatLocalTime(utcString) {
+    const date = new Date(utcString);
+    const now = new Date();
+    const diffMs = date - now;
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    
+    // If it's today and within next 24 hours, show relative time
+    if (diffMs > 0 && diffHours <= 24 && date.toDateString() === now.toDateString()) {
+      if (diffHours < 1) {
+        const diffMinutes = Math.round(diffMs / (1000 * 60));
+        return diffMinutes > 0 ? `через ${diffMinutes} мин` : 'сейчас';
+      } else {
+        return `через ${diffHours} ч`;
+      }
+    }
+    
+    const options = {
+      day: 'numeric',
+      month: 'short', 
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Berlin' // User's timezone
+    };
+    
+    const formatter = new Intl.DateTimeFormat('ru-RU', options);
+    return formatter.format(date);
+  }
+  
+  function initLocalTimes() {
+    document.querySelectorAll('.local-time').forEach(element => {
+      const utcTime = element.dataset.utc;
+      if (utcTime) {
+        element.textContent = formatLocalTime(utcTime);
+      }
+    });
+  }
+  
+  // Initialize default view on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    setCalendarView('week'); // Set week as default
+    initLocalTimes(); // Convert times to local
+  });
+</script>

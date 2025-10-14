@@ -18,14 +18,25 @@ module Ai
         "priority": 0-10,
         "create_calendar_event": true|false,
         "event_time": "ISO8601 datetime или null",
-        "event_end_time": "ISO8601 datetime или null",
+        "event_end_time": "ISO8601 datetime или null (ТОЛЬКО если время окончания ЯВНО указано пользователем)",
         "event_title": "название события или null",
         "create_reminder": true|false,
         "reminder_time": "ISO8601 datetime или null",
         "reminder_message": "текст напоминания или null",
+        "recurring_pattern": {
+          "interval_hours": число часов между напоминаниями или null,
+          "end_time": "время окончания в формате HH:MM или null"
+        } или null,
         "tags": ["тег1", "тег2"],
         "metadata": {}
       }
+
+      ВАЖНО: 
+      - Если пользователь НЕ указал время окончания события, оставь event_end_time как null
+      - НЕ добавляй автоматически 1 час к времени начала
+      - event_end_time должен быть заполнен ТОЛЬКО если пользователь явно сказал когда событие заканчивается
+      - При обнаружении фраз типа "каждые X часов до HH:MM", "напоминай каждые X часов", заполни recurring_pattern
+      - Примеры повторяющихся паттернов: "каждые 3 часа до 22:00", "напоминай каждый час до 18:00"
     PROMPT
 
     class << self

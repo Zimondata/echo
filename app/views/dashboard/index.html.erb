@@ -11,81 +11,124 @@
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-    <!-- Total Entries -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+  <!-- Calendar Widget - Simplified -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-5">
+      <h3 class="text-xl leading-6 font-bold text-gray-900 mb-6">
+        📅 Календарь на неделю
+      </h3>
+      
+      <!-- Week Calendar Grid -->
+      <div class="grid grid-cols-7 gap-4 mb-6" style="min-height: 420px;">
+        <!-- Week Headers -->
+        <% 
+          weekdays = [
+            { short: 'ПН', full: 'Понедельник' },
+            { short: 'ВТ', full: 'Вторник' }, 
+            { short: 'СР', full: 'Среда' },
+            { short: 'ЧТ', full: 'Четверг' },
+            { short: 'ПТ', full: 'Пятница' },
+            { short: 'СБ', full: 'Суббота' },
+            { short: 'ВС', full: 'Воскресенье' }
+          ]
+          
+          start_of_week = Date.current.beginning_of_week(:monday)
+          weekdays.each_with_index do |day, index|
+            current_day = start_of_week + index.days
+            is_today = current_day == Date.current
+        %>
+          <div class="text-center pb-3 border-b border-gray-200">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <%= day[:short] %>
+            </div>
+            <div class="text-lg font-bold mt-1 <%= is_today ? 'text-indigo-600' : 'text-gray-900' %>">
+              <%= current_day.day %>
+            </div>
+            <% if is_today %>
+              <div class="text-xs text-indigo-600 font-medium">
+                Сегодня
+              </div>
+            <% end %>
           </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Всего записей</dt>
-              <dd class="text-3xl font-semibold text-gray-900"><%= @total_entries %></dd>
-            </dl>
+        <% end %>
+        
+        <!-- Week Days with Events -->
+        <% 
+          (0..6).each do |day_offset|
+            current_day = start_of_week + day_offset.days
+            day_events = @week_events.select { |event| event.start_date == current_day }
+        %>
+          <div class="min-h-[360px] p-3 <%= day_offset.even? ? 'bg-white' : 'bg-slate-25' %> rounded-xl border border-gray-100 drop-zone"
+               data-date="<%= current_day.iso8601 %>"
+               ondrop="handleEventDrop(event)"
+               ondragover="handleDragOver(event)"
+               ondragenter="handleDragEnter(event)"
+               ondragleave="handleDragLeave(event)"
+               onclick="openDayModal('<%= current_day.iso8601 %>', '<%= current_day.strftime('%d %B') %>', event)">
+            
+            <!-- Events for this day -->
+            <div class="space-y-2">
+              <% 
+                current_time = Time.current.in_time_zone('Europe/Berlin')
+                upcoming_events = day_events.select { |e| e.start_time.in_time_zone('Europe/Berlin') >= current_time }
+              %>
+              
+              <!-- Only Upcoming Events -->
+              <% upcoming_events.first(5).each do |event| %>
+                <div class="event-card text-xs p-3 rounded-lg border-l-3 transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-move draggable-event" 
+                     style="background: linear-gradient(145deg, <%= hex_to_rgba(event.display_color, 0.08) %>, <%= hex_to_rgba(event.display_color, 0.12) %>); border-left-color: <%= event.display_color %>; border: 1px solid <%= hex_to_rgba(event.display_color, 0.2) %>;"
+                     draggable="true"
+                     ondragstart="handleEventDragStart(event)"
+                     ondragend="handleEventDragEnd(event)"
+                     onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
+                     data-event-id="<%= event.id %>"
+                     data-event-title="<%= event.title.gsub('"', '&quot;') %>"
+                     data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
+                     data-event-start="<%= event.start_time.iso8601 %>"
+                     data-event-end="<%= event.end_time&.iso8601 %>"
+                     data-event-type="<%= event.event_type %>"
+                     data-event-priority="<%= event.priority %>"
+                     data-event-all-day="<%= event.all_day? %>"
+                     data-event-color="<%= event.display_color %>">
+                  
+                  <div class="font-semibold text-sm mb-2 text-gray-800">
+                    <%= event.title %>
+                  </div>
+                  <% unless event.all_day? %>
+                    <div class="text-xs text-gray-500">
+                      <%= event.start_time.strftime('%H:%M') %>
+                      <% if event.end_time && event.end_time != event.start_time %>
+                        - <%= event.end_time.strftime('%H:%M') %>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-400 italic">
+                      Весь день
+                    </div>
+                  <% end %>
+                  
+                  <!-- Category Badge -->
+                  <div class="flex items-center justify-between mt-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
+                          style="background-color: <%= event.display_color %>15; color: <%= event.display_color %>;">
+                      <%= event.category_info[:label] %>
+                    </span>
+                    <% if event.done? %>
+                      <span class="text-green-500 text-xs">✓</span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              
+              <!-- Empty state -->
+              <% if upcoming_events.empty? %>
+                <div class="text-xs text-gray-400 text-center py-4 italic">
+                  Нет предстоящих событий
+                </div>
+              <% end %>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Diary -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-            </svg>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Дневник</dt>
-              <dd class="text-3xl font-semibold text-blue-600"><%= @diary_count %></dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ideas -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Идеи</dt>
-              <dd class="text-3xl font-semibold text-yellow-600"><%= @ideas_count %></dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Plans -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-            </svg>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Планы</dt>
-              <dd class="text-3xl font-semibold text-green-600"><%= @plans_count %></dd>
-            </dl>
-          </div>
-        </div>
+        <% end %>
       </div>
     </div>
   </div>
@@ -113,7 +156,7 @@
                       <%= entry.content.truncate(60) %>
                     </p>
                     <p class="text-sm text-gray-500">
-                      <%= entry.created_at.strftime("%d %b, %H:%M") %>
+                      <%= entry.created_at.strftime('%d.%m.%Y %H:%M') %>
                     </p>
                   </div>
                 </div>
@@ -121,7 +164,6 @@
             <% end %>
           </ul>
         </div>
-        <%= link_to "Смотреть все →", entries_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
       </div>
     </div>
 
@@ -147,7 +189,7 @@
                         <%= event.title %>
                       </p>
                       <p class="text-sm text-gray-500">
-                        <%= event.start_time.strftime("%d %b, %H:%M") %>
+                        <%= event.start_time.strftime('%d.%m.%Y %H:%M') %>
                       </p>
                     </div>
                   </div>
@@ -158,43 +200,404 @@
         <% else %>
           <p class="text-sm text-gray-500">Нет запланированных событий</p>
         <% end %>
-        <%= link_to "Смотреть календарь →", calendar_events_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Active Reminders -->
-  <% if @pending_reminders.any? %>
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-          Активные напоминания
-        </h3>
-        <div class="flow-root">
-          <ul role="list" class="-my-5 divide-y divide-gray-200">
-            <% @pending_reminders.each do |reminder| %>
-              <li class="py-4">
-                <div class="flex items-center space-x-4">
-                  <div class="flex-shrink-0">
-                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600">
-                      🔔
-                    </span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900">
-                      <%= reminder.message %>
-                    </p>
-                    <p class="text-sm text-gray-500">
-                      <%= reminder.remind_at.strftime("%d %b, %H:%M") %>
-                    </p>
-                  </div>
-                </div>
-              </li>
-            <% end %>
-          </ul>
+<!-- Event Edit Modal -->
+<div id="eventModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="flex justify-between items-center pb-3">
+      <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Редактировать событие</h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <form id="eventForm" class="space-y-4">
+      <input type="hidden" id="eventId" />
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+        <input type="text" id="eventTitle" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+               required>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+        <textarea id="eventDescription" rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+          <input type="date" id="eventDate" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                 required>
         </div>
-        <%= link_to "Смотреть все →", reminders_path, class: "mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-block" %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Время</label>
+          <input type="time" id="eventTime" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+      
+      <div class="flex items-center">
+        <input type="checkbox" id="eventAllDay" class="rounded border-gray-300 text-indigo-600">
+        <label for="eventAllDay" class="ml-2 text-sm text-gray-700">Весь день</label>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+        <select id="eventType" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="meeting">Встреча</option>
+          <option value="task">Задача</option>
+          <option value="plan">План</option>
+          <option value="idea">Идея</option>
+          <option value="diary">Дневник</option>
+          <option value="reminder">Напоминание</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Приоритет</label>
+        <select id="eventPriority" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="low">Низкий</option>
+          <option value="medium">Средний</option>
+          <option value="high">Высокий</option>
+          <option value="urgent">Срочный</option>
+        </select>
+      </div>
+    </form>
+    
+    <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
+      <button onclick="deleteEvent()" 
+              class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+        🗑️ Удалить
+      </button>
+      
+      <div class="flex space-x-3">
+        <button onclick="closeModal()" 
+                class="bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium py-2 px-4 rounded-md transition-colors">
+          Отмена
+        </button>
+        <button onclick="saveEvent()" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
+          💾 Сохранить
+        </button>
       </div>
     </div>
-  <% end %>
+  </div>
 </div>
+
+<style>
+  .border-l-3 {
+    border-left-width: 3px;
+  }
+  
+  .drop-zone.drag-active {
+    background-color: #f0f9ff !important;
+    border-color: #3b82f6 !important;
+    border-style: dashed !important;
+  }
+  
+  .drop-zone.drag-over {
+    background-color: #dbeafe !important;
+    border-color: #1d4ed8 !important;
+    border-width: 2px !important;
+    transform: scale(1.02);
+  }
+  
+  .draggable-event:hover::after {
+    content: "🔄";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<script>
+// Drag and Drop Variables
+let draggedEvent = null;
+let draggedEventId = null;
+
+// Drag and Drop Functions
+function handleEventDragStart(e) {
+  e.stopPropagation();
+  
+  draggedEvent = e.target.closest('.event-card');
+  draggedEventId = draggedEvent.dataset.eventId;
+  
+  e.dataTransfer.setData('text/plain', draggedEventId);
+  e.dataTransfer.effectAllowed = 'move';
+  
+  draggedEvent.style.opacity = '0.5';
+  
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.classList.add('drag-active');
+  });
+}
+
+function handleEventDragEnd(e) {
+  if (draggedEvent) {
+    draggedEvent.style.opacity = '';
+  }
+  
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.classList.remove('drag-active', 'drag-over');
+  });
+  
+  draggedEvent = null;
+  draggedEventId = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  if (draggedEvent) {
+    const dropZone = e.target.closest('.drop-zone');
+    if (dropZone) {
+      dropZone.classList.add('drag-over');
+    }
+  }
+}
+
+function handleDragLeave(e) {
+  const dropZone = e.target.closest('.drop-zone');
+  if (!dropZone) return;
+  
+  if (!e.relatedTarget || !dropZone.contains(e.relatedTarget)) {
+    dropZone.classList.remove('drag-over');
+  }
+}
+
+function handleEventDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const dropZone = e.target.closest('.drop-zone');
+  if (!dropZone) return;
+  
+  const newDate = dropZone.dataset.date;
+  
+  if (!draggedEventId || !newDate) return;
+  
+  dropZone.classList.remove('drag-over');
+  
+  updateEventDate(draggedEventId, newDate)
+    .then(() => {
+      location.reload();
+    })
+    .catch(error => {
+      alert('Ошибка при перемещении события: ' + error.message);
+    });
+}
+
+async function updateEventDate(eventId, newDate) {
+  const response = await fetch(`/api/calendar/events/${eventId}/move`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      new_date: newDate
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Неизвестная ошибка');
+  }
+  
+  return response.json();
+}
+
+// Modal Functions
+function openDayModal(date, dateFormatted, clickEvent) {
+  if (clickEvent.target.closest('.event-card')) {
+    return;
+  }
+  
+  document.getElementById('eventId').value = '';
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventDescription').value = '';
+  document.getElementById('eventDate').value = date;
+  document.getElementById('eventTime').value = '09:00';
+  document.getElementById('eventAllDay').checked = false;
+  document.getElementById('eventType').value = 'meeting';
+  document.getElementById('eventPriority').value = 'medium';
+  
+  document.getElementById('modalTitle').textContent = `Новое событие на ${dateFormatted}`;
+  
+  const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
+  if (deleteButton) {
+    deleteButton.style.display = 'none';
+  }
+  
+  document.getElementById('eventModal').classList.remove('hidden');
+}
+
+function editEvent(eventId, clickEvent) {
+  const eventCard = clickEvent.target.closest('[data-event-id]');
+  
+  const eventData = {
+    id: eventCard.dataset.eventId,
+    title: eventCard.dataset.eventTitle,
+    description: eventCard.dataset.eventDescription,
+    start: eventCard.dataset.eventStart,
+    end: eventCard.dataset.eventEnd,
+    type: eventCard.dataset.eventType,
+    priority: eventCard.dataset.eventPriority,
+    allDay: eventCard.dataset.eventAllDay === 'true'
+  };
+  
+  document.getElementById('eventId').value = eventData.id;
+  document.getElementById('eventTitle').value = eventData.title;
+  document.getElementById('eventDescription').value = eventData.description;
+  
+  const startDate = new Date(eventData.start);
+  document.getElementById('eventDate').value = startDate.toISOString().split('T')[0];
+  document.getElementById('eventTime').value = startDate.toTimeString().split(' ')[0].substring(0, 5);
+  
+  document.getElementById('eventAllDay').checked = eventData.allDay;
+  document.getElementById('eventType').value = eventData.type;
+  document.getElementById('eventPriority').value = eventData.priority;
+  
+  const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
+  if (deleteButton) {
+    deleteButton.style.display = 'block';
+  }
+  
+  document.getElementById('eventModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('eventModal').classList.add('hidden');
+}
+
+function saveEvent() {
+  const eventId = document.getElementById('eventId').value;
+  const title = document.getElementById('eventTitle').value;
+  const description = document.getElementById('eventDescription').value;
+  const date = document.getElementById('eventDate').value;
+  const time = document.getElementById('eventTime').value;
+  const allDay = document.getElementById('eventAllDay').checked;
+  const eventType = document.getElementById('eventType').value;
+  const priority = document.getElementById('eventPriority').value;
+  
+  if (!title.trim()) {
+    alert('Укажите название события');
+    return;
+  }
+  
+  let startTime;
+  if (allDay) {
+    startTime = new Date(date + 'T00:00:00.000Z').toISOString();
+  } else {
+    startTime = new Date(date + 'T' + time + ':00.000Z').toISOString();
+  }
+  
+  const eventData = {
+    calendar_event: {
+      title: title,
+      description: description,
+      start_time: startTime,
+      end_time: null,
+      event_type: eventType,
+      priority: priority,
+      all_day: allDay
+    }
+  };
+  
+  const isNewEvent = !eventId || eventId === '';
+  const url = isNewEvent ? '/api/calendar/events' : `/api/calendar/events/${eventId}`;
+  const method = isNewEvent ? 'POST' : 'PUT';
+  
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(eventData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.event) {
+      const message = isNewEvent ? 'Событие создано!' : 'Событие обновлено!';
+      alert(message);
+      closeModal();
+      location.reload();
+    } else {
+      alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    const errorMessage = isNewEvent ? 'Ошибка при создании события' : 'Ошибка при обновлении события';
+    alert(errorMessage);
+  });
+}
+
+function deleteEvent() {
+  const eventId = document.getElementById('eventId').value;
+  const title = document.getElementById('eventTitle').value;
+  
+  if (!confirm(`Удалить событие "${title}"?`)) {
+    return;
+  }
+  
+  fetch(`/api/calendar/events/${eventId}`, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert('Событие удалено');
+    closeModal();
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при удалении события');
+  });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  const allDayCheckbox = document.getElementById('eventAllDay');
+  const timeInput = document.getElementById('eventTime');
+  
+  allDayCheckbox.addEventListener('change', function() {
+    timeInput.disabled = this.checked;
+    if (this.checked) {
+      timeInput.value = '';
+    }
+  });
+  
+  document.getElementById('eventModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+});
+</script>

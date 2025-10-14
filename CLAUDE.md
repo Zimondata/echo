@@ -10,7 +10,7 @@ Echo is a Telegram-based AI personal assistant that helps users manage their dia
 - Ruby 3.4.5
 - Rails 8.0.3
 - PostgreSQL 17 with pgvector extension
-- Solid Queue (background jobs)
+- Solid Queue (background jobs, with Sidekiq available as alternative)
 - Telegram Bot API
 - OpenAI API (GPT-4, Whisper)
 
