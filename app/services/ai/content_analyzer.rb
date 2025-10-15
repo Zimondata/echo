@@ -37,12 +37,32 @@ module Ai
       - event_end_time должен быть заполнен ТОЛЬКО если пользователь явно сказал когда событие заканчивается
       - При обнаружении фраз типа "каждые X часов до HH:MM", "напоминай каждые X часов", заполни recurring_pattern
       - Примеры повторяющихся паттернов: "каждые 3 часа до 22:00", "напоминай каждый час до 18:00"
+
+      КРИТИЧЕСКИ ВАЖНО - ДАТЫ И ВРЕМЯ:
+      
+      ⚠️ ОБЯЗАТЕЛЬНО используй СЕГОДНЯШНЮЮ дату если не указано иначе!
+      ⚠️ НИКОГДА НЕ ИСПОЛЬЗУЙ ВЧЕРАШНЮЮ ДАТУ!
+      ⚠️ "добавь", "планирую", "сегодня", "на сегодня" = ВСЕГДА сегодняшняя дата!
+      
+      ПРАВИЛА ДАТ:
+      - "сегодня", "добавь", "планирую" = сегодняшняя дата
+      - "завтра" = завтрашняя дата
+      - Без указания даты = сегодняшняя дата
+      - НИКОГДА не используй вчерашнюю дату
+      
+      ПРАВИЛА ВРЕМЕНИ:
+      - "17:30", "5:30 вечера", "17.30" = 17:30 (НЕ 15:30!)
+      - "утром" = 09:00, "днем" = 13:00, "вечером" = 18:00
+      
+      ИСПРАВЛЕНИЯ:
+      - "17:30!!!", "нет, в 17:30" = type: "plan_update"
+      - В metadata добавь: {"correction": true, "corrected_time": "17:30"}
       
       ПЛАНЫ БЕЗ ВРЕМЕНИ:
-      - Если пользователь НЕ указал конкретное время (например: "силовая тренировка", "сходить в магазин", "прочитать книгу")
+      - Если НЕ указано конкретное время (например: "дневной сон", "силовая тренировка", "медитация")
       - Установи event_time на начало дня (00:00) и добавь в metadata: {"all_day": true}
       - Это создаст "плавающий" план без привязки к конкретному времени
-      - Примеры БЕЗ времени: "план на тренировку", "купить продукты", "позвонить маме"
+      - Примеры БЕЗ времени: "план на тренировку", "дневной сон", "купить продукты", "позвонить маме"
       - Примеры С временем: "встреча в 15:00", "звонок завтра в 9 утра", "обед в полдень"
     PROMPT
 
@@ -51,18 +71,19 @@ module Ai
         return default_analysis(text) if text.blank?
 
         user_context = build_user_context(user)
+        recent_events_context = build_recent_events_context(user)
 
         # Get current time in user's timezone
         local_time = Time.current.in_time_zone(user.timezone)
         
         response = client.chat(
           parameters: {
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: "Текущая дата и время (#{user.timezone}): #{local_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n\nТекст: #{text}\n\nКонтекст пользователя: #{user_context}\n\nВАЖНО: Возвращай время в формате ISO8601 с учетом часового пояса #{user.timezone}" }
+              { role: "user", content: "Текущая дата и время (#{user.timezone}): #{local_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n\nТекст: #{text}\n\nКонтекст пользователя: #{user_context}\n\nНедавние события пользователя:\n#{recent_events_context}\n\n🚨 КРИТИЧЕСКИ ВАЖНО:\n- Используй ТОЛЬКО сегодняшнюю дату: #{local_time.strftime('%Y-%m-%d')}\n- НИКОГДА НЕ используй вчерашнюю дату!\n- \"17:30\" = 17:30, НЕ 15:30!\n- Планы без времени = all_day: true\n- Возвращай время в ISO8601 с #{user.timezone}\n- Исправления времени = type: 'plan_update'" }
             ],
-            temperature: 0.3,
+            temperature: 0.1,
             response_format: { type: "json_object" }
           }
         )
@@ -100,6 +121,28 @@ module Ai
         context.to_json
       end
 
+      def build_recent_events_context(user)
+        # Получаем недавние события за последние 24 часа
+        local_time = Time.current.in_time_zone(user.timezone)
+        yesterday = local_time - 1.day
+        
+        recent_events = user.calendar_events
+                           .where('start_time >= ?', yesterday)
+                           .order(created_at: :desc)
+                           .limit(5)
+        
+        context_lines = recent_events.map do |event|
+          event_time = event.start_time.in_time_zone(user.timezone)
+          "- #{event.title} (#{event_time.strftime('%d.%m в %H:%M')})"
+        end
+        
+        if context_lines.any?
+          "Недавно созданные события:\n#{context_lines.join("\n")}"
+        else
+          "Недавних событий нет."
+        end
+      end
+
       def parse_datetime(datetime_str)
         return nil if datetime_str.blank? || datetime_str == "null"
         
@@ -112,8 +155,8 @@ module Ai
       def parse_datetime_for_user(datetime_str, user)
         return nil if datetime_str.blank? || datetime_str == "null"
         
-        # Parse in user's specific timezone
-        Time.zone.parse(datetime_str)&.in_time_zone(user.timezone)
+        # Parse directly in user's timezone
+        Time.find_zone(user.timezone).parse(datetime_str)
       rescue StandardError
         nil
       end

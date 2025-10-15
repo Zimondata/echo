@@ -16,11 +16,15 @@ class DashboardController < ApplicationController
       plans_count: @user.entries.where(entry_type: "plan").count
     }
 
-    # Последние записи
-    @recent_entries = @user.entries.order(created_at: :desc).limit(5)
+    # Последние записи (увеличили лимит для секции заметок)
+    @recent_entries = @user.entries.order(created_at: :desc).limit(20)
 
-    # Ближайшие события
-    @upcoming_events = @user.calendar_events.active.upcoming.limit(5)
+    # Ближайшие события (учитываем часовой пояс пользователя)
+    current_user_time = Time.current.in_time_zone(@user.timezone)
+    @upcoming_events = @user.calendar_events.active
+                            .where("start_time >= ?", current_user_time.beginning_of_day)
+                            .order(:start_time)
+                            .limit(5)
     
     # Календарные данные для текущей недели
     @week_events = @user.calendar_events.for_week(Date.current)

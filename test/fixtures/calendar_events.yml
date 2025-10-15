@@ -3,21 +3,25 @@
 one:
   entry: one
   user: one
-  google_event_id: MyString
-  title: MyString
-  description: MyText
-  start_time: 2025-10-13 10:47:45
-  end_time: 2025-10-13 10:47:45
-  event_type: MyString
-  metadata: 
+  title: "Встреча с клиентом"
+  description: "Обсуждение нового проекта"
+  start_time: <%= 1.day.from_now.beginning_of_hour %>
+  end_time: <%= 1.day.from_now.beginning_of_hour + 1.hour %>
+  event_type: "meeting"
+  priority: "medium"
+  all_day: false
+  done: false
+  metadata: {}
 
 two:
   entry: two
   user: two
-  google_event_id: MyString
-  title: MyString
-  description: MyText
-  start_time: 2025-10-13 10:47:45
-  end_time: 2025-10-13 10:47:45
-  event_type: MyString
-  metadata: 
+  title: "Планирование недели"
+  description: "Составить план на следующую неделю"
+  start_time: <%= 2.days.from_now.beginning_of_hour %>
+  end_time: <%= 2.days.from_now.beginning_of_hour + 2.hours %>
+  event_type: "plan"
+  priority: "high"
+  all_day: false
+  done: false
+  metadata: {} 

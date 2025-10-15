@@ -31,7 +31,9 @@ class CalendarEvent < ApplicationRecord
   scope :completed, -> { active.where(done: true) }
   scope :pending, -> { active.where(done: false) }
   scope :for_date_range, ->(start_date, end_date) {
-    active.where("start_time <= ? AND (end_time >= ? OR end_time IS NULL)", end_date, start_date)
+    start_datetime = start_date.is_a?(Date) ? start_date.beginning_of_day : start_date
+    end_datetime = end_date.is_a?(Date) ? end_date.end_of_day : end_date
+    active.where("start_time <= ? AND (end_time >= ? OR end_time IS NULL)", end_datetime, start_datetime)
   }
   scope :by_category, ->(category) { active.where(event_type: category) }
   scope :with_reminders, -> { active.where.not(reminder_minutes: nil) }

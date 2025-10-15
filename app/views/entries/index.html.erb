@@ -1,2 +1,132 @@
-<h1>Entries#index</h1>
-<p>Find me in app/views/entries/index.html.erb</p>
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="md:flex md:items-center md:justify-between">
+    <div class="flex-1 min-w-0">
+      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+        <%= 
+          case params[:action]
+          when 'ideas' then '💡 Мои идеи'
+          when 'diary' then '📔 Дневниковые записи'
+          when 'plans' then '📋 Планы'
+          else 'Все записи'
+          end
+        %>
+      </h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Всего найдено: <%= @entries.count %> записей
+      </p>
+    </div>
+    <div class="mt-4 flex md:mt-0 md:ml-4">
+      <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        ← Назад к Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8">
+      <%= link_to entries_path, class: "#{params[:action] == 'index' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
+        📝 Все записи
+      <% end %>
+      <%= link_to ideas_entries_path, class: "#{params[:action] == 'ideas' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
+        💡 Идеи
+      <% end %>
+      <%= link_to diary_entries_path, class: "#{params[:action] == 'diary' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
+        📔 Дневник
+      <% end %>
+      <%= link_to plans_entries_path, class: "#{params[:action] == 'plans' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
+        📋 Планы
+      <% end %>
+    </nav>
+  </div>
+
+  <!-- Entries Grid -->
+  <% if @entries.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @entries.each do |entry| %>
+        <div class="entry-card bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 border-l-4 <%= entry.entry_type == 'idea' ? 'border-yellow-400' : entry.entry_type == 'diary' ? 'border-blue-400' : 'border-green-400' %>">
+          <!-- Entry Header -->
+          <div class="px-6 py-4 border-b border-gray-200 <%= entry.entry_type == 'idea' ? 'bg-yellow-50' : entry.entry_type == 'diary' ? 'bg-blue-50' : 'bg-green-50' %>">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= entry.entry_type == 'idea' ? 'bg-yellow-100 text-yellow-800' : entry.entry_type == 'diary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' %>">
+                  <%= entry.entry_type == 'idea' ? '💡 Идея' : entry.entry_type == 'diary' ? '📔 Дневник' : '📋 План' %>
+                </span>
+                <% if entry.child_entries.any? %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    +<%= entry.child_entries.count %> размышлений
+                  </span>
+                <% end %>
+              </div>
+              <span class="text-xs text-gray-500">
+                <%= entry.created_at.in_time_zone(@user.timezone).strftime('%d.%m.%Y %H:%M') %>
+              </span>
+            </div>
+          </div>
+          
+          <!-- Entry Content -->
+          <div class="px-6 py-4">
+            <p class="text-sm text-gray-800 leading-relaxed">
+              <%= entry.content.length > 200 ? entry.content.truncate(200) : entry.content %>
+            </p>
+          </div>
+          
+          <!-- Entry Footer -->
+          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-500">
+                  Приоритет: <%= entry.priority || 5 %>/10
+                </span>
+                <% if entry.calendar_event %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-indigo-100 text-indigo-800">
+                    📅 В календаре
+                  </span>
+                <% end %>
+              </div>
+              <div class="flex items-center space-x-1">
+                <% if entry.tags.present? %>
+                  <% entry.tags.first(2).each do |tag| %>
+                    <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
+                      #<%= tag %>
+                    </span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="text-2xl">
+          <%= 
+            case params[:action]
+            when 'ideas' then '💡'
+            when 'diary' then '📔'
+            when 'plans' then '📋'
+            else '📝'
+            end
+          %>
+        </span>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">
+        <%= 
+          case params[:action]
+          when 'ideas' then 'Пока нет идей'
+          when 'diary' then 'Пока нет дневниковых записей'
+          when 'plans' then 'Пока нет планов'
+          else 'Пока нет записей'
+          end
+        %>
+      </h3>
+      <p class="text-sm text-gray-500 max-w-sm mx-auto">
+        Отправьте боту свои мысли, и они появятся здесь
+      </p>
+    </div>
+  <% end %>
+</div>

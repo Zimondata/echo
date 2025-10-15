@@ -214,25 +214,84 @@ module Telegram
       
       created_entries = []
       
-      analyses.each do |analysis|
-        # Create entry for each analyzed plan/content
-        entry = user.entries.create!(
-          entry_type: analysis[:type],
-          content: analysis[:content] || analysis[:summary] || text,
-          transcript: text,
-          audio_file_id: audio_file_id,
-          priority: analysis[:priority] || 0,
-          metadata: {
-            multi_plan_source: analyses.count > 1,
-            plan_index: analyses.index(analysis) + 1,
-            total_plans: analyses.count
-          }.merge(analysis[:metadata] || {})
-        )
-        
-        created_entries << entry
+      # Check if we should group related ideas
+      should_group_ideas = analyses.count > 1 && 
+                          analyses.all? { |a| a[:type] == 'idea' } &&
+                          audio_file_id.present?
+      
+      parent_entry = nil
+      group_id = should_group_ideas ? SecureRandom.uuid : nil
+      
+      analyses.each_with_index do |analysis, index|
+        # For grouped ideas, create first as parent, rest as children
+        if should_group_ideas && index == 0
+          # Create main parent entry with combined content
+          combined_content = "#{analysis[:content] || analysis[:summary]}\n\nСвязанные размышления:\n" + 
+                            analyses[1..-1].map { |a| "• #{a[:content] || a[:summary]}" }.join("\n")
+          
+          parent_entry = user.entries.create!(
+            entry_type: analysis[:type],
+            content: combined_content,
+            transcript: text,
+            audio_file_id: audio_file_id,
+            priority: analysis[:priority] || 0,
+            group_id: group_id,
+            metadata: {
+              multi_plan_source: true,
+              plan_index: 1,
+              total_plans: analyses.count,
+              is_grouped_idea: true,
+              grouped_content_count: analyses.count
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << parent_entry
+          
+        elsif should_group_ideas && index > 0
+          # Create child entries for additional ideas
+          child_entry = user.entries.create!(
+            entry_type: analysis[:type],
+            content: analysis[:content] || analysis[:summary] || text,
+            transcript: text,
+            audio_file_id: audio_file_id,
+            priority: analysis[:priority] || 0,
+            group_id: group_id,
+            parent_entry: parent_entry,
+            metadata: {
+              multi_plan_source: true,
+              plan_index: index + 1,
+              total_plans: analyses.count,
+              is_grouped_idea_child: true
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << child_entry
+          
+        else
+          # Create regular standalone entry
+          entry = user.entries.create!(
+            entry_type: analysis[:type],
+            content: analysis[:content] || analysis[:summary] || text,
+            transcript: text,
+            audio_file_id: audio_file_id,
+            priority: analysis[:priority] || 0,
+            metadata: {
+              multi_plan_source: analyses.count > 1,
+              plan_index: index + 1,
+              total_plans: analyses.count
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << entry
+        end
 
-        # Create calendar event if needed
-        if analysis[:create_calendar_event] && analysis[:event_time]
+        # Handle plan updates (corrections) OR prevent duplicates
+        Rails.logger.info "DEBUG: Processing entry type=#{analysis[:type]}, should_update=#{should_update_existing_event?(analysis)}"
+        if analysis[:type] == 'plan_update' || should_update_existing_event?(analysis)
+          Rails.logger.info "DEBUG: Calling handle_plan_update for entry: #{entry.content}"
+          handle_plan_update(entry, analysis)
+        elsif analysis[:create_calendar_event]
+          # Create calendar event if needed (only if not updating)
           create_calendar_event(entry, analysis)
         end
 
@@ -262,7 +321,7 @@ module Telegram
         #{type_emoji} *Записал!*
 
         *Тип:* #{entry_type_name(entry.entry_type)}
-        *Дата:* #{entry.occurred_at.strftime('%d %B %Y, %H:%M')}
+        *Дата:* #{entry.occurred_at.in_time_zone(user.timezone).strftime('%d %B %Y, %H:%M')}
 
         *Резюме:*
         #{entry.content}
@@ -298,8 +357,13 @@ module Telegram
         
         # Add timing info if it's a plan with time
         if entry.entry_type == 'plan' && entry.calendar_event
-          event_time = entry.calendar_event.start_time.strftime('%d.%m в %H:%M')
-          confirmation_text += "   📅 #{event_time}\n"
+          if entry.calendar_event.all_day?
+            event_date = entry.calendar_event.start_time.in_time_zone(user.timezone).strftime('%d.%m')
+            confirmation_text += "   📅 #{event_date} (план без времени)\n"
+          else
+            event_time = entry.calendar_event.start_time.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')
+            confirmation_text += "   📅 #{event_time}\n"
+          end
         end
       end
 
@@ -343,12 +407,22 @@ module Telegram
       is_all_day = analysis[:metadata]&.dig(:all_day) || analysis[:metadata]&.dig("all_day") || false
       Rails.logger.info "Creating event with all_day: #{is_all_day}, metadata: #{analysis[:metadata]}" # Debug
       
+      # Определяем время события
+      if is_all_day && analysis[:event_time].nil?
+        # Для all_day событий без времени используем завтрашний день
+        start_time = Date.tomorrow.beginning_of_day
+        end_time = Date.tomorrow.end_of_day
+      else
+        start_time = analysis[:event_time]
+        end_time = analysis[:event_end_time]
+      end
+      
       event = user.calendar_events.create!(
         entry: entry,
         title: analysis[:event_title] || entry.content.truncate(100),
         description: entry.content,
-        start_time: analysis[:event_time],
-        end_time: analysis[:event_end_time],
+        start_time: start_time,
+        end_time: end_time,
         event_type: "plan",
         all_day: is_all_day
       )
@@ -356,7 +430,7 @@ module Telegram
       if is_all_day
         send_reply("📅 Добавил план в календарь: #{event.title}")
       else
-        send_reply("📅 Создал событие в календаре на #{event.start_time.strftime('%d.%m в %H:%M')}")
+        send_reply("📅 Создал событие в календаре на #{event.start_time.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}")
       end
     rescue StandardError => e
       Rails.logger.error "Error creating calendar event: #{e.message}"
@@ -374,10 +448,82 @@ module Telegram
           message: analysis[:reminder_message] || entry.content.truncate(200)
         )
 
-        send_reply("🔔 Напомню тебе #{reminder.remind_at.strftime('%d.%m в %H:%M')}")
+        send_reply("🔔 Напомню тебе #{reminder.remind_at.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}")
       end
     rescue StandardError => e
       Rails.logger.error "Error creating reminder: #{e.message}"
+    end
+
+    def should_update_existing_event?(analysis)
+      return false unless analysis[:create_calendar_event] && analysis[:event_title]
+      
+      # Проверяем есть ли ТОЧНО похожие события за последние 24 часа
+      similar_events = user.calendar_events
+                          .where('created_at >= ?', 24.hours.ago)
+                          .where('LOWER(title) = LOWER(?)', analysis[:event_title].strip)
+      
+      similar_events.any?
+    end
+
+    def handle_plan_update(entry, analysis)
+      Rails.logger.info "DEBUG: handle_plan_update STARTED for entry: #{entry.content}"
+      Rails.logger.info "DEBUG: analysis keys: #{analysis.keys}"
+      Rails.logger.info "DEBUG: event_title=#{analysis[:event_title]}, create_calendar_event=#{analysis[:create_calendar_event]}"
+      
+      return unless analysis[:event_title] && analysis[:create_calendar_event]
+      Rails.logger.info "DEBUG: Passed initial checks, proceeding with plan update"
+      
+      # Найти недавние события ТОЧНО похожие по названию в последние 24 часа
+      search_title = analysis[:event_title].strip
+      recent_events = user.calendar_events
+                         .where('created_at >= ?', 24.hours.ago)
+                         .where('LOWER(title) = LOWER(?)', search_title)
+                         .order(created_at: :desc)
+                         .limit(3)
+      
+      if recent_events.any?
+        # Обновляем самое недавнее похожее событие
+        event_to_update = recent_events.first
+        
+        # Если это исправление времени
+        if analysis[:event_time] && !event_to_update.all_day? && analysis[:metadata]&.dig(:correction)
+          old_time = event_to_update.start_time.in_time_zone(user.timezone).strftime('%H:%M')
+          corrected_time = analysis[:metadata][:corrected_time] || analysis[:event_time].in_time_zone(user.timezone).strftime('%H:%M')
+          
+          event_to_update.update!(
+            start_time: analysis[:event_time],
+            end_time: analysis[:event_end_time]
+          )
+          
+          send_reply("✏️ Исправил время с #{old_time} на #{corrected_time}: #{event_to_update.title}")
+        else
+          # Если это дубль - просто не создаем новое событие
+          send_reply("📋 Событие \"#{search_title}\" уже существует")
+        end
+      else
+        # Если похожих событий нет, создаем новое
+        Rails.logger.info "DEBUG: No similar events found for '#{search_title}', creating new event"
+        Rails.logger.info "DEBUG: create_calendar_event=#{analysis[:create_calendar_event]}, event_time=#{analysis[:event_time]}"
+        if analysis[:create_calendar_event]
+          create_calendar_event(entry, analysis)
+          Rails.logger.info "DEBUG: Calendar event created successfully"
+          
+          # Отправляем сообщение о создании нового события вместо обновления
+          if analysis[:event_time]
+            time_str = analysis[:event_time].in_time_zone(user.timezone).strftime('%H:%M')
+            date_str = analysis[:event_time].in_time_zone(user.timezone).strftime('%d.%m')
+            send_reply("📅 Создал новое событие: #{search_title} на #{date_str} в #{time_str}")
+          else
+            date_str = analysis[:event_date] ? Date.parse(analysis[:event_date]).strftime('%d.%m') : 'завтра'
+            send_reply("📅 Создал новое событие: #{search_title} на #{date_str}")
+          end
+        else
+          Rails.logger.info "DEBUG: Calendar event NOT created - missing conditions"
+          send_reply("⚠️ Не смог обновить план \"#{search_title}\" - событие не найдено. Попробуйте создать новый план.")
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.error "Error handling plan update: #{e.message}"
     end
 
     def create_recurring_reminder(entry, analysis)
@@ -404,7 +550,7 @@ module Telegram
       send_reply(<<~TEXT)
         🔔 *Создал повторяющееся напоминание!*
         
-        ⏰ Первое: #{reminder.remind_at.strftime('%d.%m в %H:%M')}
+        ⏰ Первое: #{reminder.remind_at.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}
         🔄 Интервал: каждые #{interval_hours} ч.
         🛑 До: #{end_time}
         
@@ -430,7 +576,7 @@ module Telegram
         
         day_events.each do |event|
           status_emoji = event.done? ? "✅" : "⏰"
-          time_str = event.all_day? ? "весь день" : event.start_time.strftime("%H:%M")
+          time_str = event.all_day? ? "весь день" : event.start_time.in_time_zone(user.timezone).strftime("%H:%M")
           
           calendar_text += "#{status_emoji} #{time_str} - #{event.title}\n"
         end
@@ -454,7 +600,7 @@ module Telegram
       
       events.each do |event|
         status_emoji = event.done? ? "✅" : "⏰"
-        time_str = event.all_day? ? "весь день" : event.start_time.strftime("%H:%M")
+        time_str = event.all_day? ? "весь день" : event.start_time.in_time_zone(user.timezone).strftime("%H:%M")
         priority_emoji = case event.priority
         when 'urgent' then '🔴'
         when 'high' then '🟡'
@@ -514,7 +660,7 @@ module Telegram
         
         insights_text += "#{icon} *#{insight.title}*\n"
         insights_text += "#{insight.content.truncate(150)}\n"
-        insights_text += "_#{insight.generated_at.strftime('%d.%m в %H:%M')}_\n\n"
+        insights_text += "_#{insight.generated_at.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}_\n\n"
       end
       
       insights_text += "💡 Хочешь получить свежий анализ? Используй /digest или /daily"
@@ -841,7 +987,7 @@ module Telegram
         plan_data[:scheduled_tasks].each do |task|
           time_str = ""
           if task[:suggested_start_time]
-            time_str = " в #{task[:suggested_start_time].strftime('%H:%M')}"
+            time_str = " в #{task[:suggested_start_time].in_time_zone(user.timezone).strftime('%H:%M')}"
           end
           
           confidence_emoji = case task[:confidence_score]
@@ -907,7 +1053,7 @@ module Telegram
       if result[:optimized_tasks]&.any?
         text += "📋 *Оптимизированные задачи:*\n"
         result[:optimized_tasks].each do |task|
-          start_time = task[:suggested_start_time]&.strftime('%H:%M') || "время не определено"
+          start_time = task[:suggested_start_time]&.in_time_zone(user.timezone)&.strftime('%H:%M') || "время не определено"
           confidence_emoji = case task[:confidence_score]
                            when 80..100 then "🎯"
                            when 60..79 then "✅" 

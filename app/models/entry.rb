@@ -3,6 +3,10 @@ class Entry < ApplicationRecord
   belongs_to :user
   has_one :calendar_event, dependent: :destroy
   has_many :reminders, dependent: :destroy
+  
+  # Self-referential associations for grouped entries
+  belongs_to :parent_entry, class_name: 'Entry', optional: true
+  has_many :child_entries, class_name: 'Entry', foreign_key: 'parent_entry_id', dependent: :destroy
 
   # pgvector neighbor
   has_neighbors :embedding
@@ -30,6 +34,8 @@ class Entry < ApplicationRecord
   scope :processed, -> { where(dashboard_status: "processed") }
   scope :needs_attention, -> { where(dashboard_status: ["new", "triaged"]) }
   scope :with_tags, -> { where.not(tags: [nil, ""]) }
+  scope :parent_entries, -> { where(parent_entry_id: nil) }
+  scope :grouped_by, ->(group_id) { where(group_id: group_id) }
 
   # Callbacks
   before_validation :set_occurred_at, on: :create
@@ -96,6 +102,41 @@ class Entry < ApplicationRecord
 
   def categorized?
     category != "inbox"
+  end
+
+  # Grouping methods
+  def is_parent?
+    parent_entry_id.nil? && child_entries.any?
+  end
+
+  def is_child?
+    parent_entry_id.present?
+  end
+
+  def is_standalone?
+    parent_entry_id.nil? && child_entries.empty?
+  end
+
+  def main_entry
+    parent_entry || self
+  end
+
+  def grouped_entries
+    if group_id.present?
+      Entry.grouped_by(group_id)
+    else
+      [self]
+    end
+  end
+
+  def all_related_content
+    if is_parent?
+      [content] + child_entries.pluck(:content)
+    elsif is_child?
+      [parent_entry.content] + parent_entry.child_entries.pluck(:content)
+    else
+      [content]
+    end
   end
 
   private

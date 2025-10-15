@@ -34,6 +34,9 @@ Rails.application.routes.draw do
     get 'calendar/upcoming', to: 'calendar#upcoming'
     get 'calendar/stats', to: 'calendar#stats'
 
+    # Reminders API (manual send)
+    post 'reminders/:id/send_now', to: 'reminders#send_now'
+
     namespace :v1 do
       # Dashboard
       get 'dashboard/overview', to: 'dashboard#overview'

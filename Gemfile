@@ -54,6 +54,9 @@ gem "sidekiq", "~> 7.2"            # Background jobs (alternative to Solid Queue
 # Vector embeddings for AI features
 gem "neighbor", "~> 0.4"           # pgvector for similarity search
 
+# Additional gems for dashboard
+# gem "groupdate"                     # Group queries by date/time periods (commented out - manual implementation used)
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
