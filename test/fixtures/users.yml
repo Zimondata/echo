@@ -1,25 +1,28 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  telegram_id: 
-  username: MyString
-  first_name: MyString
-  last_name: MyString
-  timezone: MyString
-  language: MyString
-  google_refresh_token: MyText
-  google_access_token: MyText
-  google_token_expires_at: 2025-10-13 10:47:17
-  settings: 
+john:
+  telegram_id: 123456789
+  username: "john_doe"
+  first_name: "John"
+  last_name: "Doe"
+  timezone: "Europe/Moscow"
+  language: "ru"
+  settings: {}
 
-two:
-  telegram_id: 
-  username: MyString
-  first_name: MyString
-  last_name: MyString
-  timezone: MyString
-  language: MyString
-  google_refresh_token: MyText
-  google_access_token: MyText
-  google_token_expires_at: 2025-10-13 10:47:17
-  settings: 
+moscow_user:
+  telegram_id: 987654321
+  username: "moscow_user"
+  first_name: "Московский"
+  last_name: "Пользователь"
+  timezone: "Europe/Moscow"
+  language: "ru"
+  settings: {}
+
+utc_user:
+  telegram_id: 555666777
+  username: "utc_user"
+  first_name: "UTC"
+  last_name: "User"
+  timezone: "UTC"
+  language: "en"
+  settings: {} 

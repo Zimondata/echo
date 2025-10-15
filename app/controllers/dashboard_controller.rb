@@ -26,7 +26,7 @@ class DashboardController < ApplicationController
     @week_events = @user.calendar_events.for_week(Date.current)
 
     # Активные напоминания
-    current_local_time = Time.current.in_time_zone('Europe/Berlin')
+    current_local_time = Time.current.in_time_zone(@user.timezone)
     @pending_reminders = @user.reminders
                               .where(status: "pending")
                               .where("remind_at >= ?", current_local_time)

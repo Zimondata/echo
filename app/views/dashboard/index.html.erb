@@ -36,16 +36,16 @@
           <div class="relative h-6 bg-gray-100 rounded-full">
             <%
               # Get reminders for this specific day
-              day_start = current_day.beginning_of_day.in_time_zone('Europe/Berlin')
-              day_end = current_day.end_of_day.in_time_zone('Europe/Berlin')
-              current_time = Time.current.in_time_zone('Europe/Berlin')
+              day_start = current_day.beginning_of_day.in_time_zone(@user.timezone)
+              day_end = current_day.end_of_day.in_time_zone(@user.timezone)
+              current_time = Time.current.in_time_zone(@user.timezone)
               
               # Only future reminders
               day_reminders = @user.reminders.where(remind_at: day_start..day_end)
                                              .where('remind_at > ?', current_time)
               
               day_reminders.each do |reminder|
-                reminder_time = reminder.remind_at.in_time_zone('Europe/Berlin')
+                reminder_time = reminder.remind_at.in_time_zone(@user.timezone)
                 # Position from 6:00 to 22:00 (16 hours span)
                 if reminder_time.hour >= 6 && reminder_time.hour <= 22
                   hour_offset = reminder_time.hour - 6  # 0-16 range
@@ -69,7 +69,7 @@
             <!-- Current time indicator (only for today) -->
             <% if current_day == Date.current %>
               <%
-                current_hour = Time.current.in_time_zone('Europe/Berlin')
+                current_hour = Time.current.in_time_zone(@user.timezone)
                 if current_hour.hour >= 6 && current_hour.hour <= 22
                   current_offset = current_hour.hour - 6
                   current_minute_offset = current_hour.min / 60.0
@@ -140,8 +140,8 @@
             <!-- Events for this day -->
             <div class="space-y-1">
               <% 
-                current_time = Time.current.in_time_zone('Europe/Berlin')
-                upcoming_events = day_events.select { |e| e.start_time.in_time_zone('Europe/Berlin') >= current_time }
+                current_time = Time.current.in_time_zone(@user.timezone)
+                upcoming_events = day_events.select { |e| e.start_time.in_time_zone(@user.timezone) >= current_time }
               %>
               
               <%
@@ -908,10 +908,10 @@ function saveReminder() {
     return;
   }
   
-  // Create date in Berlin timezone
-  const berlinerTime = new Date(date + 'T' + time + ':00+02:00').toISOString();
+  // Create date in user's timezone
+  const userTimezoneTime = new Date(date + 'T' + time + ':00').toISOString();
   
-  console.log('Saving reminder:', { reminderId, message, date, time, berlinerTime });
+  console.log('Saving reminder:', { reminderId, message, date, time, userTimezoneTime });
   
   fetch(`/api/v1/reminders/${reminderId}`, {
     method: 'PATCH',
@@ -921,7 +921,7 @@ function saveReminder() {
     body: JSON.stringify({
       reminder: {
         message: message,
-        remind_at: berlinerTime
+        remind_at: userTimezoneTime
       }
     })
   })

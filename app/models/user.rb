@@ -10,6 +10,9 @@ class User < ApplicationRecord
   has_many :reminders, dependent: :destroy
   has_many :insights, dependent: :destroy
 
+  # Scopes
+  scope :active, -> { where.not(telegram_id: nil) }
+
   # Methods
   def full_name
     [first_name, last_name].compact.join(" ").presence || username || "User"

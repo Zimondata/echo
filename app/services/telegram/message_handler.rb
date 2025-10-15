@@ -15,12 +15,14 @@ module Telegram
       # Handle different message types
       if message.text&.start_with?("/")
         handle_command
+      elsif message.location
+        handle_location_message
       elsif message.voice
         handle_voice_message
       elsif message.text
         handle_text_message
       else
-        send_reply("Извините, я пока поддерживаю только текстовые и голосовые сообщения.")
+        send_reply("Извините, я пока поддерживаю только текстовые, голосовые сообщения и геолокацию.")
       end
     end
 
@@ -62,6 +64,8 @@ module Telegram
         handle_suggest_command
       when "/autoplan"
         handle_autoplan_command
+      when "/timezone"
+        handle_timezone_command
       else
         send_reply("Неизвестная команда. Используй /help для списка команд.")
       end
@@ -81,6 +85,10 @@ module Telegram
 
         Просто отправь мне голосовое или текстовое сообщение, и я всё сохраню!
 
+        🕐 *Важно:* Для корректной работы напоминаний настрой свой часовой пояс:
+        • Отправь геолокацию 📍 (самый простой способ)
+        • Или используй `/timezone Madrid` (для Испании)
+
         Используй /help для подробной информации.
       TEXT
 
@@ -94,6 +102,7 @@ module Telegram
         /start — Начать работу
         /help — Показать это сообщение
         /settings — Настройки
+        /timezone — Настроить часовой пояс
         /status — Статистика твоих записей
         
         *Календарь:*
@@ -213,11 +222,11 @@ module Telegram
           transcript: text,
           audio_file_id: audio_file_id,
           priority: analysis[:priority] || 0,
-          metadata: (analysis[:metadata] || {}).merge({
+          metadata: {
             multi_plan_source: analyses.count > 1,
             plan_index: analyses.index(analysis) + 1,
             total_plans: analyses.count
-          })
+          }.merge(analysis[:metadata] || {})
         )
         
         created_entries << entry
@@ -330,16 +339,25 @@ module Telegram
     end
 
     def create_calendar_event(entry, analysis)
+      # Проверяем metadata для all_day события  
+      is_all_day = analysis[:metadata]&.dig(:all_day) || analysis[:metadata]&.dig("all_day") || false
+      Rails.logger.info "Creating event with all_day: #{is_all_day}, metadata: #{analysis[:metadata]}" # Debug
+      
       event = user.calendar_events.create!(
         entry: entry,
         title: analysis[:event_title] || entry.content.truncate(100),
         description: entry.content,
         start_time: analysis[:event_time],
         end_time: analysis[:event_end_time],
-        event_type: "plan"
+        event_type: "plan",
+        all_day: is_all_day
       )
 
-      send_reply("📅 Создал событие в календаре на #{event.start_time.strftime('%d.%m в %H:%M')}")
+      if is_all_day
+        send_reply("📅 Добавил план в календарь: #{event.title}")
+      else
+        send_reply("📅 Создал событие в календаре на #{event.start_time.strftime('%d.%m в %H:%M')}")
+      end
     rescue StandardError => e
       Rails.logger.error "Error creating calendar event: #{e.message}"
     end
@@ -982,6 +1000,111 @@ module Telegram
       end
       
       text
+    end
+
+    def handle_location_message
+      location = message.location
+      latitude = location.latitude
+      longitude = location.longitude
+      
+      send_reply("🌍 Определяю ваш часовой пояс...")
+      
+      begin
+        # Определяем timezone по координатам
+        timezone = TimezoneService.detect_timezone(latitude, longitude)
+        
+        if timezone
+          old_timezone = user.timezone
+          user.update!(timezone: timezone)
+          
+          send_reply(<<~TEXT)
+            ✅ *Часовой пояс обновлен!*
+            
+            📍 Ваше местоположение: #{latitude.round(4)}, #{longitude.round(4)}
+            🕐 Был: #{old_timezone}
+            🕐 Стал: #{timezone}
+            
+            Теперь все напоминания и события будут отображаться в вашем местном времени!
+          TEXT
+        else
+          send_reply("❌ Не удалось определить часовой пояс по координатам. Попробуйте команду /timezone для ручной настройки.")
+        end
+        
+      rescue StandardError => e
+        Rails.logger.error "Location processing error: #{e.message}"
+        send_reply("❌ Ошибка обработки геолокации. Попробуйте команду /timezone для ручной настройки.")
+      end
+    end
+
+    def handle_timezone_command
+      command_parts = message.text.split
+      
+      if command_parts.length == 1
+        # Показываем текущий timezone и инструкции
+        send_reply(<<~TEXT)
+          🕐 *Настройка часового пояса*
+          
+          Ваш текущий часовой пояс: *#{user.timezone}*
+          
+          *Способы настройки:*
+          
+          1️⃣ **Отправьте геолокацию** 📍
+             Нажмите 📎 → Местоположение → Отправить
+             Я автоматически определю ваш часовой пояс
+          
+          2️⃣ **Введите город:**
+             `/timezone Madrid`
+             `/timezone Barcelona` 
+             `/timezone Moscow`
+             `/timezone London`
+          
+          3️⃣ **Введите timezone:**
+             `/timezone Europe/Madrid`
+             `/timezone Europe/Moscow`
+             `/timezone UTC`
+          
+          💡 Правильный часовой пояс важен для корректной работы напоминаний и утренних сводок!
+        TEXT
+        return
+      end
+      
+      # Пытаемся установить timezone
+      timezone_input = command_parts[1..-1].join(" ")
+      
+      begin
+        new_timezone = TimezoneService.parse_timezone_input(timezone_input)
+        
+        if new_timezone
+          old_timezone = user.timezone
+          user.update!(timezone: new_timezone)
+          
+          # Получаем текущее время в новом timezone
+          current_time = Time.current.in_time_zone(new_timezone)
+          
+          send_reply(<<~TEXT)
+            ✅ *Часовой пояс обновлен!*
+            
+            🕐 Был: #{old_timezone}
+            🕐 Стал: #{new_timezone}
+            🕐 Ваше время сейчас: #{current_time.strftime('%H:%M, %d %B %Y')}
+            
+            Все напоминания и события теперь будут отображаться в вашем местном времени!
+          TEXT
+        else
+          send_reply(<<~TEXT)
+            ❌ Не удалось распознать часовой пояс: "#{timezone_input}"
+            
+            Попробуйте:
+            • Название города: Madrid, Barcelona, Moscow
+            • Название timezone: Europe/Madrid, Europe/Moscow
+            • Или отправьте геолокацию 📍
+          TEXT
+        end
+        
+      rescue StandardError => e
+        Rails.logger.error "Timezone setting error: #{e.message}"
+        send_reply("❌ Ошибка установки часового пояса. Проверьте формат и попробуйте снова.")
+      end
     end
 
     def send_reply(text)

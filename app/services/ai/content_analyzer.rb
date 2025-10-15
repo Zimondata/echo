@@ -37,6 +37,13 @@ module Ai
       - event_end_time должен быть заполнен ТОЛЬКО если пользователь явно сказал когда событие заканчивается
       - При обнаружении фраз типа "каждые X часов до HH:MM", "напоминай каждые X часов", заполни recurring_pattern
       - Примеры повторяющихся паттернов: "каждые 3 часа до 22:00", "напоминай каждый час до 18:00"
+      
+      ПЛАНЫ БЕЗ ВРЕМЕНИ:
+      - Если пользователь НЕ указал конкретное время (например: "силовая тренировка", "сходить в магазин", "прочитать книгу")
+      - Установи event_time на начало дня (00:00) и добавь в metadata: {"all_day": true}
+      - Это создаст "плавающий" план без привязки к конкретному времени
+      - Примеры БЕЗ времени: "план на тренировку", "купить продукты", "позвонить маме"
+      - Примеры С временем: "встреча в 15:00", "звонок завтра в 9 утра", "обед в полдень"
     PROMPT
 
     class << self
@@ -45,12 +52,15 @@ module Ai
 
         user_context = build_user_context(user)
 
+        # Get current time in user's timezone
+        local_time = Time.current.in_time_zone(user.timezone)
+        
         response = client.chat(
           parameters: {
             model: "gpt-4o-mini",
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: "Текущая дата и время: #{Time.current.iso8601}\n\nТекст: #{text}\n\nКонтекст пользователя: #{user_context}" }
+              { role: "user", content: "Текущая дата и время (#{user.timezone}): #{local_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n\nТекст: #{text}\n\nКонтекст пользователя: #{user_context}\n\nВАЖНО: Возвращай время в формате ISO8601 с учетом часового пояса #{user.timezone}" }
             ],
             temperature: 0.3,
             response_format: { type: "json_object" }
@@ -59,10 +69,10 @@ module Ai
 
         result = JSON.parse(response.dig("choices", 0, "message", "content"), symbolize_names: true)
 
-        # Parse ISO8601 datetimes
-        result[:event_time] = parse_datetime(result[:event_time])
-        result[:event_end_time] = parse_datetime(result[:event_end_time])
-        result[:reminder_time] = parse_datetime(result[:reminder_time])
+        # Parse ISO8601 datetimes in user's timezone
+        result[:event_time] = parse_datetime_for_user(result[:event_time], user)
+        result[:event_end_time] = parse_datetime_for_user(result[:event_end_time], user)
+        result[:reminder_time] = parse_datetime_for_user(result[:reminder_time], user)
 
         result
       rescue StandardError => e
@@ -92,7 +102,18 @@ module Ai
 
       def parse_datetime(datetime_str)
         return nil if datetime_str.blank? || datetime_str == "null"
+        
+        # Parse in user's timezone  
         Time.zone.parse(datetime_str)
+      rescue StandardError
+        nil
+      end
+
+      def parse_datetime_for_user(datetime_str, user)
+        return nil if datetime_str.blank? || datetime_str == "null"
+        
+        # Parse in user's specific timezone
+        Time.zone.parse(datetime_str)&.in_time_zone(user.timezone)
       rescue StandardError
         nil
       end
