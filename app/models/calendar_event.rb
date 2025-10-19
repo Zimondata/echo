@@ -104,6 +104,14 @@ class CalendarEvent < ApplicationRecord
     update!(deleted_at: nil)
   end
 
+  def time_display(timezone = "UTC")
+    return "Утром" if all_day? && title.downcase.include?("утр")
+    return "Днем" if all_day? && title.downcase.include?("днем")
+    return "Вечером" if all_day? && title.downcase.include?("вечер")
+    return "Весь день" if all_day?
+    start_time.in_time_zone(timezone).strftime("%H:%M")
+  end
+
   # Class methods
   def self.for_week(date = Date.current)
     start_of_week = date.beginning_of_week(:monday)

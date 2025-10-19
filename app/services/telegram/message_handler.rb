@@ -212,6 +212,8 @@ module Telegram
       # Use multi-plan analyzer to extract multiple plans from one message
       analyses = Ai::MultiPlanAnalyzer.analyze(text, user: user)
       
+      # Track created events to avoid duplicates within same message
+      created_events_titles = []
       created_entries = []
       
       # Check if we should group related ideas
@@ -223,6 +225,8 @@ module Telegram
       group_id = should_group_ideas ? SecureRandom.uuid : nil
       
       analyses.each_with_index do |analysis, index|
+        current_entry = nil
+        
         # For grouped ideas, create first as parent, rest as children
         if should_group_ideas && index == 0
           # Create main parent entry with combined content
@@ -245,6 +249,7 @@ module Telegram
             }.merge(analysis[:metadata] || {})
           )
           
+          current_entry = parent_entry
           created_entries << parent_entry
           
         elsif should_group_ideas && index > 0
@@ -265,6 +270,7 @@ module Telegram
             }.merge(analysis[:metadata] || {})
           )
           
+          current_entry = child_entry
           created_entries << child_entry
           
         else
@@ -282,22 +288,30 @@ module Telegram
             }.merge(analysis[:metadata] || {})
           )
           
+          current_entry = entry
           created_entries << entry
         end
 
-        # Handle plan updates (corrections) OR prevent duplicates
-        Rails.logger.info "DEBUG: Processing entry type=#{analysis[:type]}, should_update=#{should_update_existing_event?(analysis)}"
-        if analysis[:type] == 'plan_update' || should_update_existing_event?(analysis)
-          Rails.logger.info "DEBUG: Calling handle_plan_update for entry: #{entry.content}"
-          handle_plan_update(entry, analysis)
-        elsif analysis[:create_calendar_event]
-          # Create calendar event if needed (only if not updating)
-          create_calendar_event(entry, analysis)
+        # Handle calendar events with proper deduplication
+        if analysis[:create_calendar_event] && analysis[:event_title]
+          # Check if we already created this event in this batch
+          normalized_title = analysis[:event_title].strip.downcase
+          
+          if created_events_titles.include?(normalized_title)
+            Rails.logger.info "Skipping duplicate event in same batch: #{analysis[:event_title]}"
+          elsif should_update_existing_event?(analysis)
+            Rails.logger.info "Event already exists, handling as update: #{analysis[:event_title]}"
+            handle_plan_update(current_entry, analysis)
+          else
+            # Create new calendar event
+            create_calendar_event(current_entry, analysis)
+            created_events_titles << normalized_title
+          end
         end
 
         # Create reminder if needed
         if analysis[:create_reminder] && analysis[:reminder_time]
-          create_reminder(entry, analysis)
+          create_reminder(current_entry, analysis)
         end
       end
 
@@ -457,9 +471,22 @@ module Telegram
     def should_update_existing_event?(analysis)
       return false unless analysis[:create_calendar_event] && analysis[:event_title]
       
-      # Проверяем есть ли ТОЧНО похожие события за последние 24 часа
+      # Check for exact title match AND same date
+      normalized_title = analysis[:event_title].strip.downcase
+      
+      # Determine the event date
+      event_date = if analysis[:event_time]
+        analysis[:event_time].to_date
+      elsif analysis[:metadata]&.dig(:all_day)
+        # For all-day events, check today and tomorrow
+        Date.current
+      else
+        Date.current
+      end
+      
+      # Check for similar events on the same day
       similar_events = user.calendar_events
-                          .where('created_at >= ?', 24.hours.ago)
+                          .where('DATE(start_time) = ?', event_date)
                           .where('LOWER(title) = LOWER(?)', analysis[:event_title].strip)
       
       similar_events.any?

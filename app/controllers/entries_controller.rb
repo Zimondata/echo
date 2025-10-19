@@ -16,6 +16,7 @@ class EntriesController < ApplicationController
   end
 
   def ideas
+    @user = current_user
     @entries = current_user.entries.where(entry_type: "idea").parent_entries.order(created_at: :desc).limit(20)
     render :ideas
   end

@@ -2,6 +2,7 @@ class CalendarEventsController < ApplicationController
   before_action :set_calendar_event, only: [:show]
 
   def index
+    @user = current_user
     @calendar_events = current_user.calendar_events.order(start_time: :asc)
 
     # Группируем по месяцам для календаря

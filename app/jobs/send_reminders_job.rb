@@ -1,5 +1,8 @@
 class SendRemindersJob < ApplicationJob
   queue_as :default
+  
+  # Prevent duplicate executions
+  limits_concurrency to: 1, key: -> { "send_reminders" }
 
   def perform
     # Find all reminders that are due
@@ -11,6 +14,13 @@ class SendRemindersJob < ApplicationJob
   private
 
   def send_reminder(reminder)
+    # Skip if already sent (double check for race conditions)
+    return if reminder.status == "sent"
+    
+    # Reload to get latest status and check again
+    reminder.reload
+    return if reminder.status == "sent"
+    
     user = reminder.user
     message = reminder.message || "Напоминание"
 
