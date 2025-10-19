@@ -1,0 +1,5 @@
+# Add this to your ~/.zshrc or ~/.bash_profile
+export KAMAL_REGISTRY_PASSWORD='your_new_github_token_here'
+
+# For immediate use in current session:
+# export KAMAL_REGISTRY_PASSWORD='your_new_github_token_here'

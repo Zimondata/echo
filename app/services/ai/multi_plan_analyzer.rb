@@ -44,6 +44,7 @@ module Ai
       - Для "на сегодня" без времени → ВСЕГДА используй сегодняшнюю дату в полночь с часовым поясом
       - Для "на завтра" без времени → ВСЕГДА используй завтрашнюю дату в полночь с часовым поясом
       - ВАЖНО: НЕ КОНВЕРТИРУЙ В UTC! Используй часовой пояс пользователя напрямую!
+      - ВСЕГДА устанавливай create_calendar_event: true для типа "plan"
 
       Ответь ТОЛЬКО в формате JSON:
       {
@@ -53,10 +54,10 @@ module Ai
             "content": "полное содержание этого конкретного плана/записи",
             "summary": "краткое резюме (1-2 предложения)",
             "priority": 0-10,
-            "create_calendar_event": true|false,
+            "create_calendar_event": true|false (ВСЕГДА true для типа "plan"),
             "event_time": "ISO8601 datetime или null",
             "event_end_time": "ISO8601 datetime или null (ТОЛЬКО если время окончания ЯВНО указано)",
-            "event_title": "название события или null",
+            "event_title": "название события или null (ОБЯЗАТЕЛЬНО для планов)",
             "create_reminder": true|false,
             "reminder_time": "ISO8601 datetime или null",
             "reminder_message": "текст напоминания или null",
@@ -203,6 +204,12 @@ module Ai
         entry[:content] ||= original_text
         entry[:summary] ||= (entry[:content] || original_text).truncate(200)
         entry[:priority] ||= 0
+        
+        # For plans, ensure we have calendar event settings
+        if entry[:type] == 'plan'
+          entry[:create_calendar_event] = true if entry[:create_calendar_event].nil?
+          entry[:event_title] ||= entry[:summary] || entry[:content]&.truncate(100)
+        end
 
         # Parse datetimes
         entry[:event_time] = parse_datetime(entry[:event_time])

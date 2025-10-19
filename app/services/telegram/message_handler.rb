@@ -302,10 +302,16 @@ module Telegram
 
         # Handle calendar events with proper deduplication
         Rails.logger.info "DEBUG: Checking calendar event creation for entry #{index + 1}"
+        Rails.logger.info "  entry_type: #{analysis[:type]}"
         Rails.logger.info "  create_calendar_event: #{analysis[:create_calendar_event]}"
         Rails.logger.info "  event_title: #{analysis[:event_title]}"
+        Rails.logger.info "  event_time: #{analysis[:event_time]}"
         
-        if analysis[:create_calendar_event] && analysis[:event_title]
+        # Create calendar event for plans (even without explicit create_calendar_event flag)
+        should_create_event = (analysis[:type] == 'plan' && analysis[:event_title].present?) || 
+                             (analysis[:create_calendar_event] && analysis[:event_title].present?)
+        
+        if should_create_event
           # Check if we already created this event in this batch
           normalized_title = analysis[:event_title].strip.downcase
           
@@ -324,7 +330,7 @@ module Telegram
             created_events_titles << normalized_title
           end
         else
-          Rails.logger.info "  Skipping calendar creation - missing requirements"
+          Rails.logger.info "  Skipping calendar creation - not a plan or missing title"
         end
 
         # Create reminder if needed
@@ -444,11 +450,16 @@ module Telegram
         # Если есть event_time, используем его
         start_time = analysis[:event_time]
         end_time = analysis[:event_end_time]
-      elsif is_all_day
-        # Для all_day событий без времени используем сегодня в часовом поясе пользователя
+        # Если время 00:00 и есть флаг all_day, это план без конкретного времени
+        if is_all_day && start_time.hour == 0 && start_time.min == 0
+          is_all_day = true
+        end
+      elsif is_all_day || analysis[:type] == 'plan'
+        # Для планов без указанного времени используем сегодня в часовом поясе пользователя
         user_today = Time.current.in_time_zone(user.timezone).beginning_of_day
         start_time = user_today
         end_time = user_today.end_of_day
+        is_all_day = true
       else
         # Fallback на сегодня
         start_time = Time.current
@@ -466,12 +477,14 @@ module Telegram
       )
 
       if is_all_day
-        send_reply("📅 Добавил план в календарь: #{event.title}")
+        formatted_date = event.start_time.in_time_zone(user.timezone).strftime('%d.%m')
+        send_reply("📅 Добавил план в календарь на #{formatted_date}: #{event.title}")
       else
-        send_reply("📅 Создал событие в календаре на #{event.start_time.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}")
+        send_reply("📅 Создал событие в календаре на #{event.start_time.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')}: #{event.title}")
       end
     rescue StandardError => e
       Rails.logger.error "Error creating calendar event: #{e.message}"
+      Rails.logger.error e.backtrace.first(5).join("\n")
     end
 
     def create_reminder(entry, analysis)

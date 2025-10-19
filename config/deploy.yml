@@ -2,7 +2,7 @@
 service: echo
 
 # Name of the container image.
-image: zimondata/echo
+image: ghcr.io/zimondata/echo
 
 # Deploy to these servers.
 servers:
@@ -25,6 +25,7 @@ proxy:
 registry:
   # Specify the registry server, if you're not using Docker Hub
   # server: registry.digitalocean.com / ghcr.io / ...
+  server: ghcr.io  # GitHub Container Registry
   username: zimondata
 
   # Always use an access token rather than real password when possible.
@@ -48,11 +49,6 @@ env:
 
     # Set number of cores available to the application on each server (default: 1).
     # WEB_CONCURRENCY: 2
-
-    # Match this to any external database server to configure Active Record correctly
-    # Use echo-db for a db accessory server on same machine via local kamal docker network.
-    DB_HOST: echo-db
-    # DB_HOST: 192.168.0.2
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
@@ -79,7 +75,7 @@ asset_path: /rails/public/assets
 
 # Configure the image builder.
 builder:
-  arch: amd64
+  arch: arm64
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
@@ -98,7 +94,7 @@ builder:
 # Use accessory services (secrets come from .kamal/secrets).
 accessories:
   db:
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     host: 46.62.211.95
     port: 5432
     env:
@@ -109,8 +105,6 @@ accessories:
         POSTGRES_DB: echo_production
     directories:
       - data:/var/lib/postgresql/data
-    options:
-      network: "kamal"
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2

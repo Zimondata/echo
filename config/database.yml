@@ -78,29 +78,5 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary:
-    <<: *default
-    database: echo_production
-    host: <%= ENV["DB_HOST"] %>
-    username: echo
-    password: <%= ENV["POSTGRES_PASSWORD"] %>
-  cache:
-    <<: *default
-    database: echo_production_cache
-    host: <%= ENV["DB_HOST"] %>
-    username: echo
-    password: <%= ENV["POSTGRES_PASSWORD"] %>
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *default
-    database: echo_production_queue
-    host: <%= ENV["DB_HOST"] %>
-    username: echo
-    password: <%= ENV["POSTGRES_PASSWORD"] %>
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *default
-    database: echo_production_cable
-    username: echo
-    password: <%= ENV["ECHO_DATABASE_PASSWORD"] %>
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
