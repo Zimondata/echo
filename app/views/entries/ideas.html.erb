@@ -1,0 +1,332 @@
+<style>
+  .idea-card {
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  .idea-card:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+  .gradient-overlay {
+    transition: opacity 0.5s ease;
+  }
+  .idea-card:hover .gradient-overlay {
+    opacity: 0.3;
+  }
+  .tag-badge {
+    backdrop-filter: blur(8px);
+  }
+  .search-container {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+  }
+  .dark .search-container {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  @keyframes sparkle {
+    0% { transform: rotate(0deg) scale(1); opacity: 0.1; }
+    50% { transform: rotate(180deg) scale(1.1); opacity: 0.2; }
+    100% { transform: rotate(360deg) scale(1); opacity: 0.1; }
+  }
+  .sparkle-icon {
+    animation: sparkle 8s linear infinite;
+  }
+  .modal-backdrop {
+    backdrop-filter: blur(8px);
+  }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header with animation -->
+    <div class="mb-8 animate-fade-in">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        💡 Мои идеи
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-300">
+        Коллекция инновационных идей и концепций
+      </p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="mb-8 space-y-4">
+      <!-- Search Bar -->
+      <div class="search-container rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input 
+            type="text" 
+            id="searchInput"
+            placeholder="Поиск идей..." 
+            class="w-full pl-12 pr-4 py-3 bg-transparent border-0 focus:ring-2 focus:ring-indigo-500 rounded-lg outline-none text-gray-900 dark:text-white placeholder-gray-500"
+            onkeyup="filterIdeas()"
+          >
+        </div>
+      </div>
+
+      <!-- Tag Filters -->
+      <div class="flex flex-wrap gap-2" id="tagFilters">
+        <button 
+          onclick="filterByTag(null)" 
+          class="tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-indigo-600 text-white shadow-md"
+          data-tag="all"
+        >
+          Все
+        </button>
+        <% 
+          all_tags = @entries.flat_map { |e| e.tags || [] }.uniq.compact
+          all_tags.each do |tag| 
+        %>
+          <button 
+            onclick="filterByTag('<%= tag %>')" 
+            class="tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm"
+            data-tag="<%= tag %>"
+          >
+            <%= tag %>
+          </button>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Ideas Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ideasGrid">
+      <% @entries.each_with_index do |entry, index| %>
+        <%
+          gradients = [
+            ['#667eea', '#764ba2'],
+            ['#f093fb', '#f5576c'],
+            ['#4facfe', '#00f2fe'],
+            ['#fa709a', '#fee140'],
+            ['#30cfd0', '#330867'],
+            ['#a8edea', '#fed6e3']
+          ]
+          gradient = gradients[index % gradients.length]
+        %>
+        
+        <div 
+          class="idea-card relative cursor-pointer group" 
+          data-idea-id="<%= entry.id %>"
+          data-tags="<%= entry.tags&.join(',') || '' %>"
+          data-title="<%= entry.content.split('.').first&.truncate(100) || '' %>"
+          onclick="openIdeaModal(<%= entry.id %>)"
+        >
+          <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+            <!-- Gradient Overlay -->
+            <div 
+              class="gradient-overlay absolute inset-0 opacity-20"
+              style="background: linear-gradient(135deg, <%= gradient[0] %>, <%= gradient[1] %>);"
+            ></div>
+            
+            <!-- Content -->
+            <div class="relative z-10 p-6">
+              <!-- Header -->
+              <div class="mb-4 flex items-start justify-between">
+                <div class="flex items-center gap-2">
+                  <div 
+                    class="rounded-full p-2"
+                    style="background: linear-gradient(135deg, <%= gradient[0] %>, <%= gradient[1] %>);"
+                  >
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+                    </svg>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span><%= entry.created_at.in_time_zone(@user.timezone).strftime('%d.%m.%Y') %></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <h3 class="mb-3 text-xl font-bold leading-tight text-gray-900 dark:text-white">
+                <%= entry.content.split('.').first&.truncate(60) || "Идея ##{entry.id}" %>
+              </h3>
+
+              <!-- Description -->
+              <p class="mb-4 line-clamp-3 text-sm text-gray-600 dark:text-gray-300">
+                <%= entry.content.truncate(150) %>
+              </p>
+
+              <!-- Tags -->
+              <div class="flex flex-wrap gap-2">
+                <% (entry.tags || []).first(3).each do |tag| %>
+                  <span 
+                    class="tag-badge px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+                    style="background: linear-gradient(135deg, <%= gradient[0] %>20, <%= gradient[1] %>20); color: <%= gradient[0] %>;"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <%= tag %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+
+            <!-- Sparkle Icon -->
+            <div class="absolute bottom-0 right-0 w-32 h-32 opacity-10 group-hover:opacity-20 transition-opacity">
+              <svg class="sparkle-icon w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l2 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Empty State -->
+    <% if @entries.empty? %>
+      <div class="text-center py-16">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+          <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Пока нет идей
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+          Отправьте боту свои идеи, и они появятся здесь в красивом виде
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Modal for full idea view -->
+<div id="ideaModal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-backdrop fixed inset-0 bg-black/50" onclick="closeIdeaModal()"></div>
+  <div class="fixed inset-4 md:inset-8 lg:inset-16 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+    <button 
+      onclick="closeIdeaModal()"
+      class="absolute right-4 top-4 z-10 p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+    
+    <div class="h-full overflow-y-auto">
+      <div id="modalGradient" class="relative h-48 md:h-64"></div>
+      <div class="p-6 md:p-8">
+        <h1 id="modalTitle" class="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white"></h1>
+        <p id="modalDate" class="text-sm text-gray-500 dark:text-gray-400 mb-6"></p>
+        <div id="modalTags" class="flex flex-wrap gap-2 mb-6"></div>
+        <div id="modalContent" class="prose prose-lg max-w-none dark:prose-invert"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Store ideas data
+const ideasData = <%= @entries.to_json.html_safe %>;
+const gradients = [
+  ['#667eea', '#764ba2'],
+  ['#f093fb', '#f5576c'],
+  ['#4facfe', '#00f2fe'],
+  ['#fa709a', '#fee140'],
+  ['#30cfd0', '#330867'],
+  ['#a8edea', '#fed6e3']
+];
+
+let currentTag = null;
+
+function filterIdeas() {
+  const searchValue = document.getElementById('searchInput').value.toLowerCase();
+  const cards = document.querySelectorAll('.idea-card');
+  
+  cards.forEach(card => {
+    const title = card.dataset.title.toLowerCase();
+    const tags = card.dataset.tags.toLowerCase();
+    const matchesSearch = title.includes(searchValue) || tags.includes(searchValue);
+    const matchesTag = !currentTag || tags.includes(currentTag.toLowerCase());
+    
+    if (matchesSearch && matchesTag) {
+      card.style.display = 'block';
+      card.style.animation = 'fadeIn 0.3s ease';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function filterByTag(tag) {
+  currentTag = tag;
+  
+  // Update button states
+  document.querySelectorAll('.tag-filter').forEach(btn => {
+    if ((tag === null && btn.dataset.tag === 'all') || btn.dataset.tag === tag) {
+      btn.className = 'tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-indigo-600 text-white shadow-md';
+    } else {
+      btn.className = 'tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm';
+    }
+  });
+  
+  filterIdeas();
+}
+
+function openIdeaModal(ideaId) {
+  const idea = ideasData.find(i => i.id === ideaId);
+  if (!idea) return;
+  
+  const gradientIndex = ideasData.indexOf(idea) % gradients.length;
+  const gradient = gradients[gradientIndex];
+  
+  // Set modal content
+  document.getElementById('modalGradient').style.background = `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`;
+  document.getElementById('modalTitle').textContent = idea.content.split('.')[0] || `Идея #${idea.id}`;
+  document.getElementById('modalDate').textContent = new Date(idea.created_at).toLocaleDateString('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  // Set tags
+  const tagsContainer = document.getElementById('modalTags');
+  tagsContainer.innerHTML = (idea.tags || []).map(tag => `
+    <span class="px-3 py-1 rounded-full text-sm font-medium" 
+          style="background: linear-gradient(135deg, ${gradient[0]}20, ${gradient[1]}20); color: ${gradient[0]};">
+      ${tag}
+    </span>
+  `).join('');
+  
+  // Set content
+  document.getElementById('modalContent').innerHTML = `<p>${idea.content.replace(/\n/g, '<br>')}</p>`;
+  
+  // Show modal
+  document.getElementById('ideaModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeIdeaModal() {
+  document.getElementById('ideaModal').classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+// Add fade-in animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease;
+  }
+`;
+document.head.appendChild(style);
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  // Add staggered animation to cards
+  document.querySelectorAll('.idea-card').forEach((card, index) => {
+    card.style.animation = `fadeIn 0.5s ease ${index * 0.1}s both`;
+  });
+});
+</script>

@@ -1,11 +1,9 @@
-class Api::CalendarController < ApplicationController
-  skip_before_action :verify_authenticity_token
-  before_action :set_user
+class Api::CalendarController < Api::BaseController
   before_action :set_calendar_event, only: [:show, :update, :destroy, :toggle_done, :move]
 
   # GET /api/calendar/events
   def index
-    events = @user.calendar_events.active
+    events = current_user.calendar_events.active
 
     # Filter by date range
     if params[:start_date] && params[:end_date]
@@ -56,7 +54,7 @@ class Api::CalendarController < ApplicationController
 
   # POST /api/calendar/events
   def create
-    @calendar_event = @user.calendar_events.build(calendar_event_params)
+    @calendar_event = current_user.calendar_events.build(calendar_event_params)
 
     if @calendar_event.save
       broadcast_calendar_update('created', @calendar_event)
@@ -157,7 +155,7 @@ class Api::CalendarController < ApplicationController
           id: key,
           name: info[:label],
           color: info[:color],
-          count: @user.calendar_events.active.by_category(key).count
+          count: current_user.calendar_events.active.by_category(key).count
         }
       end
     }
@@ -166,7 +164,7 @@ class Api::CalendarController < ApplicationController
   # GET /api/calendar/upcoming
   def upcoming
     limit = params[:limit]&.to_i || 5
-    events = @user.calendar_events.upcoming.pending.limit(limit)
+    events = current_user.calendar_events.upcoming.pending.limit(limit)
     
     render json: {
       events: events.map { |event| serialize_event(event) }
@@ -178,15 +176,15 @@ class Api::CalendarController < ApplicationController
     today = Date.current
     
     render json: {
-      today: @user.calendar_events.active.where(start_time: today.beginning_of_day..today.end_of_day).count,
-      this_week: @user.calendar_events.for_week(today).count,
-      this_month: @user.calendar_events.for_month(today).count,
-      completed_this_week: @user.calendar_events.for_week(today).completed.count,
-      pending_reminders: @user.calendar_events.reminder_pending.count,
+      today: current_user.calendar_events.active.where(start_time: today.beginning_of_day..today.end_of_day).count,
+      this_week: current_user.calendar_events.for_week(today).count,
+      this_month: current_user.calendar_events.for_month(today).count,
+      completed_this_week: current_user.calendar_events.for_week(today).completed.count,
+      pending_reminders: current_user.calendar_events.reminder_pending.count,
       by_category: CalendarEvent::CATEGORIES.keys.map do |category|
         {
           category: category,
-          count: @user.calendar_events.active.by_category(category).count
+          count: current_user.calendar_events.active.by_category(category).count
         }
       end
     }
@@ -194,18 +192,8 @@ class Api::CalendarController < ApplicationController
 
   private
 
-  def set_user
-    # Для демонстрации берем первого пользователя
-    # В продакшене здесь будет current_user
-    @user = User.first
-    
-    unless @user
-      render json: { error: 'User not found' }, status: :not_found
-    end
-  end
-
   def set_calendar_event
-    @calendar_event = @user.calendar_events.active.find(params[:id])
+    @calendar_event = current_user.calendar_events.active.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Event not found' }, status: :not_found
   end
@@ -245,12 +233,12 @@ class Api::CalendarController < ApplicationController
 
   def broadcast_calendar_update(action, event)
     ActionCable.server.broadcast(
-      "calendar_#{@user.id}",
+      "calendar_#{current_user.id}",
       {
         type: "calendar:event:#{action}",
         data: {
           event: serialize_event(event),
-          user_id: @user.id,
+          user_id: current_user.id,
           timestamp: Time.current.iso8601
         }
       }

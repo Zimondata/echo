@@ -1,1059 +1,909 @@
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="md:flex md:items-center md:justify-between">
-    <div class="flex-1 min-w-0">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        Dashboard
-      </h2>
-      <p class="mt-1 text-sm text-gray-500">
-        Добро пожаловать, <%= @user.full_name %>! 👋
-      </p>
-    </div>
-  </div>
-
-  <!-- Timeline with Alerts -->
-  <div class="bg-white shadow rounded-lg mb-6">
-    <div class="px-6 py-5">
-      <!-- Time markers across full width -->
-      <div class="grid grid-cols-7 gap-2 mb-2">
-        <% 7.times do %>
-          <div class="flex justify-between items-center text-xs text-gray-400 font-mono px-2">
-            <% [6, 10, 14, 18, 22].each do |hour| %>
-              <span><%= sprintf('%02d', hour) %></span>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-      
-      <!-- Timeline with Reminders for each day -->
-      <div class="grid grid-cols-7 gap-2">
-        <% 
-          start_of_week = Date.current.beginning_of_week(:monday)
-          (0..6).each do |day_offset|
-            current_day = start_of_week + day_offset.days
-            is_today = current_day == Date.current
-        %>
-          <div class="relative h-6 bg-gray-100 rounded-full">
-            <%
-              # Get reminders for this specific day
-              day_start = current_day.beginning_of_day.in_time_zone(@user.timezone)
-              day_end = current_day.end_of_day.in_time_zone(@user.timezone)
-              current_time = Time.current.in_time_zone(@user.timezone)
-              
-              # Only future reminders
-              day_reminders = @user.reminders.where(remind_at: day_start..day_end)
-                                             .where('remind_at > ?', current_time)
-              
-              day_reminders.each do |reminder|
-                reminder_time = reminder.remind_at.in_time_zone(@user.timezone)
-                # Position from 6:00 to 22:00 (16 hours span)
-                if reminder_time.hour >= 6 && reminder_time.hour <= 22
-                  hour_offset = reminder_time.hour - 6  # 0-16 range
-                  minute_offset = reminder_time.min / 60.0
-                  position = ((hour_offset + minute_offset) / 16.0 * 100).round(2)
-                  
-                  # Only blue for future reminders
-                  bell_color = 'text-blue-500'
-            %>
-              <div class="absolute top-0 transform -translate-x-1/2 -translate-y-1 cursor-pointer hover:scale-125 transition-transform"
-                   style="left: <%= position %>%;"
-                   onclick="showReminderModal('<%= reminder.id %>', '<%= reminder.message.gsub("'", "\\'") %>', '<%= reminder_time.strftime('%H:%M') %>', event); event.stopPropagation();"
-                   title="🔔 <%= reminder.message %> (<%= reminder_time.strftime('%H:%M') %>)">
-                <span class="<%= bell_color %> text-lg hover:drop-shadow-md">🔔</span>
-              </div>
-            <% 
-                end
-              end
-            %>
-            
-            <!-- Current time indicator (only for today) -->
-            <% if current_day == Date.current %>
-              <%
-                current_hour = Time.current.in_time_zone(@user.timezone)
-                if current_hour.hour >= 6 && current_hour.hour <= 22
-                  current_offset = current_hour.hour - 6
-                  current_minute_offset = current_hour.min / 60.0
-                  current_position = ((current_offset + current_minute_offset) / 16.0 * 100).round(2)
-              %>
-                <div class="absolute top-0 bottom-0 w-1 bg-red-400 rounded-full transform -translate-x-1/2"
-                     style="left: <%= current_position %>%;"
-                     title="Сейчас: <%= current_hour.strftime('%H:%M') %>">
-                </div>
-              <% end %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
-  <!-- Week Calendar -->
-  <div class="bg-white shadow rounded-lg">
-    <div class="px-6 py-5">
-      <!-- Week Calendar Grid -->
-      <div class="grid grid-cols-7 gap-1 mb-4" style="min-height: 580px;">
-        <!-- Week Headers -->
-        <% 
-          weekdays = [
-            { short: 'ПН', full: 'Понедельник' },
-            { short: 'ВТ', full: 'Вторник' }, 
-            { short: 'СР', full: 'Среда' },
-            { short: 'ЧТ', full: 'Четверг' },
-            { short: 'ПТ', full: 'Пятница' },
-            { short: 'СБ', full: 'Суббота' },
-            { short: 'ВС', full: 'Воскресенье' }
-          ]
-          
-          start_of_week = Date.current.beginning_of_week(:monday)
-          weekdays.each_with_index do |day, index|
-            current_day = start_of_week + index.days
-            is_today = current_day == Date.current
-        %>
-          <div class="text-center pb-1">
-            <div class="flex items-center justify-center space-x-1">
-              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide"><%= day[:short] %></span>
-              <span class="text-lg font-bold <%= is_today ? 'text-indigo-600' : 'text-gray-900' %>"><%= current_day.day %></span>
-            </div>
-            <% if is_today %>
-              <div class="text-xs text-indigo-600 font-medium">
-                Сегодня
-              </div>
-            <% end %>
-          </div>
-        <% end %>
-        
-        <!-- Week Days with Events -->
-        <% 
-          (0..6).each do |day_offset|
-            current_day = start_of_week + day_offset.days
-            day_events = @week_events.select { |event| 
-              event.start_time.in_time_zone(@user.timezone).to_date == current_day 
-            }
-        %>
-          <div class="min-h-[520px] p-3 <%= day_offset.even? ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100' : 'bg-gradient-to-br from-slate-50 via-white to-slate-100' %> rounded-2xl border border-gray-200 drop-zone shadow-sm hover:shadow-md transition-all duration-300"
-               data-date="<%= current_day.iso8601 %>"
-               ondrop="handleEventDrop(event)"
-               ondragover="handleDragOver(event)"
-               ondragenter="handleDragEnter(event)"
-               ondragleave="handleDragLeave(event)"
-               onclick="openDayModal('<%= current_day.iso8601 %>', '<%= current_day.strftime('%d %B') %>', event)">
-            
-            
-            <!-- Events for this day -->
-            <div class="space-y-1">
-              <% 
-                # Показываем ВСЕ события дня - и прошлые, и будущие
-                upcoming_events = day_events
-              %>
-              
-              <%
-                # Разделяем события на временные и плавающие
-                timed_events = upcoming_events.select { |e| !e.all_day? }.sort_by(&:start_time)
-                floating_events = upcoming_events.select { |e| e.all_day? }
-              %>
-              
-              <!-- Floating Plans (без времени) -->
-              <% if floating_events.any? %>
-                <div class="mb-2">
-                  <div class="text-xs text-gray-600 font-bold mb-3 flex items-center bg-white bg-opacity-60 backdrop-blur-sm px-3 py-2 rounded-xl shadow-sm border border-white border-opacity-50">
-                    <span class="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mr-2 animate-pulse"></span>
-                    📋 Планы
-                  </div>
-                  <% floating_events.each do |event| %>
-                    <%
-                      # Определяем цвета по типу события для планов
-                      if event.event_type == 'reminder'
-                        float_bg_color = "rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%"
-                        float_border_color = "rgba(239, 68, 68, 0.25)"
-                        float_shadow_color = "rgba(239, 68, 68, 0.15)"
-                        float_icon = "🔔"
-                      else
-                        float_bg_color = "rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%"
-                        float_border_color = "rgba(168, 85, 247, 0.25)"
-                        float_shadow_color = "rgba(168, 85, 247, 0.15)"
-                        float_icon = "📋"
-                      end
-                    %>
-                    <div class="event-card text-xs p-3 rounded-xl border mb-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.03] cursor-move draggable-event transform hover:-translate-y-1 relative backdrop-blur-sm" 
-                         style="background: linear-gradient(135deg, <%= float_bg_color %>); border: 1px solid <%= float_border_color %>; box-shadow: 0 8px 32px <%= float_shadow_color %>; backdrop-filter: blur(10px);"
-                         draggable="true"
-                         ondragstart="handleEventDragStart(event)"
-                         ondragend="handleEventDragEnd(event)"
-                         onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
-                         data-event-id="<%= event.id %>"
-                         data-event-title="<%= event.title.gsub('"', '&quot;') %>"
-                         data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
-                         data-event-start="<%= event.start_time.iso8601 %>"
-                         data-event-end="<%= event.end_time&.iso8601 %>"
-                         data-event-type="<%= event.event_type %>"
-                         data-event-priority="<%= event.priority %>"
-                         data-event-all-day="<%= event.all_day? %>"
-                         data-event-color="<%= event.display_color %>">
-                      
-                      <!-- Type icon in corner -->
-                      <div class="absolute top-1 right-1 text-xs opacity-80 bg-white bg-opacity-60 backdrop-blur-sm p-1 rounded-full shadow-sm"><%= float_icon %></div>
-                      
-                      <div class="flex items-start space-x-2">
-                        <input type="checkbox" 
-                               class="w-4 h-4 text-emerald-600 bg-white bg-opacity-90 border-2 border-gray-300 border-opacity-60 rounded-lg focus:ring-emerald-500 focus:ring-2 cursor-pointer transition-all duration-200 hover:border-emerald-400 hover:bg-opacity-100 flex-shrink-0 mt-0.5 backdrop-blur-sm shadow-sm"
-                               <%= 'checked' if event.done? %>
-                               onchange="toggleEventDone('<%= event.id %>', this.checked)"
-                               onclick="event.stopPropagation();">
-                        <div class="font-semibold text-gray-800 text-xs <%= 'line-through text-gray-500' if event.done? %> flex-1 leading-relaxed pr-10">
-                          <%= event.title %>
-                        </div>
-                      </div>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-
-              <!-- Timed Events (с временем) -->
-              <% if timed_events.any? %>
-                
-                <% timed_events.first(8).each do |event| %>
-                  <%
-                    # Определяем цвета по типу события
-                    if event.event_type == 'reminder'
-                      bg_color = "rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%"
-                      border_color = "rgba(239, 68, 68, 0.25)"
-                      shadow_color = "rgba(239, 68, 68, 0.15)"
-                      icon = "🔔"
-                    else
-                      bg_color = "rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%"
-                      border_color = "rgba(59, 130, 246, 0.25)"
-                      shadow_color = "rgba(59, 130, 246, 0.15)"
-                      icon = "⏰"
-                    end
-                  %>
-                  <div class="event-card text-xs p-3 rounded-xl border mb-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.03] cursor-move draggable-event relative transform hover:-translate-y-1 backdrop-blur-sm" 
-                       style="background: linear-gradient(135deg, <%= bg_color %>); border: 1px solid <%= border_color %>; box-shadow: 0 8px 32px <%= shadow_color %>; backdrop-filter: blur(10px);"
-                       draggable="true"
-                       ondragstart="handleEventDragStart(event)"
-                       ondragend="handleEventDragEnd(event)"
-                       onclick="editEvent('<%= event.id %>', event); event.stopPropagation();"
-                       data-event-id="<%= event.id %>"
-                       data-event-title="<%= event.title.gsub('"', '&quot;') %>"
-                       data-event-description="<%= event.description.to_s.gsub('"', '&quot;') %>"
-                       data-event-start="<%= event.start_time.iso8601 %>"
-                       data-event-end="<%= event.end_time&.iso8601 %>"
-                       data-event-type="<%= event.event_type %>"
-                       data-event-priority="<%= event.priority %>"
-                       data-event-all-day="<%= event.all_day? %>"
-                       data-event-color="<%= event.display_color %>">
-                    
-                    <!-- Type icon in left corner -->
-                    <div class="absolute top-1 left-1 text-xs opacity-80 bg-white bg-opacity-60 backdrop-blur-sm p-1 rounded-full shadow-sm">
-                      <%= icon %>
-                    </div>
-                    
-                    <!-- Compact time only -->
-                    <div class="absolute top-1 right-1 text-[10px] font-mono text-gray-600 bg-white bg-opacity-80 backdrop-blur-sm px-2 py-1 rounded-full font-bold leading-none shadow-sm border border-white border-opacity-50">
-                      <%= event.start_time.in_time_zone(@user.timezone).strftime('%H:%M') %>
-                    </div>
-                    
-                    <div class="pt-3">
-                      <div class="flex items-start space-x-2">
-                        <input type="checkbox" 
-                               class="w-4 h-4 text-emerald-600 bg-white bg-opacity-90 border-2 border-gray-300 border-opacity-60 rounded-lg focus:ring-emerald-500 focus:ring-2 cursor-pointer transition-all duration-200 hover:border-emerald-400 hover:bg-opacity-100 flex-shrink-0 mt-0.5 backdrop-blur-sm shadow-sm"
-                               <%= 'checked' if event.done? %>
-                               onchange="toggleEventDone('<%= event.id %>', this.checked)"
-                               onclick="event.stopPropagation();">
-                        <div class="font-semibold text-xs text-gray-800 <%= 'line-through text-gray-500' if event.done? %> flex-1 leading-relaxed pr-14">
-                          <%= event.title %>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                <% end %>
-              <% end %>
-              
-              <!-- Empty state -->
-              <% if upcoming_events.empty? %>
-                <div class="text-xs text-gray-400 text-center py-2 italic">
-                  Нет событий
-                </div>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notes Section -->
-  <div class="bg-white shadow rounded-lg mb-6">
-    <div class="px-6 py-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
-          <span class="w-6 h-6 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mr-3 flex items-center justify-center">
-            <span class="text-white text-sm">📝</span>
-          </span>
-          Заметки дня
-        </h3>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-500">Идеи и размышления</span>
-          <%= link_to ideas_entries_path, class: "text-sm text-indigo-600 hover:text-indigo-500 font-medium" do %>
-            Все идеи →
-          <% end %>
-        </div>
-      </div>
-      
-      <!-- Notes Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <% 
-          today_notes = @recent_entries.select { |entry| 
-            ['idea', 'diary'].include?(entry.entry_type) && 
-            entry.created_at.in_time_zone(@user.timezone).to_date == Date.current &&
-            entry.parent_entry_id.nil?  # Only show parent entries or standalone
-          }
-        %>
-        
-        <% if today_notes.any? %>
-          <% today_notes.each do |note| %>
-            <div class="note-card p-4 rounded-lg border transition-all duration-300 hover:shadow-md cursor-pointer <%= note.entry_type == 'idea' ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200 hover:border-yellow-300' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:border-blue-300' %>">
-              <!-- Note Type & Time -->
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium <%= note.entry_type == 'idea' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' %>">
-                    <%= note.entry_type == 'idea' ? '💡 Идея' : '📔 Дневник' %>
-                  </span>
-                  <% if note.child_entries.any? %>
-                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
-                      +<%= note.child_entries.count %> размышлений
-                    </span>
-                  <% end %>
-                </div>
-                <span class="text-xs text-gray-500">
-                  <%= note.created_at.in_time_zone(@user.timezone).strftime('%H:%M') %>
-                </span>
-              </div>
-              
-              <!-- Note Content -->
-              <p class="text-sm text-gray-800 leading-relaxed">
-                <%= note.content.truncate(120) %>
-              </p>
-              
-              <!-- Note Footer -->
-              <div class="mt-3 pt-2 border-t border-gray-200">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-400">
-                    Приоритет: <%= note.priority || 5 %>/10
-                  </span>
-                  <div class="flex items-center space-x-1">
-                    <% if note.tags.present? %>
-                      <% note.tags.first(2).each do |tag| %>
-                        <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-                          #<%= tag %>
-                        </span>
-                      <% end %>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-        <% else %>
-          <!-- Empty State -->
-          <div class="col-span-full flex flex-col items-center justify-center py-12 text-center">
-            <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-4">
-              <span class="text-2xl">🌟</span>
-            </div>
-            <h4 class="text-lg font-medium text-gray-900 mb-2">Пока нет заметок</h4>
-            <p class="text-sm text-gray-500 max-w-sm">
-              Отправьте боту свои идеи или размышления, чтобы они появились здесь
-            </p>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
-  <!-- Recent Entries & Upcoming Events -->
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <!-- Recent Entries -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-          Последние планы
-        </h3>
-        <div class="flow-root">
-          <ul role="list" class="-my-5 divide-y divide-gray-200">
-            <% @recent_entries.select { |e| e.entry_type == 'plan' }.first(5).each do |entry| %>
-              <li class="py-4">
-                <div class="flex items-center space-x-4">
-                  <div class="flex-shrink-0">
-                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full <%= entry.entry_type == 'diary' ? 'bg-blue-100 text-blue-600' : entry.entry_type == 'idea' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600' %>">
-                      <%= entry.entry_type == 'diary' ? '📔' : entry.entry_type == 'idea' ? '💡' : '📋' %>
-                    </span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">
-                      <%= entry.content.truncate(60) %>
-                    </p>
-                    <p class="text-sm text-gray-500">
-                      <%= entry.created_at.in_time_zone(@user.timezone).strftime('%d.%m.%Y %H:%M') %>
-                    </p>
-                  </div>
-                </div>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upcoming Events -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-          Ближайшие события
-        </h3>
-        <% if @upcoming_events.any? %>
-          <div class="flow-root">
-            <ul role="list" class="-my-5 divide-y divide-gray-200">
-              <% @upcoming_events.each do |event| %>
-                <li class="py-4">
-                  <div class="flex items-center space-x-4">
-                    <div class="flex-shrink-0">
-                      <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-600">
-                        📅
-                      </span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">
-                        <%= event.title %>
-                      </p>
-                      <p class="text-sm text-gray-500">
-                        <%= event.all_day? ? event.start_time.in_time_zone(@user.timezone).strftime('%d.%m.%Y') : event.start_time.in_time_zone(@user.timezone).strftime('%d.%m.%Y %H:%M') %>
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              <% end %>
-            </ul>
-          </div>
-        <% else %>
-          <p class="text-sm text-gray-500">Нет запланированных событий</p>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Event Edit Modal -->
-<div id="eventModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-    <div class="flex justify-between items-center pb-3">
-      <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Редактировать событие</h3>
-      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
-    
-    <form id="eventForm" class="space-y-4">
-      <input type="hidden" id="eventId" />
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Название</label>
-        <input type="text" id="eventTitle" 
-               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-               required>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-        <textarea id="eventDescription" rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-      </div>
-      
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
-          <input type="date" id="eventDate" 
-                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                 required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Время</label>
-          <input type="time" id="eventTime" 
-                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-      </div>
-      
-      <div class="flex items-center">
-        <input type="checkbox" id="eventAllDay" class="rounded border-gray-300 text-indigo-600">
-        <label for="eventAllDay" class="ml-2 text-sm text-gray-700">Весь день</label>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-        <select id="eventType" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="meeting">Встреча</option>
-          <option value="task">Задача</option>
-          <option value="plan">План</option>
-          <option value="idea">Идея</option>
-          <option value="diary">Дневник</option>
-          <option value="reminder">Напоминание</option>
-        </select>
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Приоритет</label>
-        <select id="eventPriority" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="low">Низкий</option>
-          <option value="medium">Средний</option>
-          <option value="high">Высокий</option>
-          <option value="urgent">Срочный</option>
-        </select>
-      </div>
-    </form>
-    
-    <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
-      <button onclick="deleteEvent()" 
-              class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
-        🗑️ Удалить
-      </button>
-      
-      <div class="flex space-x-3">
-        <button onclick="closeModal()" 
-                class="bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium py-2 px-4 rounded-md transition-colors">
-          Отмена
-        </button>
-        <button onclick="saveEvent()" 
-                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
-          💾 Сохранить
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Reminder Modal -->
-<div id="reminderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-    <div class="mt-3">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Редактировать напоминание</h3>
-      
-      <input type="hidden" id="reminderId">
-      
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Сообщение</label>
-        <input type="text" id="reminderMessage" 
-               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Дата</label>
-        <input type="date" id="reminderDate" 
-               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Время</label>
-        <input type="time" id="reminderTime" 
-               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      
-      <div class="flex justify-between">
-        <button onclick="deleteReminder()" 
-                class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
-          🗑️ Удалить
-        </button>
-        
-        <div class="space-x-2">
-          <button onclick="closeReminderModal()" 
-                  class="bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-medium py-2 px-4 rounded-md transition-colors">
-            Отмена
-          </button>
-          <button onclick="saveReminder()" 
-                  class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors">
-            💾 Сохранить
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <style>
-  .border-l-3 {
-    border-left-width: 3px;
+  /* Glassmorphism and animations */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.1);
   }
   
-  .drop-zone.drag-active {
-    background-color: #f0f9ff !important;
-    border-color: #3b82f6 !important;
-    border-style: dashed !important;
+  .dark .glass-card {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
-  .drop-zone.drag-over {
-    background-color: #dbeafe !important;
-    border-color: #1d4ed8 !important;
-    border-width: 2px !important;
-    transform: scale(1.02);
-  }
-  
-  .draggable-event:hover::after {
-    content: "✨";
-    position: absolute;
-    top: -8px;
-    right: -8px;
+  .gradient-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  
+  .gradient-amber {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  }
+  
+  .gradient-blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  }
+  
+  .task-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .task-item:hover {
+    transform: translateX(4px);
+    background: rgba(139, 92, 246, 0.05);
+  }
+  
+  .completed-task {
+    opacity: 0.6;
+  }
+  
+  .completed-task .task-text {
+    text-decoration: line-through;
+    color: #9ca3af;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .stagger-animation > * {
+    animation: slideUp 0.5s ease both;
+  }
+  
+  .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+  
+  .badge-pulse {
     animation: pulse 2s infinite;
   }
   
   @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   
-  .event-card:hover {
-    transform: translateY(-2px) scale(1.02);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  .hover-scale {
+    transition: transform 0.2s ease;
   }
   
-  .drop-zone:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%) !important;
-    border-color: rgba(59, 130, 246, 0.3) !important;
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  .calendar-day {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .calendar-day:hover {
+    background: rgba(139, 92, 246, 0.1);
+    transform: scale(1.1);
+  }
+  
+  .calendar-day.selected {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .quick-action-btn {
+    transition: all 0.3s ease;
+  }
+  
+  .quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+  }
+  
+  .entry-card {
+    transition: all 0.3s ease;
+  }
+  
+  .entry-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+  
+  .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .task-item:hover .delete-btn {
+    opacity: 1;
   }
 </style>
 
+<div class="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
+  <div class="max-w-7xl mx-auto p-4 md:p-8">
+    
+    <!-- Header with Stats -->
+    <div class="mb-8 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+            Личный Ассистент
+          </h1>
+          <p class="text-gray-600 mt-2">Управляйте своим днем эффективно</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center gap-3">
+          <div class="glass-card px-4 py-2 rounded-full">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span class="text-lg font-medium text-gray-800">
+                <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
+              </span>
+            </div>
+          </div>
+          <% if logged_in? %>
+            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "glass-card px-4 py-2 rounded-full hover:bg-red-50 transition" do %>
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Выход</span>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Quick Stats -->
+      <div class="mb-4">
+        <h3 class="text-sm font-medium text-gray-500 mb-2">
+          Статистика за <span id="statsDateLabel" class="text-gray-700 font-semibold">сегодня</span>
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="glass-card p-4 rounded-xl text-center hover-scale">
+            <div id="totalEntriesCount" class="text-2xl font-bold text-violet-600">0</div>
+            <div class="text-sm text-gray-600 mt-1">Записей за день</div>
+          </div>
+          <div class="glass-card p-4 rounded-xl text-center hover-scale">
+            <div id="todayTasksCount" class="text-2xl font-bold text-amber-600">0</div>
+            <div class="text-sm text-gray-600 mt-1">Задач на день</div>
+          </div>
+          <div class="glass-card p-4 rounded-xl text-center hover-scale">
+            <div id="completedTodayCount" class="text-2xl font-bold text-green-600">0</div>
+            <div class="text-sm text-gray-600 mt-1">Выполнено</div>
+          </div>
+          <div class="glass-card p-4 rounded-xl text-center hover-scale">
+            <div id="todayIdeasCount" class="text-2xl font-bold text-blue-600">0</div>
+            <div class="text-sm text-gray-600 mt-1">Новых идей</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-animation">
+      
+      <!-- Calendar Widget -->
+      <div class="lg:col-span-1">
+        <div class="glass-card rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="p-2 rounded-lg gradient-bg">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-800">Календарь</h2>
+          </div>
+          
+          <!-- Mini Calendar -->
+          <div class="space-y-3">
+            <div class="grid grid-cols-7 gap-2 text-center text-xs text-gray-500 font-medium">
+              <div>Пн</div>
+              <div>Вт</div>
+              <div>Ср</div>
+              <div>Чт</div>
+              <div>Пт</div>
+              <div>Сб</div>
+              <div>Вс</div>
+            </div>
+            <div class="grid grid-cols-7 gap-2" id="calendarDays">
+              <% 
+                today = Date.current
+                start_date = today.beginning_of_week
+                (0..6).each do |i| 
+                  date = start_date + i.days
+                  is_today = date == today
+                  events_count = @user&.calendar_events&.where('DATE(start_time) = ?', date)&.count || 0
+              %>
+                <div 
+                  class="calendar-day relative p-3 rounded-lg text-center <%= 'selected' if is_today %>"
+                  onclick="loadDayEvents('<%= date.iso8601 %>')"
+                  data-date="<%= date.iso8601 %>"
+                >
+                  <div class="text-sm font-medium <%= is_today ? 'text-white' : 'text-gray-700' %>">
+                    <%= date.day %>
+                  </div>
+                  <% if events_count > 0 %>
+                    <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      <%= events_count %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="glass-card rounded-2xl p-6 shadow-xl mt-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            Быстрые действия
+          </h3>
+          <div class="space-y-3">
+            <button onclick="quickAddReminder()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-violet-50 transition">
+              <div class="p-2 rounded-lg bg-amber-100">
+                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+              </div>
+              <span class="text-gray-700">Создать напоминание</span>
+            </button>
+            
+            <button onclick="startVoiceNote()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition">
+              <div class="p-2 rounded-lg bg-blue-100">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
+              </div>
+              <span class="text-gray-700">Голосовая заметка</span>
+            </button>
+            
+            <button onclick="quickAddIdea()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-green-50 transition">
+              <div class="p-2 rounded-lg bg-green-100">
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+              </div>
+              <span class="text-gray-700">Новая заметка</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Today and Tomorrow Tasks -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Today Section -->
+          <div class="glass-card rounded-2xl shadow-xl gradient-amber">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <div class="p-2 rounded-lg bg-amber-500">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
+                    </svg>
+                  </div>
+                  <h2 class="text-xl font-semibold text-gray-800">Сегодня</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="badge-pulse px-3 py-1 bg-amber-100 text-amber-700 text-sm rounded-full">
+                    <%= @today_events&.count || 0 %> задач
+                  </div>
+                  <button 
+                    onclick="toggleExpand('today')" 
+                    id="expandTodayBtn"
+                    class="p-1 hover:bg-amber-100 rounded-lg transition"
+                    title="Развернуть"
+                  >
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <div class="space-y-3 transition-all duration-300 pr-2" id="todayTasks" style="max-height: 320px; overflow-y: auto;">
+                  <% (@today_events || []).each do |event| %>
+                  <div class="task-item glass-card p-3 rounded-lg <%= 'completed-task' if event.done? %>" data-event-id="<%= event.id %>">
+                    <div class="flex items-start gap-3">
+                      <label class="flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
+                          <%= 'checked' if event.done? %>
+                          onchange="toggleTask(<%= event.id %>)"
+                        >
+                      </label>
+                      <div class="flex-1">
+                        <p class="task-text text-gray-800 font-medium">
+                          <%= event.title %>
+                        </p>
+                        <% if event.start_time && !event.all_day? %>
+                          <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <%= event.start_time.strftime("%H:%M") %>
+                          </p>
+                        <% end %>
+                      </div>
+                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1 hover:bg-red-50 rounded">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
+                
+                  <% if @today_events.nil? || @today_events.empty? %>
+                    <div class="text-center py-8 text-gray-500">
+                      <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p>Нет задач на сегодня</p>
+                    </div>
+                  <% end %>
+                </div>
+                <% if @today_events && @today_events.count > 3 %>
+                  <div class="text-center mt-3 text-sm text-gray-500">
+                    Показано <%= [3, @today_events.count].min %> из <%= @today_events.count %> задач
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tomorrow Section -->
+          <div class="glass-card rounded-2xl shadow-xl gradient-blue">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <div class="p-2 rounded-lg bg-blue-500">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                  </div>
+                  <h2 class="text-xl font-semibold text-gray-800">Завтра</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="badge-pulse px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                    <%= @tomorrow_events&.count || 0 %> задач
+                  </div>
+                  <button 
+                    onclick="toggleExpand('tomorrow')" 
+                    id="expandTomorrowBtn"
+                    class="p-1 hover:bg-blue-100 rounded-lg transition"
+                    title="Развернуть"
+                  >
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <div class="space-y-3 transition-all duration-300 pr-2" id="tomorrowTasks" style="max-height: 320px; overflow-y: auto;">
+                  <% (@tomorrow_events || []).each do |event| %>
+                  <div class="task-item glass-card p-3 rounded-lg <%= 'completed-task' if event.done? %>" data-event-id="<%= event.id %>">
+                    <div class="flex items-start gap-3">
+                      <label class="flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
+                          <%= 'checked' if event.done? %>
+                          onchange="toggleTask(<%= event.id %>)"
+                        >
+                      </label>
+                      <div class="flex-1">
+                        <p class="task-text text-gray-800 font-medium">
+                          <%= event.title %>
+                        </p>
+                        <% if event.start_time && !event.all_day? %>
+                          <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <%= event.start_time.strftime("%H:%M") %>
+                          </p>
+                        <% end %>
+                      </div>
+                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1 hover:bg-red-50 rounded">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                <% end %>
+                
+                  <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
+                    <div class="text-center py-8 text-gray-500">
+                      <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      <p>Нет задач на завтра</p>
+                    </div>
+                  <% end %>
+                </div>
+                <% if @tomorrow_events && @tomorrow_events.count > 3 %>
+                  <div class="text-center mt-3 text-sm text-gray-500">
+                    Показано <%= [3, @tomorrow_events.count].min %> из <%= @tomorrow_events.count %> задач
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Add Task Section -->
+        <div class="glass-card rounded-2xl p-6 shadow-xl">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Добавить задачу
+          </h3>
+          <div class="flex gap-3">
+            <div class="flex gap-2">
+              <button 
+                id="todayBtn"
+                onclick="setActiveSection('today')" 
+                class="px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition"
+              >
+                Сегодня
+              </button>
+              <button 
+                id="tomorrowBtn"
+                onclick="setActiveSection('tomorrow')" 
+                class="px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Завтра
+              </button>
+            </div>
+            <input 
+              type="text" 
+              id="newTaskInput"
+              placeholder="Новая задача..." 
+              class="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              onkeypress="if(event.key === 'Enter') addTask()"
+            >
+            <button 
+              onclick="addTask()"
+              class="px-6 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white font-medium hover:shadow-lg transition"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Recent Entries -->
+        <div class="glass-card rounded-2xl p-6 shadow-xl">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Последние записи
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <% (@recent_entries || []).first(4).each do |entry| %>
+              <%
+                type_colors = {
+                  'diary' => 'blue',
+                  'idea' => 'amber', 
+                  'plan' => 'green'
+                }
+                color = type_colors[entry.entry_type] || 'gray'
+              %>
+              <div class="entry-card glass-card p-4 rounded-xl border border-gray-200 hover:border-violet-300 cursor-pointer">
+                <div class="flex items-start gap-3">
+                  <div class="p-2 rounded-lg bg-<%= color %>-100">
+                    <svg class="w-4 h-4 text-<%= color %>-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <% if entry.entry_type == 'idea' %>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                      <% elsif entry.entry_type == 'diary' %>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      <% else %>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                      <% end %>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-sm text-gray-800 truncate">
+                      <%= entry.content.truncate(50) %>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      <%= time_ago_in_words(entry.created_at) %> назад
+                    </p>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-// Drag and Drop Variables
-let draggedEvent = null;
-let draggedEventId = null;
+let activeSection = 'today';
+let expandedSections = {
+  today: false,
+  tomorrow: false
+};
 
-// Drag and Drop Functions
-function handleEventDragStart(e) {
-  e.stopPropagation();
+function toggleExpand(section) {
+  const container = section === 'today' ? document.getElementById('todayTasks') : document.getElementById('tomorrowTasks');
+  const button = section === 'today' ? document.getElementById('expandTodayBtn') : document.getElementById('expandTomorrowBtn');
   
-  draggedEvent = e.target.closest('.event-card');
-  draggedEventId = draggedEvent.dataset.eventId;
+  expandedSections[section] = !expandedSections[section];
   
-  e.dataTransfer.setData('text/plain', draggedEventId);
-  e.dataTransfer.effectAllowed = 'move';
-  
-  draggedEvent.style.opacity = '0.5';
-  
-  document.querySelectorAll('.drop-zone').forEach(zone => {
-    zone.classList.add('drag-active');
-  });
-}
-
-function handleEventDragEnd(e) {
-  if (draggedEvent) {
-    draggedEvent.style.opacity = '';
-  }
-  
-  document.querySelectorAll('.drop-zone').forEach(zone => {
-    zone.classList.remove('drag-active', 'drag-over');
-  });
-  
-  draggedEvent = null;
-  draggedEventId = null;
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDragEnter(e) {
-  e.preventDefault();
-  if (draggedEvent) {
-    const dropZone = e.target.closest('.drop-zone');
-    if (dropZone) {
-      dropZone.classList.add('drag-over');
-    }
-  }
-}
-
-function handleDragLeave(e) {
-  const dropZone = e.target.closest('.drop-zone');
-  if (!dropZone) return;
-  
-  if (!e.relatedTarget || !dropZone.contains(e.relatedTarget)) {
-    dropZone.classList.remove('drag-over');
-  }
-}
-
-function handleEventDrop(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  const dropZone = e.target.closest('.drop-zone');
-  if (!dropZone) return;
-  
-  const newDate = dropZone.dataset.date;
-  
-  if (!draggedEventId || !newDate) return;
-  
-  dropZone.classList.remove('drag-over');
-  
-  updateEventDate(draggedEventId, newDate)
-    .then(() => {
-      location.reload();
-    })
-    .catch(error => {
-      alert('Ошибка при перемещении события: ' + error.message);
-    });
-}
-
-async function updateEventDate(eventId, newDate) {
-  const response = await fetch(`/api/calendar/events/${eventId}/move`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      new_date: newDate
-    })
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Неизвестная ошибка');
-  }
-  
-  return response.json();
-}
-
-// Modal Functions
-function openDayModal(date, dateFormatted, clickEvent) {
-  if (clickEvent.target.closest('.event-card')) {
-    return;
-  }
-  
-  document.getElementById('eventId').value = '';
-  document.getElementById('eventTitle').value = '';
-  document.getElementById('eventDescription').value = '';
-  document.getElementById('eventDate').value = date;
-  document.getElementById('eventTime').value = '09:00';
-  document.getElementById('eventAllDay').checked = false;
-  document.getElementById('eventType').value = 'meeting';
-  document.getElementById('eventPriority').value = 'medium';
-  
-  document.getElementById('modalTitle').textContent = `Новое событие на ${dateFormatted}`;
-  
-  const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
-  if (deleteButton) {
-    deleteButton.style.display = 'none';
-  }
-  
-  document.getElementById('eventModal').classList.remove('hidden');
-}
-
-function editEvent(eventId, clickEvent) {
-  const eventCard = clickEvent.target.closest('[data-event-id]');
-  
-  const eventData = {
-    id: eventCard.dataset.eventId,
-    title: eventCard.dataset.eventTitle,
-    description: eventCard.dataset.eventDescription,
-    start: eventCard.dataset.eventStart,
-    end: eventCard.dataset.eventEnd,
-    type: eventCard.dataset.eventType,
-    priority: eventCard.dataset.eventPriority,
-    allDay: eventCard.dataset.eventAllDay === 'true'
-  };
-  
-  document.getElementById('eventId').value = eventData.id;
-  document.getElementById('eventTitle').value = eventData.title;
-  document.getElementById('eventDescription').value = eventData.description;
-  
-  const startDate = new Date(eventData.start);
-  document.getElementById('eventDate').value = startDate.toISOString().split('T')[0];
-  document.getElementById('eventTime').value = startDate.toTimeString().split(' ')[0].substring(0, 5);
-  
-  document.getElementById('eventAllDay').checked = eventData.allDay;
-  document.getElementById('eventType').value = eventData.type;
-  document.getElementById('eventPriority').value = eventData.priority;
-  
-  const deleteButton = document.querySelector('[onclick="deleteEvent()"]');
-  if (deleteButton) {
-    deleteButton.style.display = 'block';
-  }
-  
-  document.getElementById('eventModal').classList.remove('hidden');
-}
-
-function closeModal() {
-  document.getElementById('eventModal').classList.add('hidden');
-}
-
-function saveEvent() {
-  const eventId = document.getElementById('eventId').value;
-  const title = document.getElementById('eventTitle').value;
-  const description = document.getElementById('eventDescription').value;
-  const date = document.getElementById('eventDate').value;
-  const time = document.getElementById('eventTime').value;
-  const allDay = document.getElementById('eventAllDay').checked;
-  const eventType = document.getElementById('eventType').value;
-  const priority = document.getElementById('eventPriority').value;
-  
-  if (!title.trim()) {
-    alert('Укажите название события');
-    return;
-  }
-  
-  let startTime;
-  if (allDay) {
-    startTime = new Date(date + 'T00:00:00.000Z').toISOString();
+  if (expandedSections[section]) {
+    // Expand
+    container.style.maxHeight = '600px';
+    button.innerHTML = `
+      <svg class="w-5 h-5 text-${section === 'today' ? 'amber' : 'blue'}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+      </svg>
+    `;
+    button.title = 'Свернуть';
   } else {
-    startTime = new Date(date + 'T' + time + ':00.000Z').toISOString();
+    // Collapse
+    container.style.maxHeight = '320px';
+    button.innerHTML = `
+      <svg class="w-5 h-5 text-${section === 'today' ? 'amber' : 'blue'}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    `;
+    button.title = 'Развернуть';
   }
+}
+
+function setActiveSection(section) {
+  activeSection = section;
+  const todayBtn = document.getElementById('todayBtn');
+  const tomorrowBtn = document.getElementById('tomorrowBtn');
   
-  const eventData = {
-    calendar_event: {
-      title: title,
-      description: description,
-      start_time: startTime,
-      end_time: null,
-      event_type: eventType,
-      priority: priority,
-      all_day: allDay
-    }
-  };
-  
-  const isNewEvent = !eventId || eventId === '';
-  const url = isNewEvent ? '/api/calendar/events' : `/api/calendar/events/${eventId}`;
-  const method = isNewEvent ? 'POST' : 'PUT';
-  
-  fetch(url, {
-    method: method,
+  if (section === 'today') {
+    todayBtn.className = 'px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition';
+    tomorrowBtn.className = 'px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition';
+  } else {
+    tomorrowBtn.className = 'px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition';
+    todayBtn.className = 'px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition';
+  }
+}
+
+function toggleTask(eventId) {
+  fetch(`/api/v1/calendar_events/${eventId}/toggle`, {
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(eventData)
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
   })
   .then(response => response.json())
   .then(data => {
-    if (data.event) {
-      const message = isNewEvent ? 'Событие создано!' : 'Событие обновлено!';
-      alert(message);
-      closeModal();
-      location.reload();
+    const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (data.data.completed) {
+      taskElement.classList.add('completed-task');
     } else {
-      alert('Ошибка: ' + (data.errors || 'Неизвестная ошибка'));
+      taskElement.classList.remove('completed-task');
     }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    const errorMessage = isNewEvent ? 'Ошибка при создании события' : 'Ошибка при обновлении события';
-    alert(errorMessage);
   });
 }
 
-function deleteEvent() {
-  const eventId = document.getElementById('eventId').value;
-  const title = document.getElementById('eventTitle').value;
+function deleteTask(eventId) {
+  if (!confirm('Удалить задачу?')) return;
   
-  if (!confirm(`Удалить событие "${title}"?`)) {
-    return;
+  fetch(`/api/v1/calendar_events/${eventId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
+    taskElement.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => taskElement.remove(), 300);
+  });
+}
+
+function addTask() {
+  const input = document.getElementById('newTaskInput');
+  const taskText = input.value.trim();
+  
+  if (!taskText) return;
+  
+  // Get user's local date
+  const now = new Date();
+  let targetDate = new Date();
+  
+  if (activeSection === 'today') {
+    // Today - set to start of today in user's timezone
+    targetDate.setHours(9, 0, 0, 0);
+  } else {
+    // Tomorrow - add one day and set to 9 AM
+    targetDate.setDate(targetDate.getDate() + 1);
+    targetDate.setHours(9, 0, 0, 0);
   }
   
-  fetch(`/api/calendar/events/${eventId}`, {
-    method: 'DELETE'
+  fetch('/api/v1/calendar_events', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      title: taskText,
+      start_time: targetDate.toISOString(),
+      all_day: true
+    })
   })
   .then(response => response.json())
   .then(data => {
-    alert('Событие удалено');
-    closeModal();
     location.reload();
+  });
+  
+  input.value = '';
+}
+
+function loadDayEvents(date) {
+  // Update selected day visual
+  document.querySelectorAll('.calendar-day').forEach(day => {
+    day.classList.remove('selected');
+  });
+  event.currentTarget.classList.add('selected');
+  
+  // Update stats date label
+  const selectedDate = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  
+  let dateLabel = '';
+  if (selectedDate.getTime() === today.getTime()) {
+    dateLabel = 'сегодня';
+  } else if (selectedDate.getTime() === today.getTime() + 86400000) {
+    dateLabel = 'завтра';
+  } else {
+    const options = { day: 'numeric', month: 'long' };
+    dateLabel = selectedDate.toLocaleDateString('ru-RU', options);
+  }
+  document.getElementById('statsDateLabel').textContent = dateLabel;
+  
+  // Load stats for selected day
+  updateDayStats(date);
+  
+  // Load events for selected day
+  fetch(`/api/v1/calendar_events?start_date=${date}&end_date=${date}`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Ошибка при удалении события');
+  .then(response => response.json())
+  .then(data => {
+    updateTasksDisplay(data.data || []);
   });
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-  const allDayCheckbox = document.getElementById('eventAllDay');
-  const timeInput = document.getElementById('eventTime');
+function updateDayStats(date) {
+  const selectedDate = new Date(date);
+  const startOfDay = new Date(selectedDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(selectedDate);
+  endOfDay.setHours(23, 59, 59, 999);
   
-  allDayCheckbox.addEventListener('change', function() {
-    timeInput.disabled = this.checked;
-    if (this.checked) {
-      timeInput.value = '';
-    }
+  // Get stats for the selected day
+  Promise.all([
+    fetch(`/api/v1/entries?created_after=${startOfDay.toISOString()}&created_before=${endOfDay.toISOString()}`),
+    fetch(`/api/v1/calendar_events?start_date=${date}&end_date=${date}`)
+  ])
+  .then(responses => Promise.all(responses.map(r => r.json())))
+  .then(([entriesData, eventsData]) => {
+    // Update stats
+    const entries = entriesData.data || [];
+    const events = eventsData.data || [];
+    
+    document.getElementById('totalEntriesCount').textContent = entries.length;
+    document.getElementById('todayTasksCount').textContent = events.length;
+    document.getElementById('completedTodayCount').textContent = events.filter(e => e.done).length;
+    document.getElementById('todayIdeasCount').textContent = entries.filter(e => e.entry_type === 'idea').length;
+  });
+}
+
+function updateTasksDisplay(events) {
+  const todayContainer = document.getElementById('todayTasks');
+  const tomorrowContainer = document.getElementById('tomorrowTasks');
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const todayEvents = events.filter(e => {
+    const eventDate = new Date(e.start_time);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate.getTime() === today.getTime();
   });
   
-  document.getElementById('eventModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeModal();
-    }
+  const tomorrowEvents = events.filter(e => {
+    const eventDate = new Date(e.start_time);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate.getTime() === today.getTime() + 86400000;
   });
+  
+  // Update today section
+  if (todayContainer) {
+    renderEvents(todayContainer, todayEvents);
+  }
+  
+  // Update tomorrow section
+  if (tomorrowContainer) {
+    renderEvents(tomorrowContainer, tomorrowEvents);
+  }
+}
+
+function renderEvents(container, events) {
+  if (events.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-gray-500">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p>Нет задач</p>
+      </div>
+    `;
+  } else {
+    container.innerHTML = events.map(event => `
+      <div class="task-item glass-card p-3 rounded-lg ${event.done ? 'completed-task' : ''}" data-event-id="${event.id}">
+        <div class="flex items-start gap-3">
+          <label class="flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
+              ${event.done ? 'checked' : ''}
+              onchange="toggleTask(${event.id})"
+            >
+          </label>
+          <div class="flex-1">
+            <p class="task-text text-gray-800 font-medium">
+              ${event.title}
+            </p>
+            ${event.start_time && !event.all_day ? `
+              <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ${new Date(event.start_time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            ` : ''}
+          </div>
+          <button onclick="deleteTask(${event.id})" class="delete-btn p-1 hover:bg-red-50 rounded">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function quickAddReminder() {
+  const reminder = prompt('О чём напомнить? (например: "вечером почитать книгу")');
+  if (!reminder) return;
+  
+  // Parse natural language time
+  let remindTime = new Date();
+  const lowerText = reminder.toLowerCase();
+  const now = new Date();
+  
+  if (lowerText.includes('утром')) {
+    remindTime.setHours(9, 0, 0, 0);
+    // If morning time already passed today, set for tomorrow
+    if (remindTime <= now) {
+      remindTime.setDate(remindTime.getDate() + 1);
+    }
+  } else if (lowerText.includes('вечером')) {
+    remindTime.setHours(20, 0, 0, 0);
+    // If evening time already passed today, set for tomorrow
+    if (remindTime <= now) {
+      remindTime.setDate(remindTime.getDate() + 1);
+    }
+  } else if (lowerText.includes('днем')) {
+    remindTime.setHours(14, 0, 0, 0);
+    // If afternoon time already passed today, set for tomorrow
+    if (remindTime <= now) {
+      remindTime.setDate(remindTime.getDate() + 1);
+    }
+  } else {
+    // Default: 1 hour from now
+    remindTime.setTime(now.getTime() + 60 * 60 * 1000);
+  }
+  
+  fetch('/api/v1/reminders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      message: reminder,
+      remind_at: remindTime.toISOString()
+    })
+  })
+  .then(() => {
+    alert('Напоминание создано!');
+    location.reload();
+  });
+}
+
+function startVoiceNote() {
+  alert('Функция голосовых заметок будет доступна в следующей версии');
+}
+
+function quickAddIdea() {
+  const idea = prompt('Опишите вашу идею:');
+  if (!idea) return;
+  
+  fetch('/api/v1/entries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      content: idea,
+      entry_type: 'idea'
+    })
+  })
+  .then(() => {
+    alert('Идея сохранена!');
+    location.reload();
+  });
+}
+
+// Add fade out animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-20px); }
+  }
+`;
+document.head.appendChild(style);
+
+// Initialize stats on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  updateDayStats(today);
 });
-
-// Event Toggle Done Function
-function toggleEventDone(eventId, isChecked) {
-  console.log('Toggling event:', eventId, 'to:', isChecked);
-  
-  fetch(`/api/calendar/events/${eventId}/toggle_done`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest'
-    },
-    body: JSON.stringify({
-      done: isChecked
-    })
-  })
-  .then(response => {
-    console.log('Response status:', response.status);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('API Response:', data);
-    if (data.event) {
-      console.log('Event status updated:', data.event.done);
-      // Reload page to reflect changes
-      location.reload();
-    } else {
-      console.error('No event in response:', data);
-      alert('Ошибка при обновлении статуса: ' + (data.error || 'Неизвестная ошибка'));
-      // Find the checkbox and revert its state
-      const checkbox = document.querySelector(`input[onchange*="${eventId}"]`);
-      if (checkbox) checkbox.checked = !isChecked;
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Ошибка при обновлении статуса: ' + error.message);
-    // Find the checkbox and revert its state
-    const checkbox = document.querySelector(`input[onchange*="${eventId}"]`);
-    if (checkbox) checkbox.checked = !isChecked;
-  });
-}
-
-// Reminder Modal Functions
-function showReminderModal(reminderId, message, time, event) {
-  event.stopPropagation();
-  
-  // Fetch full reminder data
-  fetch(`/api/v1/reminders/${reminderId}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log('Reminder API Response:', data);
-      if (data.reminder) {
-        const reminder = data.reminder;
-        // Parse Berlin time correctly
-        const remindAt = new Date(reminder.remind_at);
-        
-        document.getElementById('reminderId').value = reminder.id;
-        document.getElementById('reminderMessage').value = reminder.message;
-        
-        // Format date for input (YYYY-MM-DD)
-        const year = remindAt.getFullYear();
-        const month = String(remindAt.getMonth() + 1).padStart(2, '0');
-        const day = String(remindAt.getDate()).padStart(2, '0');
-        document.getElementById('reminderDate').value = `${year}-${month}-${day}`;
-        
-        // Format time for input (HH:MM)
-        const hours = String(remindAt.getHours()).padStart(2, '0');
-        const minutes = String(remindAt.getMinutes()).padStart(2, '0');
-        document.getElementById('reminderTime').value = `${hours}:${minutes}`;
-        
-        document.getElementById('reminderModal').classList.remove('hidden');
-      } else {
-        alert('Ошибка при загрузке напоминания: ' + (data.error || 'Неизвестная ошибка'));
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Ошибка при загрузке напоминания: ' + error.message);
-    });
-}
-
-function closeReminderModal() {
-  document.getElementById('reminderModal').classList.add('hidden');
-}
-
-function saveReminder() {
-  const reminderId = document.getElementById('reminderId').value;
-  const message = document.getElementById('reminderMessage').value;
-  const date = document.getElementById('reminderDate').value;
-  const time = document.getElementById('reminderTime').value;
-  
-  if (!message.trim()) {
-    alert('Укажите сообщение напоминания');
-    return;
-  }
-  
-  // Create date in user's timezone
-  const userTimezoneTime = new Date(date + 'T' + time + ':00').toISOString();
-  
-  console.log('Saving reminder:', { reminderId, message, date, time, userTimezoneTime });
-  
-  fetch(`/api/v1/reminders/${reminderId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      reminder: {
-        message: message,
-        remind_at: userTimezoneTime
-      }
-    })
-  })
-  .then(response => {
-    console.log('Response status:', response.status);
-    return response.json();
-  })
-  .then(data => {
-    console.log('API Response:', data);
-    if (data.reminder) {
-      alert('Напоминание обновлено!');
-      closeReminderModal();
-      location.reload();
-    } else {
-      alert('Ошибка: ' + (data.error || data.errors || JSON.stringify(data)));
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Ошибка при обновлении напоминания: ' + error.message);
-  });
-}
-
-function deleteReminder() {
-  const reminderId = document.getElementById('reminderId').value;
-  
-  if (!confirm('Удалить напоминание?')) {
-    return;
-  }
-  
-  fetch(`/api/v1/reminders/${reminderId}`, {
-    method: 'DELETE'
-  })
-  .then(response => response.json())
-  .then(data => {
-    alert('Напоминание удалено');
-    closeReminderModal();
-    location.reload();
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Ошибка при удалении напоминания');
-  });
-}
 </script>

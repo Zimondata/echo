@@ -1,5 +1,5 @@
 class Api::V1::CalendarEventsController < Api::BaseController
-  before_action :find_calendar_event, only: [:show, :update, :destroy, :toggle_done]
+  before_action :find_calendar_event, only: [:show, :update, :destroy, :toggle_done, :toggle_status, :toggle]
 
   def index
     events = current_user.calendar_events.active.order(:start_time)
@@ -46,6 +46,29 @@ class Api::V1::CalendarEventsController < Api::BaseController
   def toggle_done
     @calendar_event.toggle_done!
     success_response(serialize_calendar_event_full(@calendar_event), message: "Event status updated")
+  end
+
+  def toggle_status
+    @calendar_event.toggle_done!
+    
+    render json: {
+      success: true,
+      message: @calendar_event.done? ? 'Задача отмечена как выполненная' : 'Задача отмечена как невыполненная',
+      done: @calendar_event.done?,
+      data: serialize_calendar_event(@calendar_event)
+    }
+  end
+  
+  def toggle
+    @calendar_event.toggle_done!
+    
+    render json: {
+      data: {
+        id: @calendar_event.id,
+        completed: @calendar_event.done?,
+        done: @calendar_event.done?
+      }
+    }
   end
 
   # Calendar statistics

@@ -41,6 +41,10 @@ class Entry < ApplicationRecord
   before_validation :set_occurred_at, on: :create
 
   # Methods
+  def content_length
+    content.to_s.split.size
+  end
+  
   def diary?
     entry_type == "diary"
   end

@@ -1,0 +1,103 @@
+<!-- Statistics Widget -->
+<div class="widget-card bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6">
+  <div class="widget-header flex items-center justify-between mb-4">
+    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+      <span class="w-8 h-8 bg-gradient-to-r from-purple-400 to-violet-500 rounded-full mr-3 flex items-center justify-center">
+        <span class="text-white text-sm">📊</span>
+      </span>
+      Статистика
+    </h3>
+    <span class="text-xs text-purple-600 font-medium">За неделю</span>
+  </div>
+  
+  <div class="widget-preview space-y-4">
+    <%
+      week_start = Date.current.beginning_of_week(:monday)
+      week_end = Date.current.end_of_week(:sunday)
+      
+      week_entries = @recent_entries.select { |entry|
+        entry.created_at.in_time_zone(@user.timezone).to_date >= week_start &&
+        entry.created_at.in_time_zone(@user.timezone).to_date <= week_end
+      }
+      
+      week_ideas = week_entries.select { |e| e.entry_type == 'idea' }.count
+      week_diary = week_entries.select { |e| e.entry_type == 'diary' }.count
+      week_plans = week_entries.select { |e| e.entry_type == 'plan' }.count
+      
+      week_events = @user.calendar_events.where(
+        start_time: week_start.beginning_of_day..week_end.end_of_day
+      ).count
+      
+      completed_events = @user.calendar_events.where(
+        start_time: week_start.beginning_of_day..week_end.end_of_day,
+        done: true
+      ).count
+    %>
+    
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white bg-opacity-70 rounded-lg p-3 text-center border border-purple-200">
+        <div class="text-lg font-bold text-purple-600"><%= week_entries.count %></div>
+        <div class="text-xs text-gray-600">записей</div>
+      </div>
+      <div class="bg-white bg-opacity-70 rounded-lg p-3 text-center border border-purple-200">
+        <div class="text-lg font-bold text-purple-600"><%= completed_events %></div>
+        <div class="text-xs text-gray-600">выполнено</div>
+      </div>
+    </div>
+    
+    <!-- Breakdown -->
+    <div class="space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+          <span class="text-sm text-gray-700">Идеи</span>
+        </div>
+        <span class="text-sm font-medium text-gray-900"><%= week_ideas %></span>
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 bg-blue-400 rounded-full"></span>
+          <span class="text-sm text-gray-700">Дневник</span>
+        </div>
+        <span class="text-sm font-medium text-gray-900"><%= week_diary %></span>
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+          <span class="text-sm text-gray-700">Планы</span>
+        </div>
+        <span class="text-sm font-medium text-gray-900"><%= week_plans %></span>
+      </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <% if week_events > 0 %>
+      <div class="mt-4">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs text-gray-600">Прогресс выполнения</span>
+          <span class="text-xs text-gray-900 font-medium">
+            <%= ((completed_events.to_f / week_events) * 100).round(1) %>%
+          </span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+          <div class="bg-gradient-to-r from-purple-400 to-violet-500 h-2 rounded-full transition-all duration-300"
+               style="width: <%= ((completed_events.to_f / week_events) * 100).round(1) %>%"></div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  
+  <div class="widget-footer pt-4 border-t border-purple-200 mt-4">
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-gray-500">
+        <%= Date.current.strftime('%d.%m') %> - <%= Date.current.end_of_week.strftime('%d.%m') %>
+      </span>
+      <span class="text-xs text-purple-600 font-medium">
+        <%= week_entries.count > 0 ? '+' + week_entries.count.to_s : 'Начните писать!' %>
+      </span>
+    </div>
+  </div>
+</div>

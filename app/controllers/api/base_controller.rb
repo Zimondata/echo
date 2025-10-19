@@ -1,6 +1,7 @@
 class Api::BaseController < ActionController::API
   include ActionController::MimeResponds
 
+  # API controllers don't have CSRF protection by default
   before_action :authenticate_user
   before_action :set_current_user
 
@@ -11,9 +12,10 @@ class Api::BaseController < ActionController::API
   private
 
   def authenticate_user
-    # Временная заглушка - берем первого пользователя
-    # В продакшене здесь будет JWT или OAuth аутентификация
-    @current_user = User.first
+    # For API authentication, we'll use session-based auth like the main app
+    # In production this could be JWT or OAuth
+    user_id = session[:user_id] || params[:user_id] # Allow user_id in params for API testing
+    @current_user = User.find_by(id: user_id) if user_id
     
     unless @current_user
       render json: { error: 'Authentication required' }, status: :unauthorized

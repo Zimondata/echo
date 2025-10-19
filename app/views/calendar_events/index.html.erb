@@ -1,2 +1,233 @@
-<h1>CalendarEvents#index</h1>
-<p>Find me in app/views/calendar_events/index.html.erb</p>
+<div class="flex h-screen bg-gray-50">
+  <!-- Левая боковая панель -->
+  <div class="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+    <!-- Заголовок -->
+    <div class="p-6 border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-900">Календарь</h2>
+      <p class="text-sm text-gray-500 mt-1">Ваши события и напоминания</p>
+    </div>
+
+    <!-- Мини календарь -->
+    <div class="p-4 border-b border-gray-200">
+      <h3 class="text-sm font-medium text-gray-900 mb-3">Октябрь 2024</h3>
+      <div class="grid grid-cols-7 gap-1 text-center text-xs">
+        <div class="font-medium text-gray-500 py-2">Пн</div>
+        <div class="font-medium text-gray-500 py-2">Вт</div>
+        <div class="font-medium text-gray-500 py-2">Ср</div>
+        <div class="font-medium text-gray-500 py-2">Чт</div>
+        <div class="font-medium text-gray-500 py-2">Пт</div>
+        <div class="font-medium text-gray-500 py-2">Сб</div>
+        <div class="font-medium text-gray-500 py-2">Вс</div>
+        
+        <% 
+          # Получаем текущую дату
+          current_date = Date.current
+          start_of_month = current_date.beginning_of_month
+          start_of_calendar = start_of_month.beginning_of_week(:monday)
+          
+          # Генерируем 42 дня (6 недель)
+          (0..41).each do |i|
+            date = start_of_calendar + i.days
+            is_current_month = date.month == current_date.month
+            is_today = date == current_date
+            
+            day_events = @calendar_events.select { |event| 
+              event.start_time.in_time_zone(@user.timezone).to_date == date 
+            } if @calendar_events
+        %>
+          <div class="py-2 <%= is_today ? 'bg-blue-500 text-white rounded' : is_current_month ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-300' %> cursor-pointer relative">
+            <%= date.day %>
+            <% if day_events&.any? %>
+              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full"></div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- События сегодня -->
+    <div class="p-4 border-b border-gray-200">
+      <h3 class="text-sm font-medium text-gray-900 mb-3">Сегодня</h3>
+      <% 
+        today_events = @calendar_events.select { |event| 
+          event.start_time.in_time_zone(@user.timezone).to_date == Date.current 
+        } if @calendar_events
+      %>
+      <% if today_events&.any? %>
+        <% today_events.first(3).each do |event| %>
+          <div class="flex items-center mb-3">
+            <%
+              if event.event_type == 'reminder'
+                icon = '🔔'
+                color = 'text-red-600'
+              elsif event.entry&.entry_type == 'plan'
+                icon = '📋'
+                color = 'text-green-600'
+              elsif event.entry&.entry_type == 'idea'
+                icon = '💡'
+                color = 'text-yellow-600'
+              else
+                icon = '📅'
+                color = 'text-blue-600'
+              end
+            %>
+            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+              <span class="text-sm"><%= icon %></span>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900"><%= event.title %></p>
+              <p class="text-xs text-gray-500">
+                <%= event.start_time.in_time_zone(@user.timezone).strftime("%H:%M") %>
+                <% if event.end_time %>
+                  - <%= event.end_time.in_time_zone(@user.timezone).strftime("%H:%M") %>
+                <% end %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-gray-500">Нет событий на сегодня</p>
+      <% end %>
+    </div>
+
+    <!-- Ближайшие события -->
+    <div class="p-4 flex-1 overflow-y-auto">
+      <h3 class="text-sm font-medium text-gray-900 mb-3">Ближайшие события</h3>
+      <% 
+        upcoming_events = @calendar_events.select { |event| 
+          event.start_time.in_time_zone(@user.timezone).to_date > Date.current 
+        }.first(5) if @calendar_events
+      %>
+      <% if upcoming_events&.any? %>
+        <% upcoming_events.each do |event| %>
+          <div class="flex items-center mb-4">
+            <%
+              if event.event_type == 'reminder'
+                icon = '🔔'
+                color = 'text-red-600'
+              elsif event.entry&.entry_type == 'plan'
+                icon = '📋'
+                color = 'text-green-600'
+              elsif event.entry&.entry_type == 'idea'
+                icon = '💡'
+                color = 'text-yellow-600'
+              else
+                icon = '📅'
+                color = 'text-blue-600'
+              end
+            %>
+            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+              <span class="text-sm"><%= icon %></span>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900"><%= event.title %></p>
+              <p class="text-xs text-gray-500">
+                <%= event.start_time.in_time_zone(@user.timezone).strftime("%d.%m.%Y %H:%M") %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-gray-500">Нет предстоящих событий</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Основной календарь -->
+  <div class="flex-1 flex flex-col">
+    <!-- Заголовок календаря -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">
+            <%= Date.current.strftime("%B %Y") %>
+          </h1>
+          <p class="text-sm text-gray-500">
+            Сегодня: <%= Date.current.strftime("%d %B, %A") %>
+          </p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            ← Предыдущий
+          </button>
+          <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Следующий →
+          </button>
+          <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Добавить событие
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Сетка календаря -->
+    <div class="flex-1 bg-white">
+      <!-- Заголовки дней недели -->
+      <div class="grid grid-cols-7 border-b border-gray-200">
+        <% %w[Понедельник Вторник Среда Четверг Пятница Суббота Воскресенье].each do |day| %>
+          <div class="px-4 py-3 text-center text-sm font-medium text-gray-500 border-r border-gray-200 last:border-r-0">
+            <%= day %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Сетка дней -->
+      <div class="grid grid-cols-7 auto-rows-fr" style="height: calc(100vh - 200px);">
+        <% 
+          current_date = Date.current
+          start_of_month = current_date.beginning_of_month
+          start_of_calendar = start_of_month.beginning_of_week(:monday)
+          
+          (0..41).each do |i|
+            date = start_of_calendar + i.days
+            is_current_month = date.month == current_date.month
+            is_today = date == current_date
+            
+            day_events = @calendar_events.select { |event| 
+              event.start_time.in_time_zone(@user.timezone).to_date == date 
+            } if @calendar_events
+        %>
+          <div class="border-r border-b border-gray-200 last:border-r-0 p-2 <%= is_current_month ? 'bg-white' : 'bg-gray-50' %> <%= is_today ? 'bg-blue-50' : '' %> hover:bg-gray-50 min-h-[120px] flex flex-col">
+            <div class="font-medium text-sm <%= is_today ? 'text-blue-600' : is_current_month ? 'text-gray-900' : 'text-gray-400' %> mb-1">
+              <%= date.day %>
+            </div>
+            <div class="flex-1 space-y-1">
+              <% if day_events&.any? %>
+                <% day_events.first(3).each do |event| %>
+                  <%
+                    if event.event_type == 'reminder'
+                      icon = '🔔'
+                      bg_color = 'bg-red-100'
+                      text_color = 'text-red-800'
+                    elsif event.entry&.entry_type == 'plan'
+                      icon = '📋'
+                      bg_color = 'bg-green-100'
+                      text_color = 'text-green-800'
+                    elsif event.entry&.entry_type == 'idea'
+                      icon = '💡'
+                      bg_color = 'bg-yellow-100'
+                      text_color = 'text-yellow-800'
+                    else
+                      icon = '📅'
+                      bg_color = 'bg-blue-100'
+                      text_color = 'text-blue-800'
+                    end
+                  %>
+                  <div class="text-xs p-1 rounded <%= bg_color %> <%= text_color %> truncate flex items-center">
+                    <span class="mr-1"><%= icon %></span>
+                    <span class="flex-1 truncate"><%= event.title %></span>
+                  </div>
+                <% end %>
+                <% if day_events.count > 3 %>
+                  <div class="text-xs text-gray-500 text-center">
+                    +<%= day_events.count - 3 %> еще
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,124 @@
+<!-- Focus Widget -->
+<div class="widget-card bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6">
+  <div class="widget-header flex items-center justify-between mb-4">
+    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+      <span class="w-8 h-8 bg-gradient-to-r from-orange-400 to-red-500 rounded-full mr-3 flex items-center justify-center">
+        <span class="text-white text-sm">🎯</span>
+      </span>
+      В фокусе
+    </h3>
+    <span class="text-xs text-orange-600 font-medium">Сегодня</span>
+  </div>
+  
+  <div class="widget-preview space-y-3">
+    <%
+      # Today's high priority items
+      today = Date.current
+      today_high_priority = @recent_entries.select { |entry|
+        entry.created_at.in_time_zone(@user.timezone).to_date == today &&
+        (entry.priority || 5) >= 8
+      }.first(2)
+      
+      # Today's urgent reminders (next 4 hours)
+      urgent_reminders = @user.reminders.pending.where(
+        'remind_at BETWEEN ? AND ?', 
+        Time.current, 
+        4.hours.from_now
+      ).limit(2)
+      
+      # Today's calendar events that are not done
+      today_pending_events = @user.calendar_events.where(
+        start_time: today.beginning_of_day..today.end_of_day,
+        done: false
+      ).limit(2)
+    %>
+    
+    <!-- High Priority Items -->
+    <% if today_high_priority.any? %>
+      <div class="space-y-2">
+        <h4 class="text-xs font-medium text-orange-700 uppercase tracking-wide">Высокий приоритет</h4>
+        <% today_high_priority.each do |item| %>
+          <div class="bg-white bg-opacity-70 rounded-lg p-3 border border-orange-200">
+            <div class="flex items-start justify-between mb-1">
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                <%= item.entry_type.humanize %>
+              </span>
+              <span class="text-xs text-red-600 font-bold">
+                <%= item.priority %>/10
+              </span>
+            </div>
+            <p class="text-sm text-gray-800 leading-relaxed">
+              <%= item.content.truncate(60) %>
+            </p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <!-- Urgent Reminders -->
+    <% if urgent_reminders.any? %>
+      <div class="space-y-2">
+        <h4 class="text-xs font-medium text-red-700 uppercase tracking-wide flex items-center">
+          <span class="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+          Срочные напоминания
+        </h4>
+        <% urgent_reminders.each do |reminder| %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div class="flex items-start justify-between mb-1">
+              <span class="text-xs text-red-600 font-medium">
+                🔔 <%= reminder.remind_at.in_time_zone(@user.timezone).strftime('%H:%M') %>
+              </span>
+              <span class="text-xs text-red-600 font-bold">
+                <%= time_ago_in_words(reminder.remind_at, include_seconds: true) %>
+              </span>
+            </div>
+            <p class="text-sm text-gray-800 leading-relaxed">
+              <%= reminder.message.truncate(60) %>
+            </p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <!-- Today's Pending Events -->
+    <% if today_pending_events.any? %>
+      <div class="space-y-2">
+        <h4 class="text-xs font-medium text-blue-700 uppercase tracking-wide">Незавершенные дела</h4>
+        <% today_pending_events.each do |event| %>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div class="flex items-start justify-between mb-1">
+              <span class="text-xs text-blue-600 font-medium">
+                📅 <%= event.all_day? ? 'Весь день' : event.start_time.in_time_zone(@user.timezone).strftime('%H:%M') %>
+              </span>
+            </div>
+            <p class="text-sm text-gray-800 leading-relaxed">
+              <%= event.title.truncate(60) %>
+            </p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <!-- Empty State -->
+    <% if today_high_priority.empty? && urgent_reminders.empty? && today_pending_events.empty? %>
+      <div class="text-center py-6">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-green-500 text-xl">✨</span>
+        </div>
+        <p class="text-sm text-gray-500">Ничего срочного!</p>
+        <p class="text-xs text-gray-400 mt-1">Можете расслабиться</p>
+      </div>
+    <% end %>
+  </div>
+  
+  <div class="widget-footer pt-4 border-t border-orange-200 mt-4">
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-gray-500">
+        Обновлено: <%= Time.current.in_time_zone(@user.timezone).strftime('%H:%M') %>
+      </span>
+      <button onclick="location.reload()" class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-800 px-3 py-1 rounded-full transition-colors">
+        🔄 Обновить
+      </button>
+    </div>
+  </div>
+</div>

@@ -34,6 +34,16 @@ class Api::V1::EntriesController < Api::BaseController
   def show
     success_response(serialize_entry_full(@entry))
   end
+  
+  def create
+    entry = current_user.entries.build(entry_create_params)
+    
+    if entry.save
+      success_response(serialize_entry_full(entry), message: "Entry created successfully", status: :created)
+    else
+      error_response("Failed to create entry", status: :unprocessable_entity, details: entry.errors.full_messages)
+    end
+  end
 
   def update
     if @entry.update(entry_update_params)
@@ -113,6 +123,123 @@ class Api::V1::EntriesController < Api::BaseController
     success_response(stats)
   end
 
+  def upload_audio
+    unless params[:audio].present?
+      return error_response("Audio file is required", status: :bad_request)
+    end
+    
+    begin
+      audio_file = params[:audio]
+      
+      # Read audio data
+      audio_data = audio_file.read
+      
+      # Transcribe with Whisper
+      transcript = Ai::WhisperService.transcribe(audio_data)
+      
+      unless transcript
+        return error_response("Failed to transcribe audio", status: :unprocessable_entity)
+      end
+      
+      # Process content using the same logic as Telegram handler
+      analyses = Ai::MultiPlanAnalyzer.analyze(transcript, user: current_user)
+      
+      created_entries = []
+      
+      # Check if we should group related ideas
+      should_group_ideas = analyses.count > 1 && 
+                          analyses.all? { |a| a[:type] == 'idea' }
+      
+      parent_entry = nil
+      group_id = should_group_ideas ? SecureRandom.uuid : nil
+      
+      analyses.each_with_index do |analysis, index|
+        # For grouped ideas, create first as parent, rest as children
+        if should_group_ideas && index == 0
+          # Create main parent entry with combined content
+          combined_content = "#{analysis[:content] || analysis[:summary]}\n\nСвязанные размышления:\n" + 
+                            analyses[1..-1].map { |a| "• #{a[:content] || a[:summary]}" }.join("\n")
+          
+          parent_entry = current_user.entries.create!(
+            entry_type: analysis[:type],
+            content: combined_content,
+            transcript: transcript,
+            priority: analysis[:priority] || 0,
+            group_id: group_id,
+            metadata: {
+              multi_plan_source: true,
+              plan_index: 1,
+              total_plans: analyses.count,
+              is_grouped_idea: true,
+              grouped_content_count: analyses.count,
+              source: 'dashboard_upload'
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << parent_entry
+          
+        elsif should_group_ideas && index > 0
+          # Create child entries for additional ideas
+          child_entry = current_user.entries.create!(
+            entry_type: analysis[:type],
+            content: analysis[:content] || analysis[:summary] || transcript,
+            transcript: transcript,
+            priority: analysis[:priority] || 0,
+            group_id: group_id,
+            parent_entry: parent_entry,
+            metadata: {
+              multi_plan_source: true,
+              plan_index: index + 1,
+              total_plans: analyses.count,
+              is_grouped_idea_child: true,
+              source: 'dashboard_upload'
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << child_entry
+          
+        else
+          # Create regular standalone entry
+          entry = current_user.entries.create!(
+            entry_type: analysis[:type],
+            content: analysis[:content] || analysis[:summary] || transcript,
+            transcript: transcript,
+            priority: analysis[:priority] || 0,
+            metadata: {
+              multi_plan_source: analyses.count > 1,
+              plan_index: index + 1,
+              total_plans: analyses.count,
+              source: 'dashboard_upload'
+            }.merge(analysis[:metadata] || {})
+          )
+          
+          created_entries << entry
+        end
+
+        # Create calendar event if needed
+        if analysis[:create_calendar_event]
+          create_calendar_event(created_entries.last, analysis)
+        end
+
+        # Create reminder if needed
+        if analysis[:create_reminder] && analysis[:reminder_time]
+          create_reminder(created_entries.last, analysis)
+        end
+      end
+
+      success_response({
+        entries: created_entries.map { |entry| serialize_entry(entry) },
+        transcript: transcript,
+        total_created: created_entries.count
+      }, message: "Audio processed successfully")
+
+    rescue StandardError => e
+      Rails.logger.error "Audio upload error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      error_response("Failed to process audio", status: :internal_server_error)
+    end
+  end
+
   private
 
   def find_entry
@@ -121,6 +248,10 @@ class Api::V1::EntriesController < Api::BaseController
 
   def entry_update_params
     params.require(:entry).permit(:content, :entry_type, :category, :dashboard_status, :priority, :tags, :status)
+  end
+  
+  def entry_create_params
+    params.permit(:content, :entry_type, :category, :priority)
   end
 
   def serialize_entry(entry)
@@ -197,5 +328,43 @@ class Api::V1::EntriesController < Api::BaseController
     tag_counts.sort_by { |tag, count| -count }.first(10).map do |tag, count|
       { tag: tag, count: count }
     end
+  end
+
+  def create_calendar_event(entry, analysis)
+    # Проверяем metadata для all_day события  
+    is_all_day = analysis[:metadata]&.dig(:all_day) || analysis[:metadata]&.dig("all_day") || false
+    
+    # Определяем время события
+    if is_all_day && analysis[:event_time].nil?
+      # Для all_day событий без времени используем завтрашний день
+      start_time = Date.tomorrow.beginning_of_day
+      end_time = Date.tomorrow.end_of_day
+    else
+      start_time = analysis[:event_time]
+      end_time = analysis[:event_end_time]
+    end
+    
+    current_user.calendar_events.create!(
+      entry: entry,
+      title: analysis[:event_title] || entry.content.truncate(100),
+      description: entry.content,
+      start_time: start_time,
+      end_time: end_time,
+      event_type: "plan",
+      all_day: is_all_day
+    )
+  rescue StandardError => e
+    Rails.logger.error "Error creating calendar event: #{e.message}"
+  end
+
+  def create_reminder(entry, analysis)
+    current_user.reminders.create!(
+      entry: entry,
+      reminder_type: "one_time",
+      remind_at: analysis[:reminder_time],
+      message: analysis[:reminder_message] || entry.content.truncate(200)
+    )
+  rescue StandardError => e
+    Rails.logger.error "Error creating reminder: #{e.message}"
   end
 end

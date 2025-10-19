@@ -1,0 +1,538 @@
+<!-- Hero Section -->
+<section class="hero relative bg-slate-950 text-gray-300 min-h-screen flex flex-col overflow-hidden">
+    <!-- Interactive Background Canvas -->
+    <canvas id="hero-canvas" class="absolute inset-0 opacity-80 pointer-events-none"></canvas>
+    
+    <!-- Background Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/50 to-slate-950 pointer-events-none"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 px-6 py-4 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 transition-all duration-300" id="main-nav">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                    <span class="text-slate-900 font-bold text-lg">E</span>
+                </div>
+                <span class="text-xl font-bold text-white">Echo</span>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#features" class="text-gray-400 hover:text-white transition-colors">Возможности</a>
+                <a href="#how-it-works" class="text-gray-400 hover:text-white transition-colors">Как работает</a>
+                <a href="#about" class="text-gray-400 hover:text-white transition-colors">О проекте</a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-white" id="mobile-menu-btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="md:hidden absolute top-full left-0 right-0 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50 transform -translate-y-full opacity-0 pointer-events-none transition-all duration-300" id="mobile-menu">
+            <div class="px-6 py-4 space-y-4">
+                <a href="#features" class="block text-gray-400 hover:text-white transition-colors">Возможности</a>
+                <a href="#how-it-works" class="block text-gray-400 hover:text-white transition-colors">Как работает</a>
+                <a href="#about" class="block text-gray-400 hover:text-white transition-colors">О проекте</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Content -->
+    <div class="container mx-auto px-6 flex-grow flex items-center justify-center relative z-10 pt-24">
+        <div class="text-center max-w-4xl mx-auto">
+            <!-- Main Headline -->
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-tight mb-6 animate-fade-in">
+                Ваш личный
+                <span class="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">AI дневник</span>
+                <br>в Telegram
+            </h1>
+            
+            <!-- Subtitle -->
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 animate-slide-up opacity-0" style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+                Echo помогает вам вести дневник, анализировать эмоции и находить закономерности в вашей жизни с помощью искусственного интеллекта
+            </p>
+            
+            <!-- CTA Button -->
+            <div class="hero-cta mb-16 animate-slide-up opacity-0" style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                <div class="telegram-cta-wrapper">
+                    <div class="telegram-cta-glow"></div>
+                    <button class="telegram-cta-button" onclick="window.open('https://t.me/auriAI_bot', '_blank')">
+                        <div class="telegram-cta-shine"></div>
+                        <div class="telegram-cta-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1.5C14.7 1.2 14.2 1.2 13.9 1.5L7.91 7H3C1.9 7 1 7.9 1 9V11C1 12.1 1.9 13 3 13H4V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V13H21C22.1 13 23 12.1 23 11V9C23 7.9 22.1 7 21 7H21Z"/>
+                            </svg>
+                        </div>
+                        <span>Открыть Echo Bot</span>
+                        <svg class="telegram-cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Fallback Text -->
+                <div class="mt-4 opacity-60">
+                    <p class="text-xs text-gray-500">Или напишите боту напрямую: <a href="https://t.me/auriAI_bot" class="text-emerald-400 hover:text-emerald-300">@auriAI_bot</a></p>
+                </div>
+                <p class="text-sm text-gray-500 mt-3">Быстрый и безопасный вход через Telegram</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Cards -->
+    <div class="absolute inset-0 pointer-events-none z-5">
+        <!-- Desktop Cards -->
+        <div class="hidden lg:block">
+            <div class="floating-card card-1 absolute top-1/4 left-[10%] w-72 h-44 bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 border border-slate-700/50 shadow-2xl transform hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-2xl"></div>
+                <div class="relative z-10">
+                    <div class="text-3xl mb-3">🧠</div>
+                    <h3 class="text-white font-semibold mb-2">Умный анализ</h3>
+                    <p class="text-gray-400 text-sm">AI анализирует ваши записи и помогает находить закономерности</p>
+                </div>
+            </div>
+            
+            <div class="floating-card card-2 absolute top-1/2 right-[8%] w-72 h-44 bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 border border-slate-700/50 shadow-2xl transform hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent rounded-2xl"></div>
+                <div class="relative z-10">
+                    <div class="text-3xl mb-3">🔒</div>
+                    <h3 class="text-white font-semibold mb-2">Приватность</h3>
+                    <p class="text-gray-400 text-sm">Все данные защищены end-to-end шифрованием</p>
+                </div>
+            </div>
+            
+            <div class="floating-card card-3 absolute bottom-1/4 left-[15%] w-72 h-44 bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 border border-slate-700/50 shadow-2xl transform hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent rounded-2xl"></div>
+                <div class="relative z-10">
+                    <div class="text-3xl mb-3">📱</div>
+                    <h3 class="text-white font-semibold mb-2">Telegram интеграция</h3>
+                    <p class="text-gray-400 text-sm">Ведите дневник прямо в Telegram — быстро и удобно</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile/Tablet Cards -->
+        <div class="lg:hidden">
+            <div class="floating-card card-mobile-1 absolute top-[15%] left-[5%] w-64 h-36 bg-slate-900/90 backdrop-blur-md rounded-xl p-4 border border-slate-700/50 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-xl"></div>
+                <div class="relative z-10">
+                    <div class="text-2xl mb-2">🧠</div>
+                    <h3 class="text-white font-semibold mb-1 text-sm">Умный анализ</h3>
+                    <p class="text-gray-400 text-xs">AI анализирует записи</p>
+                </div>
+            </div>
+            
+            <div class="floating-card card-mobile-2 absolute top-[60%] right-[5%] w-64 h-36 bg-slate-900/90 backdrop-blur-md rounded-xl p-4 border border-slate-700/50 shadow-xl transform hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent rounded-xl"></div>
+                <div class="relative z-10">
+                    <div class="text-2xl mb-2">📱</div>
+                    <h3 class="text-white font-semibold mb-1 text-sm">Telegram интеграция</h3>
+                    <p class="text-gray-400 text-xs">Быстро и удобно</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="bg-gray-50 py-24" id="features">
+    <div class="container mx-auto px-6 max-w-6xl">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Возможности Echo
+            </h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Три ключевых принципа для эффективного планирования и рефлексии
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div class="feature-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 text-center group">
+                <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform duration-300">
+                    📝
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Планируй</h3>
+                <p class="text-gray-600 leading-relaxed">Echo синхронизирует календарь и уведомления. Никаких забытых встреч и просроченных задач.</p>
+            </div>
+            
+            <div class="feature-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 text-center group">
+                <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform duration-300">
+                    🎤
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Записывай</h3>
+                <p class="text-gray-600 leading-relaxed">Идеи, заметки и инсайты голосом за 30 секунд. В одном месте, с автоматической организацией.</p>
+            </div>
+            
+            <div class="feature-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 text-center group">
+                <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform duration-300">
+                    🔍
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Рефлексируй</h3>
+                <p class="text-gray-600 leading-relaxed">AI-ассистент анализирует ваш день: "Где вы были в фокусе, а где потеряли энергию."</p>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <button 
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                onclick="scrollToDemo()"
+            >
+                Узнать больше
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="relative w-full overflow-hidden bg-white py-24" id="how-it-works">
+    <div class="container mx-auto px-6">
+        <!-- Header -->
+        <div class="mb-16 text-center workflow-header opacity-0 translate-y-5">
+            <div class="mb-4 inline-block rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-600">
+                Как это работает
+            </div>
+            <h2 class="mb-4 text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
+                Четыре простых шага к 
+                <span class="bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent">
+                    осознанности
+                </span>
+            </h2>
+            <p class="mx-auto max-w-2xl text-lg text-gray-600">
+                Echo помогает вам отслеживать свою жизнь и получать ценные инсайты с помощью искусственного интеллекта
+            </p>
+        </div>
+
+        <!-- Steps Grid -->
+        <div class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+            <!-- Step 1 -->
+            <div class="workflow-step relative opacity-0 translate-y-5" style="animation-delay: 0.1s">
+                <div class="group relative flex flex-col items-center text-center">
+                    <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-sm font-semibold text-white">
+                        1
+                    </div>
+                    
+                    <h3 class="mb-3 text-xl font-semibold text-gray-900">
+                        Вход через Telegram
+                    </h3>
+                    
+                    <p class="max-w-xs text-sm text-gray-600">
+                        Быстрая авторизация через Telegram без регистрации и паролей
+                    </p>
+                </div>
+                
+                <!-- Connection Line -->
+                <div class="absolute left-[calc(50%+40px)] top-10 hidden w-[calc(100%-80px)] items-center justify-center lg:flex">
+                    <div class="h-[2px] w-full bg-gradient-to-r from-emerald-400/50 to-emerald-400/20"></div>
+                    <svg class="absolute right-0 h-5 w-5 text-emerald-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="workflow-step relative opacity-0 translate-y-5" style="animation-delay: 0.2s">
+                <div class="group relative flex flex-col items-center text-center">
+                    <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-white">
+                        2
+                    </div>
+                    
+                    <h3 class="mb-3 text-xl font-semibold text-gray-900">
+                        Echo создаёт вашу неделю
+                    </h3>
+                    
+                    <p class="max-w-xs text-sm text-gray-600">
+                        Создайте новую неделю и начните отслеживать свои достижения
+                    </p>
+                </div>
+                
+                <!-- Connection Line -->
+                <div class="absolute left-[calc(50%+40px)] top-10 hidden w-[calc(100%-80px)] items-center justify-center lg:flex">
+                    <div class="h-[2px] w-full bg-gradient-to-r from-emerald-400/50 to-emerald-400/20"></div>
+                    <svg class="absolute right-0 h-5 w-5 text-emerald-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="workflow-step relative opacity-0 translate-y-5" style="animation-delay: 0.3s">
+                <div class="group relative flex flex-col items-center text-center">
+                    <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-purple-100 text-purple-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-sm font-semibold text-white">
+                        3
+                    </div>
+                    
+                    <h3 class="mb-3 text-xl font-semibold text-gray-900">
+                        Добавление заметок
+                    </h3>
+                    
+                    <p class="max-w-xs text-sm text-gray-600">
+                        Записывайте важные моменты, мысли и события каждый день
+                    </p>
+                </div>
+                
+                <!-- Connection Line -->
+                <div class="absolute left-[calc(50%+40px)] top-10 hidden w-[calc(100%-80px)] items-center justify-center lg:flex">
+                    <div class="h-[2px] w-full bg-gradient-to-r from-emerald-400/50 to-emerald-400/20"></div>
+                    <svg class="absolute right-0 h-5 w-5 text-emerald-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="workflow-step relative opacity-0 translate-y-5" style="animation-delay: 0.4s">
+                <div class="group relative flex flex-col items-center text-center">
+                    <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-orange-100 text-orange-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-sm font-semibold text-white">
+                        4
+                    </div>
+                    
+                    <h3 class="mb-3 text-xl font-semibold text-gray-900">
+                        AI отчёт
+                    </h3>
+                    
+                    <p class="max-w-xs text-sm text-gray-600">
+                        Получите персонализированный отчёт с анализом вашей недели
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Button -->
+        <div class="workflow-cta mt-16 text-center opacity-0 translate-y-5" style="animation-delay: 0.5s">
+            <div class="telegram-cta-wrapper">
+                <div class="telegram-cta-glow"></div>
+                <button class="telegram-cta-button" onclick="window.open('https://t.me/auriAI_bot', '_blank')">
+                    <div class="telegram-cta-shine"></div>
+                    <div class="telegram-cta-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1.5C14.7 1.2 14.2 1.2 13.9 1.5L7.91 7H3C1.9 7 1 7.9 1 9V11C1 12.1 1.9 13 3 13H4V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V13H21C22.1 13 23 12.1 23 11V9C23 7.9 22.1 7 21 7H21Z"/>
+                        </svg>
+                    </div>
+                    <span>Начать использовать Echo</span>
+                    <svg class="telegram-cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Gradient -->
+    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent"></div>
+</section>
+
+<!-- Why Echo -->
+<section class="bg-gray-50 py-24" id="about">
+    <div class="container mx-auto px-6 max-w-6xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div class="why-text">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Почему Echo</h2>
+                <div class="space-y-6 mb-10">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            ✨
+                        </div>
+                        <p class="text-gray-700 text-lg leading-relaxed">У Echo нет отвлекающих функций — только время, фокус, идеи</p>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            🔒
+                        </div>
+                        <p class="text-gray-700 text-lg leading-relaxed">Все данные хранятся приватно и безопасно</p>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            🎯
+                        </div>
+                        <p class="text-gray-700 text-lg leading-relaxed">AI-инсайты появляются естественно: без спама, без "геймификации"</p>
+                    </div>
+                </div>
+                
+                <div class="telegram-cta-wrapper">
+                    <div class="telegram-cta-glow"></div>
+                    <button class="telegram-cta-button" onclick="window.open('https://t.me/auriAI_bot', '_blank')">
+                        <div class="telegram-cta-shine"></div>
+                        <div class="telegram-cta-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1.5C14.7 1.2 14.2 1.2 13.9 1.5L7.91 7H3C1.9 7 1 7.9 1 9V11C1 12.1 1.9 13 3 13H4V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V13H21C22.1 13 23 12.1 23 11V9C23 7.9 22.1 7 21 7H21Z"/>
+                            </svg>
+                        </div>
+                        <span>Получить ранний доступ</span>
+                        <svg class="telegram-cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="why-visual">
+                <div class="bg-white rounded-2xl p-8 shadow-xl border border-gray-200 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-blue-500"></div>
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            🧠
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">AI Insight</h4>
+                            <p class="text-sm text-gray-500">Персональная рекомендация</p>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            Сегодня вы активнее утром.<br>
+                            Хочешь, чтобы Echo предложил фокус-время на завтра?
+                        </p>
+                        <div class="flex space-x-3">
+                            <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                Да, давай
+                            </button>
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                Не сейчас
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-24 text-white relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-5">
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 20px 20px;"></div>
+    </div>
+    
+    <div class="container mx-auto px-6 max-w-4xl text-center relative z-10">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+            Начни жить осознанно уже сегодня
+        </h2>
+        <p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+            Присоединяйся к предпринимателям, которые превратили хаос в ясность
+        </p>
+        
+        <!-- Main CTA -->
+        <div class="mb-8">
+            <div class="telegram-cta-wrapper">
+                <div class="telegram-cta-glow"></div>
+                <button class="telegram-cta-button text-lg px-12 py-4" onclick="window.open('https://t.me/auriAI_bot', '_blank')">
+                    <div class="telegram-cta-shine"></div>
+                    <div class="telegram-cta-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1.5C14.7 1.2 14.2 1.2 13.9 1.5L7.91 7H3C1.9 7 1 7.9 1 9V11C1 12.1 1.9 13 3 13H4V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V13H21C22.1 13 23 12.1 23 11V9C23 7.9 22.1 7 21 7H21Z"/>
+                        </svg>
+                    </div>
+                    <span>Начать в Telegram</span>
+                    <svg class="telegram-cta-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Social Proof -->
+        <div class="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-400">
+            <div class="flex items-center space-x-2">
+                <span class="text-lg">🔥</span>
+                <span>Ранний доступ</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-lg">💝</span>
+                <span>Бесплатно первый месяц</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-lg">⚡</span>
+                <span>Настройка за 30 секунд</span>
+            </div>
+        </div>
+        
+        <!-- Alternative Link -->
+        <div class="mt-8 opacity-60">
+            <p class="text-sm text-gray-400">
+                Или перейдите напрямую: 
+                <a href="https://t.me/auriAI_bot" class="text-emerald-400 hover:text-emerald-300 underline">@auriAI_bot</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-950 text-gray-400 py-16">
+    <div class="container mx-auto px-6 max-w-6xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <!-- Brand -->
+            <div class="footer-brand">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                        <span class="text-slate-900 font-bold text-lg">E</span>
+                    </div>
+                    <span class="text-2xl font-bold text-white">Echo</span>
+                </div>
+                <p class="text-gray-400 leading-relaxed">
+                    Дневник, который думает вместе с вами. AI-ассистент для осознанного планирования и рефлексии.
+                </p>
+            </div>
+            
+            <!-- Quick Links -->
+            <div>
+                <h4 class="text-white font-semibold mb-4">Навигация</h4>
+                <div class="space-y-2">
+                    <a href="#features" class="block hover:text-emerald-400 transition-colors">Возможности</a>
+                    <a href="#how-it-works" class="block hover:text-emerald-400 transition-colors">Как работает</a>
+                    <a href="#about" class="block hover:text-emerald-400 transition-colors">О проекте</a>
+                </div>
+            </div>
+            
+            <!-- Contact & Legal -->
+            <div>
+                <h4 class="text-white font-semibold mb-4">Контакты</h4>
+                <div class="space-y-2">
+                    <a href="mailto:hello@echo-ai.app" class="block hover:text-emerald-400 transition-colors">hello@echo-ai.app</a>
+                    <a href="https://t.me/auriAI_bot" class="block hover:text-emerald-400 transition-colors">@auriAI_bot</a>
+                </div>
+                <div class="mt-6 space-y-2 text-sm">
+                    <a href="/privacy" class="block hover:text-emerald-400 transition-colors">Политика приватности</a>
+                    <a href="/terms" class="block hover:text-emerald-400 transition-colors">Условия использования</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Bar -->
+        <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
+            <p>&copy; 2024 Echo. Сделано с ❤️ для предпринимателей.</p>
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <span class="text-gray-500">Powered by</span>
+                <span class="text-emerald-400 font-medium">OpenAI & Telegram</span>
+            </div>
+        </div>
+    </div>
+</footer>

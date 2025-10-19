@@ -3,40 +3,36 @@ class DashboardController < ApplicationController
   helper_method :hex_to_rgba
   
   def index
-    @user = User.first # Временно берем первого пользователя
-
-    # AI Insights Data
-    @insights = generate_ai_insights
+    @user = current_user
+    redirect_to login_path, alert: 'Пожалуйста, войдите в систему' unless @user
     
-    # Статистика (для sidebar)
-    @stats = {
-      total_entries: @user.entries.count,
-      diary_count: @user.entries.where(entry_type: "diary").count,
-      ideas_count: @user.entries.where(entry_type: "idea").count,
-      plans_count: @user.entries.where(entry_type: "plan").count
-    }
-
-    # Последние записи (увеличили лимит для секции заметок)
-    @recent_entries = @user.entries.order(created_at: :desc).limit(20)
-
-    # Ближайшие события (учитываем часовой пояс пользователя)
-    current_user_time = Time.current.in_time_zone(@user.timezone)
-    @upcoming_events = @user.calendar_events.active
-                            .where("start_time >= ?", current_user_time.beginning_of_day)
+    # Используем часовой пояс пользователя
+    user_tz = ActiveSupport::TimeZone.new(@user.timezone || 'UTC')
+    
+    # Получаем "сегодня" и "завтра" в часовом поясе пользователя
+    today_in_tz = Time.current.in_time_zone(user_tz).to_date
+    tomorrow_in_tz = today_in_tz + 1.day
+    
+    # Конвертируем в UTC для запроса к базе
+    today_start = today_in_tz.beginning_of_day.in_time_zone(user_tz).utc
+    today_end = today_in_tz.end_of_day.in_time_zone(user_tz).utc
+    tomorrow_start = tomorrow_in_tz.beginning_of_day.in_time_zone(user_tz).utc
+    tomorrow_end = tomorrow_in_tz.end_of_day.in_time_zone(user_tz).utc
+    
+    # События на сегодня
+    @today_events = @user.calendar_events.active
+                         .where('start_time >= ? AND start_time <= ?', today_start, today_end)
+                         .order(:start_time)
+    
+    # События на завтра
+    @tomorrow_events = @user.calendar_events.active
+                            .where('start_time >= ? AND start_time <= ?', tomorrow_start, tomorrow_end)
                             .order(:start_time)
-                            .limit(5)
     
-    # Календарные данные для текущей недели
-    @week_events = @user.calendar_events.for_week(Date.current)
-
-    # Активные напоминания
-    current_local_time = Time.current.in_time_zone(@user.timezone)
-    @pending_reminders = @user.reminders
-                              .where(status: "pending")
-                              .where("remind_at >= ?", current_local_time)
-                              .order(remind_at: :asc)
-                              .limit(10)
+    # Последние записи
+    @recent_entries = @user.entries.order(created_at: :desc).limit(4)
   end
+
 
   private
 

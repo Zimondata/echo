@@ -1,0 +1,79 @@
+<!-- Reminders Widget -->
+<div class="widget-card bg-gradient-to-br from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6">
+  <div class="widget-header flex items-center justify-between mb-4">
+    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+      <span class="w-8 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded-full mr-3 flex items-center justify-center">
+        <span class="text-white text-sm">🔔</span>
+      </span>
+      Напоминания
+    </h3>
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <%= @user.reminders.pending.count %>
+      </span>
+      <%= link_to reminders_path, class: "text-sm text-red-600 hover:text-red-700 font-medium transition-colors" do %>
+        Все →
+      <% end %>
+    </div>
+  </div>
+  
+  <div class="widget-preview space-y-3">
+    <% 
+      upcoming_reminders = @user.reminders.pending
+                               .where('remind_at > ?', Time.current)
+                               .order(:remind_at)
+                               .limit(3)
+    %>
+    
+    <% if upcoming_reminders.any? %>
+      <% upcoming_reminders.each do |reminder| %>
+        <div class="bg-white bg-opacity-70 rounded-lg p-3 border border-red-200 hover:border-red-300 transition-colors cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+              <span class="text-xs text-red-600 font-medium">
+                <%= reminder.remind_at.in_time_zone(@user.timezone).strftime('%d.%m %H:%M') %>
+              </span>
+            </div>
+            <span class="text-xs text-gray-500">
+              <%= time_ago_in_words(reminder.remind_at) %>
+            </span>
+          </div>
+          <p class="text-sm text-gray-800 leading-relaxed">
+            <%= reminder.message.truncate(80) %>
+          </p>
+          <div class="mt-2 flex items-center justify-between">
+            <span class="inline-block px-2 py-1 text-xs bg-red-100 text-red-700 rounded-md">
+              <%= reminder.reminder_type.humanize %>
+            </span>
+            <% if reminder.remind_at <= 1.hour.from_now %>
+              <span class="text-xs text-red-600 font-medium animate-pulse">
+                Скоро!
+              </span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <!-- Empty State -->
+      <div class="text-center py-6">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-red-500 text-xl">🔔</span>
+        </div>
+        <p class="text-sm text-gray-500">Нет напоминаний</p>
+        <p class="text-xs text-gray-400 mt-1">Все дела выполнены!</p>
+      </div>
+    <% end %>
+  </div>
+  
+  <div class="widget-footer pt-4 border-t border-red-200 mt-4">
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-gray-500">
+        Следующее: <%= upcoming_reminders.any? ? upcoming_reminders.first.remind_at.in_time_zone(@user.timezone).strftime('%d.%m %H:%M') : 'нет' %>
+      </span>
+      <button class="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-full transition-colors">
+        + Напоминание
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,14 +1,13 @@
 class GoogleAuthController < ApplicationController
-  before_action :set_user
   
   # Redirect to Google OAuth authorization
   def authorize
-    oauth_service = Google::OauthService.new(@user)
+    oauth_service = Google::OauthService.new(current_user)
     state = generate_oauth_state
     
     # Store state in session for verification
     session[:oauth_state] = state
-    session[:oauth_user_id] = @user.id
+    session[:oauth_user_id] = current_user.id
     
     authorization_url = oauth_service.authorization_url(state)
     
@@ -45,18 +44,18 @@ class GoogleAuthController < ApplicationController
     end
     
     begin
-      oauth_service = Google::OauthService.new(@user)
+      oauth_service = Google::OauthService.new(current_user)
       token_data = oauth_service.exchange_code_for_token(params[:code])
       
       # Get user info from Google
       user_info = oauth_service.get_user_info(token_data[:access_token])
       
       # Save tokens and user info
-      oauth_service.save_tokens_for_user!(@user, token_data)
+      oauth_service.save_tokens_for_user!(current_user, token_data)
       
       if user_info
-        @user.update!(
-          settings: @user.settings.merge({
+        current_user.update!(
+          settings: current_user.settings.merge({
             google_email: user_info['email'],
             google_name: user_info['name'],
             google_picture: user_info['picture']
@@ -69,9 +68,9 @@ class GoogleAuthController < ApplicationController
       session.delete(:oauth_user_id)
       
       # Start initial calendar sync
-      Google::SyncCalendarJob.perform_later(@user.id)
+      Google::SyncCalendarJob.perform_later(current_user.id)
       
-      Rails.logger.info "Google Calendar connected for user #{@user.id}"
+      Rails.logger.info "Google Calendar connected for user #{current_user.id}"
       
       # Redirect based on request source
       if session[:oauth_redirect_path]
@@ -88,17 +87,17 @@ class GoogleAuthController < ApplicationController
 
   # Disconnect Google Calendar
   def disconnect
-    oauth_service = Google::OauthService.new(@user)
+    oauth_service = Google::OauthService.new(current_user)
     
     if oauth_service.revoke_access
       # Clear user settings
-      @user.settings = @user.settings.except('google_email', 'google_name', 'google_picture')
-      @user.save!
+      current_user.settings = current_user.settings.except('google_email', 'google_name', 'google_picture')
+      current_user.save!
       
       # Mark existing calendar events as unsynced
-      @user.calendar_events.where.not(google_event_id: nil).update_all(google_event_id: nil)
+      current_user.calendar_events.where.not(google_event_id: nil).update_all(google_event_id: nil)
       
-      Rails.logger.info "Google Calendar disconnected for user #{@user.id}"
+      Rails.logger.info "Google Calendar disconnected for user #{current_user.id}"
       
       respond_to do |format|
         format.html { redirect_to dashboard_path, notice: 'Google Calendar отключен' }
@@ -114,17 +113,17 @@ class GoogleAuthController < ApplicationController
 
   # Check connection status
   def status
-    connected = Google::OauthService.connected?(@user)
+    connected = Google::OauthService.connected?(current_user)
     
     status_data = {
       connected: connected,
-      google_email: @user.settings['google_email'],
-      google_name: @user.settings['google_name'],
-      token_expires_at: @user.google_token_expires_at
+      google_email: current_user.settings['google_email'],
+      google_name: current_user.settings['google_name'],
+      token_expires_at: current_user.google_token_expires_at
     }
     
-    if connected && @user.google_token_expires_at
-      status_data[:expires_in_hours] = (((@user.google_token_expires_at - Time.current) / 1.hour).round(1))
+    if connected && current_user.google_token_expires_at
+      status_data[:expires_in_hours] = (((current_user.google_token_expires_at - Time.current) / 1.hour).round(1))
     end
     
     render json: status_data
@@ -132,12 +131,12 @@ class GoogleAuthController < ApplicationController
 
   # Manual calendar sync trigger
   def sync
-    unless Google::OauthService.connected?(@user)
+    unless Google::OauthService.connected?(current_user)
       return render json: { error: 'Google Calendar not connected' }, status: :unprocessable_entity
     end
     
     # Queue sync job
-    Google::SyncCalendarJob.perform_later(@user.id)
+    Google::SyncCalendarJob.perform_later(current_user.id)
     
     render json: { 
       message: 'Calendar sync started',
@@ -146,16 +145,6 @@ class GoogleAuthController < ApplicationController
   end
 
   private
-
-  def set_user
-    # Для демонстрации берем первого пользователя
-    # В продакшене здесь будет current_user
-    @user = User.first
-    
-    unless @user
-      redirect_to root_path, alert: 'User not found'
-    end
-  end
 
   def generate_oauth_state
     # Generate secure random state for OAuth

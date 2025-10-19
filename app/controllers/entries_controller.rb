@@ -1,28 +1,35 @@
 class EntriesController < ApplicationController
+  before_action :set_entry, only: [:show]
+
   def index
-    @user = User.first
-    @entries = @user.entries.order(created_at: :desc).limit(20)
+    @entries = current_user.entries.order(created_at: :desc).limit(20)
   end
 
   def show
-    @entry = Entry.find(params[:id])
+    # Entry is set by before_action
   end
 
   def diary
-    @user = User.first
-    @entries = @user.entries.where(entry_type: "diary").order(created_at: :desc).limit(20)
-    render :index
+    @user = current_user
+    @entries = current_user.entries.where(entry_type: "diary").order(created_at: :desc).limit(50)
+    render :diary
   end
 
   def ideas
-    @user = User.first
-    @entries = @user.entries.where(entry_type: "idea").parent_entries.order(created_at: :desc).limit(20)
-    render :index
+    @entries = current_user.entries.where(entry_type: "idea").parent_entries.order(created_at: :desc).limit(20)
+    render :ideas
   end
 
   def plans
-    @user = User.first
-    @entries = @user.entries.where(entry_type: "plan").order(created_at: :desc).limit(20)
+    @entries = current_user.entries.where(entry_type: "plan").order(created_at: :desc).limit(20)
     render :index
+  end
+
+  private
+
+  def set_entry
+    @entry = current_user.entries.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to entries_path, alert: 'Запись не найдена'
   end
 end

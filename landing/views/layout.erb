@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo — дневник, который думает вместе с тобой</title>
+    <meta name="description" content="Планируй, записывай, рефлексируй. Echo всё запомнит, проанализирует и подскажет, что важно сегодня.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Echo — дневник, который думает вместе с тобой">
+    <meta property="og:description" content="AI-ассистент для предпринимателей и руководителей. Превращает хаос дня в осмысленные паттерны.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="http://localhost:4000">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f5f3ff',
+                            500: '#706DFE',
+                            600: '#5b59d4',
+                            700: '#4c46a6',
+                        },
+                        secondary: {
+                            500: '#9B59B6',
+                            600: '#8e44ad',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { transform: 'scale(1)', opacity: '0.3' },
+                            '50%': { transform: 'scale(1.1)', opacity: '0.5' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/styles.css">
+    
+    <!-- Telegram Login Widget -->
+    <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
+</head>
+<body>
+    <%= yield %>
+    
+    <script src="/script.js"></script>
+</body>
+</html>

@@ -1,10 +1,8 @@
-class Api::V1::RemindersController < ApplicationController
-  skip_before_action :verify_authenticity_token
+class Api::V1::RemindersController < Api::BaseController
   before_action :find_reminder, only: [:show, :update, :destroy]
   
   def index
-    @user = User.first # Временно берем первого пользователя
-    @reminders = @user.reminders.includes(:entry)
+    @reminders = current_user.reminders.includes(:entry)
     render json: { reminders: @reminders }
   end
 
@@ -23,7 +21,7 @@ class Api::V1::RemindersController < ApplicationController
   end
 
   def create
-    @reminder = Reminder.new(reminder_params)
+    @reminder = current_user.reminders.build(reminder_params)
     
     if @reminder.save
       render json: { 
@@ -62,13 +60,13 @@ class Api::V1::RemindersController < ApplicationController
   private
 
   def find_reminder
-    @user = User.first # Временно берем первого пользователя
-    @reminder = @user.reminders.find(params[:id])
+    @reminder = current_user.reminders.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Напоминание не найдено' }, status: :not_found
   end
 
   def reminder_params
-    params.require(:reminder).permit(:message, :remind_at, :reminder_type, :user_id, :entry_id)
+    params[:reminder_type] ||= 'one_time' # Default to one_time
+    params.permit(:message, :remind_at, :reminder_type, :user_id, :entry_id)
   end
 end

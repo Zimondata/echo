@@ -1,0 +1,82 @@
+<!-- Mini Calendar Widget -->
+<div class="widget-card bg-white shadow rounded-lg p-6 mb-6">
+  <div class="widget-header flex items-center justify-between mb-4">
+    <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
+      <span class="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mr-3 flex items-center justify-center">
+        <span class="text-white text-sm">📅</span>
+      </span>
+      Календарь на неделю
+    </h3>
+    <%= link_to calendar_events_path, class: "text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors" do %>
+      Полный календарь →
+    <% end %>
+  </div>
+  
+  <!-- Week Days Header -->
+  <div class="grid grid-cols-7 gap-2 mb-3">
+    <% 
+      weekdays = %w[ПН ВТ СР ЧТ ПТ СБ ВС]
+      start_of_week = Date.current.beginning_of_week(:monday)
+      weekdays.each_with_index do |day, index|
+        current_day = start_of_week + index.days
+        is_today = current_day == Date.current
+    %>
+      <div class="text-center">
+        <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1"><%= day %></div>
+        <div class="text-sm font-bold <%= is_today ? 'text-indigo-600 bg-indigo-100 rounded-full w-6 h-6 flex items-center justify-center mx-auto' : 'text-gray-900' %>">
+          <%= current_day.day %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  
+  <!-- Mini Events Grid -->
+  <div class="grid grid-cols-7 gap-2">
+    <% 
+      (0..6).each do |day_offset|
+        current_day = start_of_week + day_offset.days
+        day_events = @week_events.select { |event| 
+          event.start_time.in_time_zone(@user.timezone).to_date == current_day 
+        }
+    %>
+      <div class="min-h-[60px] p-1 bg-gray-50 rounded border hover:bg-gray-100 transition-colors">
+        <% day_events.first(2).each do |event| %>
+          <%
+            if event.event_type == 'reminder'
+              icon = '🔔'
+              color = 'text-red-600'
+            elsif event.entry&.entry_type == 'plan'
+              icon = '📋'
+              color = 'text-green-600'
+            elsif event.entry&.entry_type == 'idea'
+              icon = '💡'
+              color = 'text-yellow-600'
+            else
+              icon = '📅'
+              color = 'text-blue-600'
+            end
+          %>
+          <div class="text-xs mb-1 p-1 bg-white rounded border flex items-center <%= color %>">
+            <span class="mr-1"><%= icon %></span>
+            <span class="truncate flex-1"><%= event.title.truncate(15) %></span>
+          </div>
+        <% end %>
+        
+        <% if day_events.count > 2 %>
+          <div class="text-xs text-gray-500 text-center">+<%= day_events.count - 2 %></div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+  .widget-card {
+    transition: all 0.3s ease;
+  }
+  
+  .widget-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+</style>

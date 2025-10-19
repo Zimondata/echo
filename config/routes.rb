@@ -1,9 +1,16 @@
 Rails.application.routes.draw do
-  # Root path - Dashboard
-  root "dashboard#index"
+  # Root path - Landing page
+  root "landing#index"
+  
+  # Auth routes
+  get "/auth/telegram/callback", to: "sessions#telegram_callback"
+  get "/login", to: "sessions#new"
+  post "/login", to: "sessions#create"
+  delete "/logout", to: "sessions#destroy", as: :logout
 
-  # Dashboard
+  # Dashboard (protected)
   get "dashboard", to: "dashboard#index"
+  
 
   # Entries (Diary, Ideas, Plans)
   resources :entries, only: [:index, :show] do
@@ -44,7 +51,7 @@ Rails.application.routes.draw do
       get 'dashboard/needs_attention', to: 'dashboard#needs_attention'
 
       # Entries
-      resources :entries, only: [:index, :show, :update] do
+      resources :entries, only: [:index, :show, :create, :update] do
         member do
           patch :categorize
           patch :add_tags
@@ -68,6 +75,8 @@ Rails.application.routes.draw do
       resources :calendar_events, only: [:index, :show, :create, :update, :destroy] do
         member do
           patch :toggle_done
+          patch :toggle_status
+          patch :toggle
         end
         collection do
           get :stats
