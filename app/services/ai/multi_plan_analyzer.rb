@@ -40,9 +40,10 @@ module Ai
       - "17:30!!!", "нет, в 17:30" = type: "plan_update"
       - В metadata добавь: {"correction": true, "corrected_time": "17:30"}
       
-      ПЛАНЫ БЕЗ ВРЕМЕНИ (ПРИМЕРЫ):
-      - "дневной сон" → event_time: начало сегодняшнего дня, metadata: {"all_day": true}
-      - "медитация" → event_time: начало сегодняшнего дня, metadata: {"all_day": true}
+      ПЛАНЫ БЕЗ ВРЕМЕНИ:
+      - Для "на сегодня" без времени → ВСЕГДА используй сегодняшнюю дату в полночь с часовым поясом
+      - Для "на завтра" без времени → ВСЕГДА используй завтрашнюю дату в полночь с часовым поясом
+      - ВАЖНО: НЕ КОНВЕРТИРУЙ В UTC! Используй часовой пояс пользователя напрямую!
 
       Ответь ТОЛЬКО в формате JSON:
       {
@@ -111,13 +112,17 @@ module Ai
     class << self
       def analyze(text, user:)
         return [default_analysis(text)] if text.blank?
+        
+        # Set timezone for proper date parsing
+        @user = user
+        Time.zone = user.timezone
 
         user_context = build_user_context(user)
         recent_events_context = build_recent_events_context(user)
 
         response = client.chat(
           parameters: {
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
               { 
@@ -164,10 +169,13 @@ module Ai
       end
 
       def build_user_prompt(text, context, recent_events_context)
-        current_date = Time.current.in_time_zone(context[:timezone]).strftime('%Y-%m-%d')
+        current_date = Time.current.in_time_zone(context[:timezone])
+        tomorrow_date = current_date + 1.day
         <<~PROMPT
           Текущая дата и время: #{context[:current_time]}
           Часовой пояс пользователя: #{context[:timezone]}
+          Сегодняшняя дата: #{current_date.strftime('%Y-%m-%d')} (#{current_date.strftime('%A')})
+          Завтрашняя дата: #{tomorrow_date.strftime('%Y-%m-%d')} (#{tomorrow_date.strftime('%A')})
 
           #{recent_events_context}
 
@@ -177,14 +185,15 @@ module Ai
           Найди ВСЕ планы, задачи и события в этом тексте и создай для каждого отдельную запись.
           Обрати внимание на слова: "потом", "затем", "еще", "также", "а еще", "после этого", "и" - они часто разделяют разные планы.
           
-          🚨 КРИТИЧЕСКИ ВАЖНО:
-          - Используй ТОЛЬКО СЕГОДНЯШНЮЮ дату: #{current_date}
-          - НИКОГДА НЕ используй вчерашнюю дату
-          - "17:30" = 17:30, НЕ 15:30!
-          - Планы без времени (например "дневной сон") = all_day: true
-          - Возвращай время в ISO8601 с #{context[:timezone]}
-          - Исправления времени = type: 'plan_update'
-          - НЕ создавай напоминания автоматически - только при явном запросе!
+          🚨 КРИТИЧЕСКИ ВАЖНО - ИСПОЛЬЗУЙ ЭТИ ТОЧНЫЕ ЗНАЧЕНИЯ:
+          - Для "на сегодня" БЕЗ времени: event_time = "#{current_date.strftime('%Y-%m-%dT00:00:00%:z')}"
+          - Для "на завтра" БЕЗ времени: event_time = "#{tomorrow_date.strftime('%Y-%m-%dT00:00:00%:z')}"
+          - Для "на сегодня в 15:00": event_time = "#{current_date.strftime('%Y-%m-%d')}T15:00:00#{current_date.strftime('%:z')}"
+          - Для "на завтра в 9:00": event_time = "#{tomorrow_date.strftime('%Y-%m-%d')}T09:00:00#{tomorrow_date.strftime('%:z')}"
+          - НИКОГДА не используй дату #{(current_date - 1.day).strftime('%Y-%m-%d')} или более ранние!
+          - Всегда добавляй metadata: {"all_day": true} для планов без времени
+          - НЕ конвертируй в UTC! Используй часовой пояс #{context[:timezone]} напрямую!
+          - НЕ создавай напоминания автоматически!
         PROMPT
       end
 

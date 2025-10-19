@@ -419,16 +419,22 @@ module Telegram
     def create_calendar_event(entry, analysis)
       # Проверяем metadata для all_day события  
       is_all_day = analysis[:metadata]&.dig(:all_day) || analysis[:metadata]&.dig("all_day") || false
-      Rails.logger.info "Creating event with all_day: #{is_all_day}, metadata: #{analysis[:metadata]}" # Debug
+      Rails.logger.info "Creating event with all_day: #{is_all_day}, event_time: #{analysis[:event_time]}" # Debug
       
       # Определяем время события
-      if is_all_day && analysis[:event_time].nil?
-        # Для all_day событий без времени используем завтрашний день
-        start_time = Date.tomorrow.beginning_of_day
-        end_time = Date.tomorrow.end_of_day
-      else
+      if analysis[:event_time]
+        # Если есть event_time, используем его
         start_time = analysis[:event_time]
         end_time = analysis[:event_end_time]
+      elsif is_all_day
+        # Для all_day событий без времени используем сегодня в часовом поясе пользователя
+        user_today = Time.current.in_time_zone(user.timezone).beginning_of_day
+        start_time = user_today
+        end_time = user_today.end_of_day
+      else
+        # Fallback на сегодня
+        start_time = Time.current
+        end_time = nil
       end
       
       event = user.calendar_events.create!(
