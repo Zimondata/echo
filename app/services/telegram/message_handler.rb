@@ -212,6 +212,11 @@ module Telegram
       # Use multi-plan analyzer to extract multiple plans from one message
       analyses = Ai::MultiPlanAnalyzer.analyze(text, user: user)
       
+      Rails.logger.info "PROCESS_CONTENT: Received #{analyses.count} analyses from MultiPlanAnalyzer"
+      analyses.each_with_index do |a, i|
+        Rails.logger.info "  Analysis #{i+1}: create_calendar_event=#{a[:create_calendar_event]}, event_title='#{a[:event_title]}'"
+      end
+      
       # Track created events to avoid duplicates within same message
       created_events_titles = []
       created_entries = []
@@ -284,7 +289,10 @@ module Telegram
             metadata: {
               multi_plan_source: analyses.count > 1,
               plan_index: index + 1,
-              total_plans: analyses.count
+              total_plans: analyses.count,
+              create_calendar_event: analysis[:create_calendar_event],
+              event_title: analysis[:event_title],
+              event_time: analysis[:event_time]&.iso8601
             }.merge(analysis[:metadata] || {})
           )
           
@@ -293,9 +301,16 @@ module Telegram
         end
 
         # Handle calendar events with proper deduplication
+        Rails.logger.info "DEBUG: Checking calendar event creation for entry #{index + 1}"
+        Rails.logger.info "  create_calendar_event: #{analysis[:create_calendar_event]}"
+        Rails.logger.info "  event_title: #{analysis[:event_title]}"
+        
         if analysis[:create_calendar_event] && analysis[:event_title]
           # Check if we already created this event in this batch
           normalized_title = analysis[:event_title].strip.downcase
+          
+          Rails.logger.info "  normalized_title: #{normalized_title}"
+          Rails.logger.info "  already created: #{created_events_titles}"
           
           if created_events_titles.include?(normalized_title)
             Rails.logger.info "Skipping duplicate event in same batch: #{analysis[:event_title]}"
@@ -303,10 +318,13 @@ module Telegram
             Rails.logger.info "Event already exists, handling as update: #{analysis[:event_title]}"
             handle_plan_update(current_entry, analysis)
           else
+            Rails.logger.info "Creating new calendar event: #{analysis[:event_title]}"
             # Create new calendar event
             create_calendar_event(current_entry, analysis)
             created_events_titles << normalized_title
           end
+        else
+          Rails.logger.info "  Skipping calendar creation - missing requirements"
         end
 
         # Create reminder if needed
