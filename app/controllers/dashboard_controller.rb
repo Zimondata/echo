@@ -14,10 +14,12 @@ class DashboardController < ApplicationController
     tomorrow_in_tz = today_in_tz + 1.day
     
     # Конвертируем в UTC для запроса к базе
-    today_start = today_in_tz.beginning_of_day.in_time_zone(user_tz).utc
-    today_end = today_in_tz.end_of_day.in_time_zone(user_tz).utc
-    tomorrow_start = tomorrow_in_tz.beginning_of_day.in_time_zone(user_tz).utc
-    tomorrow_end = tomorrow_in_tz.end_of_day.in_time_zone(user_tz).utc
+    # ВАЖНО: beginning_of_day уже возвращает время в нужном часовом поясе
+    # Нужно правильно конвертировать начало дня в TZ в UTC
+    today_start = user_tz.parse(today_in_tz.to_s).beginning_of_day.utc
+    today_end = user_tz.parse(today_in_tz.to_s).end_of_day.utc
+    tomorrow_start = user_tz.parse(tomorrow_in_tz.to_s).beginning_of_day.utc
+    tomorrow_end = user_tz.parse(tomorrow_in_tz.to_s).end_of_day.utc
     
     # События на сегодня
     @today_events = @user.calendar_events.active
