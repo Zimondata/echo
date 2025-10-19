@@ -2,12 +2,12 @@
 service: echo
 
 # Name of the container image.
-image: your-user/echo
+image: zimondata/echo
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - 46.62.211.95
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -19,13 +19,13 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: app.example.com
+  host: echo.46.62.211.95.nip.io
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
   # server: registry.digitalocean.com / ghcr.io / ...
-  username: your-user
+  username: zimondata
 
   # Always use an access token rather than real password when possible.
   password:
@@ -35,6 +35,9 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - TELEGRAM_BOT_TOKEN
+    - OPENAI_API_KEY
+    - DATABASE_URL
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
@@ -48,6 +51,7 @@ env:
 
     # Match this to any external database server to configure Active Record correctly
     # Use echo-db for a db accessory server on same machine via local kamal docker network.
+    DB_HOST: echo-db
     # DB_HOST: 192.168.0.2
 
     # Log everything from Rails
@@ -92,7 +96,21 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
+accessories:
+  db:
+    image: postgres:17
+    host: 46.62.211.95
+    port: 5432
+    env:
+      secret:
+        - POSTGRES_PASSWORD
+      clear:
+        POSTGRES_USER: echo
+        POSTGRES_DB: echo_production
+    directories:
+      - data:/var/lib/postgresql/data
+    options:
+      network: "kamal"
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2
