@@ -80,3 +80,5 @@ test:
 production:
   <<: *default
   url: <%= ENV["DATABASE_URL"] %>
+  # Disable migrations check in production
+  database: <%= ENV["DATABASE_URL"]&.split("/")&.last || "echo_production" %>
