@@ -1,4 +1,5 @@
 begin
+  require 'faraday'
   require 'openai'
 
   OpenAI.configure do |config|
@@ -7,4 +8,6 @@ begin
   end
 rescue LoadError => e
   Rails.logger.warn "OpenAI gem not loaded: #{e.message}"
+rescue NameError => e
+  Rails.logger.warn "OpenAI initialization error: #{e.message}"
 end
