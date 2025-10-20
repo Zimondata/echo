@@ -7,7 +7,12 @@ image: ghcr.io/zimondata/echo
 # Deploy to these servers.
 servers:
   web:
-    - 46.62.211.95
+    hosts:
+      - 46.62.211.95
+    options:
+      health-interval: 10s
+      health-timeout: 5s
+      health-retries: 10
   # job:
   #   hosts:
   #     - 192.168.0.1
