@@ -49,9 +49,8 @@ Rails.application.configure do
   # Use memory cache for simplicity (consider Solid Cache or Redis for multi-server setups)
   config.cache_store = :memory_store
 
-  # Replace the default in-process and non-durable queuing backend for Active Job.
-  config.active_job.queue_adapter = :solid_queue
-  # Solid Queue uses the queue database configured in database.yml
+  # Use async adapter for background jobs (consider Solid Queue for production with proper config)
+  config.active_job.queue_adapter = :async
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
