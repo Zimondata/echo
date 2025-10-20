@@ -1,7 +1,7 @@
 class DeleteGoogleEventJob < ApplicationJob
   queue_as :default
 
-  retry_on GoogleCalendarError, wait: :polynomially_longer, attempts: 2
+  # GoogleCalendarError retry removed - we handle it in rescue block without re-raising
   retry_on Google::Apis::Error, wait: :polynomially_longer, attempts: 2
 
   def perform(google_event_id, user_id)

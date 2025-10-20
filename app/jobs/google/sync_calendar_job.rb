@@ -1,7 +1,7 @@
 class Google::SyncCalendarJob < ApplicationJob
   queue_as :default
 
-  retry_on GoogleCalendarError, wait: :polynomially_longer, attempts: 3
+  # GoogleCalendarError retry removed - load order issue in production
   retry_on Google::Apis::Error, wait: :polynomially_longer, attempts: 3
 
   def perform(user_id, sync_direction = 'full')
