@@ -4,16 +4,19 @@ service: echo
 # Name of the container image.
 image: ghcr.io/zimondata/echo
 
+# Boot timeout
+boot_timeout: 180
+
 # Deploy to these servers.
 servers:
   web:
     hosts:
       - 46.62.211.95
     options:
-      health-interval: 10s
+      health-interval: 15s
       health-timeout: 10s
-      health-retries: 20
-      health-start-period: 60s
+      health-retries: 30
+      health-start-period: 180s
   # job:
   #   hosts:
   #     - 192.168.0.1
