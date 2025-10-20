@@ -1,8 +1,7 @@
 class SendRemindersJob < ApplicationJob
   queue_as :default
-  
-  # Prevent duplicate executions
-  limits_concurrency to: 1, key: -> { "send_reminders" }
+
+  # Note: limits_concurrency was removed (Solid Queue specific, using async adapter)
 
   def perform
     # Find all reminders that are due
