@@ -7,12 +7,29 @@ require "rails/all"
 Bundler.require(*Rails.groups)
 
 # Explicitly require OpenAI gem to ensure it loads before services
-# Temporarily disabled to get app running - OpenAI features will not work
-# begin
-#   require 'openai'
-# rescue LoadError => e
-#   warn "OpenAI gem could not be loaded: #{e.message}"
-# end
+# If OpenAI gem is not available, create stub to prevent load errors
+begin
+  require 'openai'
+rescue LoadError => e
+  warn "OpenAI gem not available, creating stub: #{e.message}"
+
+  # Create stub OpenAI module to prevent errors during class loading
+  module OpenAI
+    class Client
+      def initialize(*); end
+      def chat(*); raise "OpenAI gem not available"; end
+      def audio(*); raise "OpenAI gem not available"; end
+      def embeddings(*); raise "OpenAI gem not available"; end
+    end
+
+    def self.configure
+      yield self if block_given?
+    end
+
+    def self.access_token=(*); end
+    def self.log_errors=(*); end
+  end
+end
 
 module Echo
   class Application < Rails::Application
