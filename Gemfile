@@ -46,7 +46,8 @@ gem "thruster", require: false
 
 # AI and integrations
 gem "telegram-bot-ruby", "~> 2.0"  # Telegram Bot API
-# gem "ruby-openai", "~> 7.1"        # OpenAI (Whisper, GPT-4) - temporarily disabled due to Faraday dependency issue
+gem "faraday", "~> 2.7"            # HTTP client (required for ruby-openai)
+gem "ruby-openai", "~> 7.1"        # OpenAI (Whisper, GPT-4)
 gem "google-apis-calendar_v3"      # Google Calendar API
 gem "googleauth"                    # Google OAuth
 gem "httparty", "~> 0.22"          # HTTP requests

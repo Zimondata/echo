@@ -6,30 +6,9 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-# Explicitly require OpenAI gem to ensure it loads before services
-# If OpenAI gem is not available, create stub to prevent load errors
-begin
-  require 'openai'
-rescue LoadError => e
-  warn "OpenAI gem not available, creating stub: #{e.message}"
-
-  # Create stub OpenAI module to prevent errors during class loading
-  module OpenAI
-    class Client
-      def initialize(*); end
-      def chat(*); raise "OpenAI gem not available"; end
-      def audio(*); raise "OpenAI gem not available"; end
-      def embeddings(*); raise "OpenAI gem not available"; end
-    end
-
-    def self.configure
-      yield self if block_given?
-    end
-
-    def self.access_token=(*); end
-    def self.log_errors=(*); end
-  end
-end
+# Explicitly require Faraday first to avoid load order issues
+require 'faraday'
+require 'openai'
 
 module Echo
   class Application < Rails::Application
