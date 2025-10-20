@@ -1,6 +1,7 @@
 # Google OAuth Configuration for Calendar API
-require 'google/apis/calendar_v3'
-require 'googleauth'
+# Commented out - Google Calendar integration not yet configured
+# require 'google/apis/calendar_v3'
+# require 'googleauth'
 
 # Google Calendar API Client Configuration
 Rails.application.config.google_calendar = {
