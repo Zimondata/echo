@@ -6,6 +6,13 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Explicitly require OpenAI gem to ensure it loads before services
+begin
+  require 'openai'
+rescue LoadError => e
+  warn "OpenAI gem could not be loaded: #{e.message}"
+end
+
 module Echo
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
