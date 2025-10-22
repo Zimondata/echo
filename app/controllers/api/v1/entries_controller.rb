@@ -1,5 +1,5 @@
 class Api::V1::EntriesController < Api::BaseController
-  before_action :find_entry, only: [:show, :update, :categorize, :add_tags]
+  before_action :find_entry, only: [:show, :update, :destroy, :categorize, :add_tags]
 
   def index
     entries = current_user.entries.active
@@ -50,6 +50,14 @@ class Api::V1::EntriesController < Api::BaseController
       success_response(serialize_entry_full(@entry), message: "Entry updated successfully")
     else
       error_response("Failed to update entry", status: :unprocessable_entity, details: @entry.errors)
+    end
+  end
+
+  def destroy
+    if @entry.update(status: 'deleted')
+      success_response(nil, message: "Entry deleted successfully")
+    else
+      error_response("Failed to delete entry", status: :unprocessable_entity, details: @entry.errors)
     end
   end
 

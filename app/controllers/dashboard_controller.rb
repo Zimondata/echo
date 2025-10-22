@@ -33,6 +33,35 @@ class DashboardController < ApplicationController
     
     # Последние записи
     @recent_entries = @user.entries.order(created_at: :desc).limit(4)
+    
+    # Питание за сегодня
+    @nutrition_totals = @user ? NutritionEntry.daily_totals(@user, today_in_tz) : { calories: 0, protein: 0, fat: 0, carbs: 0, meals_count: 0 }
+    
+    # Планы на сегодня и выполненные
+    @today_tasks_count = @today_events.count
+    @completed_today_count = @today_events.where(done: true).count
+  end
+
+  def nutrition_stats
+    @user = current_user
+    return render json: { calories: 0 } unless @user
+
+    date = params[:date] ? Date.parse(params[:date]) : Date.current
+    user_tz = ActiveSupport::TimeZone.new(@user.timezone || 'UTC')
+    date_in_tz = user_tz.parse(date.to_s).to_date
+    
+    totals = NutritionEntry.daily_totals(@user, date_in_tz)
+    
+    render json: {
+      calories: totals[:calories].to_i,
+      protein: totals[:protein].to_f.round(1),
+      fat: totals[:fat].to_f.round(1),
+      carbs: totals[:carbs].to_f.round(1),
+      meals_count: totals[:meals_count]
+    }
+  rescue => e
+    Rails.logger.error "Dashboard nutrition_stats error: #{e.message}"
+    render json: { calories: 0 }
   end
 
 

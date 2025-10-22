@@ -1,0 +1,275 @@
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8">
+  <div class="max-w-2xl mx-auto p-4">
+    
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex items-center gap-4 mb-4">
+        <%= link_to nutrition_entries_path, class: "p-2 rounded-lg hover:bg-gray-100 transition" do %>
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        <% end %>
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+          ✏️ Редактировать запись
+        </h1>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="glass-card rounded-2xl p-8 shadow-xl" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.1);">
+      
+      <%= form_with model: @nutrition_entry, local: true, class: "space-y-6" do |f| %>
+        <% if @nutrition_entry.errors.any? %>
+          <div class="bg-red-50 border border-red-300 rounded-lg p-4">
+            <div class="flex">
+              <svg class="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div>
+                <h3 class="text-sm font-medium text-red-800">Ошибки в форме:</h3>
+                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                  <% @nutrition_entry.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Meal Type Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3">Тип приёма пищи</label>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <% [
+              ['breakfast', '🌅 Завтрак', 'bg-amber-50 border-amber-200 text-amber-700'],
+              ['lunch', '☀️ Обед', 'bg-blue-50 border-blue-200 text-blue-700'],
+              ['dinner', '🌙 Ужин', 'bg-purple-50 border-purple-200 text-purple-700'],
+              ['snack', '🍎 Перекус', 'bg-green-50 border-green-200 text-green-700']
+            ].each do |value, label, styles| %>
+              <label class="cursor-pointer">
+                <%= f.radio_button :meal_type, value, 
+                    checked: (@nutrition_entry.meal_type == value),
+                    class: "sr-only meal-type-radio" %>
+                <div class="meal-type-option p-4 rounded-xl border-2 transition-all text-center hover:shadow-md <%= styles if @nutrition_entry.meal_type == value %>">
+                  <div class="text-sm font-medium"><%= label %></div>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Date and Time -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Дата</label>
+            <%= f.date_field :recorded_at, 
+                value: @nutrition_entry.recorded_at&.strftime('%Y-%m-%d'),
+                class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Время</label>
+            <%= f.time_field :recorded_at, 
+                value: @nutrition_entry.recorded_at&.strftime('%H:%M'),
+                class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+          </div>
+        </div>
+
+        <!-- Meal Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Описание приёма пищи</label>
+          <%= f.text_area :meal_description, 
+              placeholder: "Например: Овсянка с бананом и орехами",
+              rows: 3,
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+        </div>
+
+        <!-- Food Items -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Продукты (через запятую)</label>
+          <%= f.text_area :food_items, 
+              placeholder: "овсянка, банан, грецкие орехи, молоко",
+              rows: 2,
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+          <p class="text-xs text-gray-500 mt-1">Перечислите основные продукты через запятую</p>
+        </div>
+
+        <!-- Nutrition Values -->
+        <div>
+          <h3 class="text-lg font-medium text-gray-700 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Пищевая ценность
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Calories -->
+            <div>
+              <label class="block text-sm font-medium text-green-700 mb-2">Калории</label>
+              <div class="relative">
+                <%= f.number_field :calories, 
+                    step: 0.1, min: 0,
+                    placeholder: "0",
+                    class: "w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">ккал</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Protein -->
+            <div>
+              <label class="block text-sm font-medium text-blue-700 mb-2">Белки</label>
+              <div class="relative">
+                <%= f.number_field :protein, 
+                    step: 0.1, min: 0,
+                    placeholder: "0",
+                    class: "w-full px-4 py-3 pr-8 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">г</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fat -->
+            <div>
+              <label class="block text-sm font-medium text-orange-700 mb-2">Жиры</label>
+              <div class="relative">
+                <%= f.number_field :fat, 
+                    step: 0.1, min: 0,
+                    placeholder: "0",
+                    class: "w-full px-4 py-3 pr-8 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" %>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">г</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carbs -->
+            <div>
+              <label class="block text-sm font-medium text-pink-700 mb-2">Углеводы</label>
+              <div class="relative">
+                <%= f.number_field :carbs, 
+                    step: 0.1, min: 0,
+                    placeholder: "0",
+                    class: "w-full px-4 py-3 pr-8 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent" %>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">г</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo URL (Optional) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Фото (URL)</label>
+          <%= f.url_field :photo_url, 
+              placeholder: "https://example.com/photo.jpg",
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" %>
+          <p class="text-xs text-gray-500 mt-1">Ссылка на фото приёма пищи (необязательно)</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-6">
+          <div class="flex items-center gap-3">
+            <%= link_to nutrition_entries_path, class: "px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition font-medium" do %>
+              Отменить
+            <% end %>
+            
+            <%= link_to @nutrition_entry, method: :delete, 
+                        confirm: 'Удалить эту запись о питании?',
+                        class: "px-6 py-3 rounded-lg border border-red-300 text-red-700 hover:bg-red-50 transition font-medium" do %>
+              Удалить
+            <% end %>
+          </div>
+          
+          <%= f.submit "Сохранить изменения", 
+              class: "px-8 py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium hover:shadow-lg transition transform hover:scale-105" %>
+        </div>
+
+      <% end %>
+    </div>
+
+    <!-- Info about entry -->
+    <div class="glass-card rounded-2xl p-6 shadow-xl mt-6" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3);">
+      <div class="flex items-center justify-between text-sm text-gray-600">
+        <div>Создано: <%= @nutrition_entry.created_at.strftime('%d.%m.%Y в %H:%M') %></div>
+        <% if @nutrition_entry.updated_at != @nutrition_entry.created_at %>
+          <div>Обновлено: <%= @nutrition_entry.updated_at.strftime('%d.%m.%Y в %H:%M') %></div>
+        <% end %>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Handle meal type selection
+document.addEventListener('DOMContentLoaded', function() {
+  const radioButtons = document.querySelectorAll('.meal-type-radio');
+  const options = document.querySelectorAll('.meal-type-option');
+  
+  function updateSelection() {
+    options.forEach((option, index) => {
+      const radio = radioButtons[index];
+      if (radio.checked) {
+        option.classList.add('bg-green-50', 'border-green-200', 'text-green-700', 'shadow-md');
+        option.classList.remove('bg-gray-50', 'border-gray-200', 'text-gray-700');
+      } else {
+        option.classList.remove('bg-green-50', 'border-green-200', 'text-green-700', 'shadow-md');
+        option.classList.add('bg-gray-50', 'border-gray-200', 'text-gray-700');
+      }
+    });
+  }
+  
+  radioButtons.forEach((radio) => {
+    radio.addEventListener('change', updateSelection);
+  });
+  
+  // Initial state
+  updateSelection();
+});
+
+// Auto-calculate calories from macros
+function calculateCaloriesFromMacros() {
+  const protein = parseFloat(document.querySelector('[name="nutrition_entry[protein]"]').value) || 0;
+  const fat = parseFloat(document.querySelector('[name="nutrition_entry[fat]"]').value) || 0;
+  const carbs = parseFloat(document.querySelector('[name="nutrition_entry[carbs]"]').value) || 0;
+  
+  const calculatedCalories = (protein * 4) + (fat * 9) + (carbs * 4);
+  const caloriesField = document.querySelector('[name="nutrition_entry[calories]"]');
+  
+  if (!caloriesField.value || caloriesField.value == 0) {
+    caloriesField.value = Math.round(calculatedCalories);
+  }
+}
+
+// Add event listeners for auto-calculation
+['protein', 'fat', 'carbs'].forEach(macro => {
+  const field = document.querySelector(`[name="nutrition_entry[${macro}]"]`);
+  if (field) {
+    field.addEventListener('input', calculateCaloriesFromMacros);
+  }
+});
+</script>
+
+<style>
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.1);
+}
+
+.meal-type-option {
+  transition: all 0.2s ease;
+}
+
+.meal-type-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+</style>

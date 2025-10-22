@@ -95,7 +95,7 @@
                 mood_emoji = mood_emojis[entry_mood]
               %>
               
-              <div class="diary-entry group bg-gradient-to-br <%= mood_color %> backdrop-blur-xl rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01]" 
+              <div id="entry-<%= entry.id %>" class="diary-entry group bg-gradient-to-br <%= mood_color %> backdrop-blur-xl rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01]" 
                    data-date="<%= entry.created_at.to_date %>"
                    data-mood="<%= entry_mood %>"
                    data-content="<%= entry.content.downcase %>">
@@ -131,11 +131,23 @@
                     </div>
                     
                     <!-- Options menu -->
-                    <button class="p-2 hover:bg-white/30 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                      </svg>
-                    </button>
+                    <div class="relative">
+                      <button onclick="toggleEntryMenu('<%= entry.id %>')" class="p-2 hover:bg-white/30 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                        </svg>
+                      </button>
+                      
+                      <!-- Dropdown menu -->
+                      <div id="menu-<%= entry.id %>" class="hidden absolute right-0 top-full mt-1 w-32 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button onclick="deleteEntry('<%= entry.id %>')" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                          Удалить
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   
                   <!-- Entry Content -->
@@ -300,7 +312,109 @@
   </div>
 </div>
 
+<style>
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+</style>
+
 <script>
+  // Toggle entry options menu
+  function toggleEntryMenu(entryId) {
+    const menu = document.getElementById(`menu-${entryId}`);
+    const allMenus = document.querySelectorAll('[id^="menu-"]');
+    
+    // Hide all other menus
+    allMenus.forEach(m => {
+      if (m.id !== `menu-${entryId}`) {
+        m.classList.add('hidden');
+      }
+    });
+    
+    // Toggle current menu
+    menu.classList.toggle('hidden');
+  }
+  
+  // Delete entry
+  function deleteEntry(entryId) {
+    if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+      return;
+    }
+    
+    const csrfToken = document.querySelector('[name="csrf-token"]');
+    if (!csrfToken) {
+      alert('CSRF токен не найден');
+      return;
+    }
+    
+    console.log('Deleting entry:', entryId);
+    console.log('Current user ID:', '<%= current_user&.id %>');
+    
+    fetch(`/entries/${entryId}.json`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': csrfToken.content
+      }
+    })
+    .then(response => {
+      console.log('Delete response status:', response.status);
+      console.log('Delete response headers:', response.headers.get('content-type'));
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json();
+      } else {
+        // If not JSON, get text to see what we actually received
+        return response.text().then(text => {
+          console.error('Expected JSON but got:', text);
+          throw new Error('Server returned non-JSON response');
+        });
+      }
+    })
+    .then(data => {
+      console.log('Delete response data:', data);
+      console.log('Data type:', typeof data);
+      
+      if (data && data.success) {
+        // Remove entry from DOM with animation
+        const entryElement = document.getElementById(`entry-${entryId}`);
+        entryElement.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          entryElement.remove();
+          // Update stats if needed
+          location.reload();
+        }, 300);
+      } else {
+        alert('Ошибка при удалении записи');
+      }
+    })
+    .catch(error => {
+      console.error('Delete error:', error);
+      alert(`Ошибка при удалении записи: ${error.message}`);
+    });
+  }
+  
+  // Close menus when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.relative')) {
+      const allMenus = document.querySelectorAll('[id^="menu-"]');
+      allMenus.forEach(menu => menu.classList.add('hidden'));
+    }
+  });
+
   // Search functionality
   document.getElementById('searchInput').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();

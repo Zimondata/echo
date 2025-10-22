@@ -10,16 +10,20 @@ Rails.application.routes.draw do
 
   # Dashboard (protected)
   get "dashboard", to: "dashboard#index"
+  get "dashboard/nutrition_stats", to: "dashboard#nutrition_stats"
   
 
   # Entries (Diary, Ideas, Plans)
-  resources :entries, only: [:index, :show] do
+  resources :entries, only: [:index, :show, :destroy] do
     collection do
       get :diary
       get :ideas
       get :plans
     end
   end
+
+  # Nutrition
+  resources :nutrition_entries, path: 'nutrition', only: [:index, :show, :new, :create, :edit, :update, :destroy]
 
   # Calendar Events
   resources :calendar_events, only: [:index, :show, :new, :create, :edit, :update, :destroy]
@@ -51,7 +55,7 @@ Rails.application.routes.draw do
       get 'dashboard/needs_attention', to: 'dashboard#needs_attention'
 
       # Entries
-      resources :entries, only: [:index, :show, :create, :update] do
+      resources :entries, only: [:index, :show, :create, :update, :destroy] do
         member do
           patch :categorize
           patch :add_tags
@@ -85,6 +89,18 @@ Rails.application.routes.draw do
 
       # Reminders API
       resources :reminders, only: [:index, :show, :create, :update, :destroy]
+
+      # Nutrition API
+      resources :nutrition_entries, only: [:index, :show, :create, :update, :destroy] do
+        collection do
+          get :daily_stats
+          get :weekly_stats
+          get :monthly_stats
+        end
+        member do
+          patch :toggle_status
+        end
+      end
 
       # Search
       get 'search', to: 'search#index'

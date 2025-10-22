@@ -14,6 +14,7 @@ module Ai
       - "idea" — новые идеи, концепции, инсайты
       - "plan" — конкретные задачи, планы, события с временем
       - "plan_update" — изменения существующих планов
+      - "nutrition" — записи о питании, еде, калориях, БЖУ
 
       ВАЖНО: Если в тексте несколько планов - создавай отдельный объект для каждого!
 
@@ -50,7 +51,7 @@ module Ai
       {
         "entries": [
           {
-            "type": "diary|idea|plan|plan_update",
+            "type": "diary|idea|plan|plan_update|nutrition",
             "content": "полное содержание этого конкретного плана/записи",
             "summary": "краткое резюме (1-2 предложения)",
             "priority": 0-10,
@@ -62,7 +63,16 @@ module Ai
             "reminder_time": "ISO8601 datetime или null",
             "reminder_message": "текст напоминания или null",
             "tags": ["тег1", "тег2"],
-            "metadata": {}
+            "metadata": {},
+            "nutrition": {
+              "calories": число или null,
+              "protein": число или null,
+              "fat": число или null,
+              "carbs": число или null,
+              "meal_type": "breakfast|lunch|dinner|snack или null",
+              "food_items": "список продуктов через запятую или null",
+              "meal_description": "описание приёма пищи или null"
+            } (ТОЛЬКО для типа "nutrition")
           }
         ]
       }
@@ -74,8 +84,27 @@ module Ai
         → 2 отдельных плана
       - "Сегодня хороший день, много работал"
         → 1 запись diary
+      - "выпил протеин на воде в обед"
+        → 1 запись nutrition с meal_type: lunch, calories: 120, protein: 25, fat: 1, carbs: 2
+      - "съел курицу с рисом, примерно 400 калорий"
+        → 1 запись nutrition с calories: 400, protein: 35, fat: 8, carbs: 40
 
       Всегда анализируй время относительно текущей даты и времени!
+      
+      КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО ДЛЯ NUTRITION:
+      - ЛЮБОЕ упоминание еды, напитков, калорий, протеина, БЖУ = тип "nutrition"!
+      - Ключевые слова: протеин, еда, съел, поел, выпил (в контексте еды), калории, белки, жиры, углеводы, завтрак, обед, ужин, перекус
+      - "выпил протеин" = nutrition с meal_type: lunch/snack по времени
+      - "в обед выпил протеин" = nutrition с meal_type: lunch
+      - Заполняй поле nutrition с извлеченными данными
+      
+      ТИПИЧНЫЕ ДАННЫЕ ДЛЯ ПРОДУКТОВ:
+      - "протеин на воде" → calories: 120, protein: 25, fat: 1, carbs: 2, food_items: "протеиновый порошок"
+      - "протеиновый коктейль" → calories: 120, protein: 25, fat: 1, carbs: 2, food_items: "протеиновый порошок"
+      - "выпил протеин" → calories: 120, protein: 25, fat: 1, carbs: 2, food_items: "протеиновый порошок"
+      - "курица с рисом" → calories: 400, protein: 35, fat: 8, carbs: 40, food_items: "курица, рис"
+      - "овсянка" → calories: 150, protein: 5, fat: 3, carbs: 30, food_items: "овсяные хлопья"
+      - "яблоко" → calories: 80, protein: 0, fat: 0, carbs: 20, food_items: "яблоко"
       
       ПЛАНЫ БЕЗ ВРЕМЕНИ:
       - Если НЕ указано конкретное время (например: "помедитировать", "силовая тренировка", "посмотреть фильм")

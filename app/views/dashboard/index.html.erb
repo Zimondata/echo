@@ -182,20 +182,26 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="glass-card p-4 rounded-xl text-center hover-scale">
             <div id="totalEntriesCount" class="text-2xl font-bold text-violet-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Записей за день</div>
-          </div>
-          <div class="glass-card p-4 rounded-xl text-center hover-scale">
-            <div id="todayTasksCount" class="text-2xl font-bold text-amber-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Задач на день</div>
+            <div class="text-sm text-gray-600 mt-1">Планов на сегодня</div>
           </div>
           <div class="glass-card p-4 rounded-xl text-center hover-scale">
             <div id="completedTodayCount" class="text-2xl font-bold text-green-600">0</div>
             <div class="text-sm text-gray-600 mt-1">Выполнено</div>
           </div>
-          <div class="glass-card p-4 rounded-xl text-center hover-scale">
-            <div id="todayIdeasCount" class="text-2xl font-bold text-blue-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Новых идей</div>
-          </div>
+          <a href="/nutrition" class="glass-card p-4 rounded-xl text-center hover-scale block">
+            <div class="flex justify-center space-x-2 mb-1">
+              <span id="todayProtein" class="text-sm font-bold text-blue-600">0</span>
+              <span class="text-xs text-gray-400">/</span>
+              <span id="todayFat" class="text-sm font-bold text-orange-600">0</span>
+              <span class="text-xs text-gray-400">/</span>
+              <span id="todayCarbs" class="text-sm font-bold text-purple-600">0</span>
+            </div>
+            <div class="text-xs text-gray-600">Б/Ж/У (г)</div>
+          </a>
+          <a href="/nutrition" class="glass-card p-4 rounded-xl text-center hover-scale block">
+            <div id="todayCaloriesCount" class="text-2xl font-bold text-orange-600">0</div>
+            <div class="text-sm text-gray-600 mt-1">Калорий сегодня</div>
+          </a>
         </div>
       </div>
     </div>
@@ -617,7 +623,28 @@ function toggleTask(eventId) {
     } else {
       taskElement.classList.remove('completed-task');
     }
+    
+    // Update completed tasks counter
+    updateCompletedTasksCounter();
   });
+}
+
+function updateCompletedTasksCounter() {
+  // Count completed tasks in today's section
+  const todayTasks = document.querySelectorAll('#todayTasks input[type="checkbox"]:checked');
+  const completedCount = todayTasks.length;
+  
+  // Update the counter display
+  document.getElementById('completedTodayCount').textContent = completedCount;
+}
+
+function updateTasksCounter() {
+  // Count total tasks in today's section
+  const todayTasks = document.querySelectorAll('#todayTasks input[type="checkbox"]');
+  const totalCount = todayTasks.length;
+  
+  // Update the counter display
+  document.getElementById('totalEntriesCount').textContent = totalCount;
 }
 
 function deleteTask(eventId) {
@@ -634,7 +661,12 @@ function deleteTask(eventId) {
   .then(data => {
     const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
     taskElement.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(() => taskElement.remove(), 300);
+    setTimeout(() => {
+      taskElement.remove();
+      // Update counters after task is removed
+      updateCompletedTasksCounter();
+      updateTasksCounter();
+    }, 300);
   });
 }
 
@@ -704,6 +736,9 @@ function loadDayEvents(date) {
   // Load stats for selected day
   updateDayStats(date);
   
+  // Load nutrition stats for selected day
+  loadNutritionStats(date);
+  
   // Load events for selected day
   fetch(`/api/v1/calendar_events?start_date=${date}&end_date=${date}`, {
     headers: {
@@ -731,13 +766,23 @@ function updateDayStats(date) {
   .then(responses => Promise.all(responses.map(r => r.json())))
   .then(([entriesData, eventsData]) => {
     // Update stats
+    console.log('Entries data:', entriesData);
+    console.log('Events data:', eventsData);
     const entries = entriesData.data || [];
     const events = eventsData.data || [];
     
-    document.getElementById('totalEntriesCount').textContent = entries.length;
-    document.getElementById('todayTasksCount').textContent = events.length;
+    console.log('Events count:', events.length);
+    document.getElementById('totalEntriesCount').textContent = events.length;
     document.getElementById('completedTodayCount').textContent = events.filter(e => e.done).length;
-    document.getElementById('todayIdeasCount').textContent = entries.filter(e => e.entry_type === 'idea').length;
+    
+    // Load nutrition data for today
+    loadNutritionStats(selectedDate || new Date().toISOString().split('T')[0]);
+  })
+  .catch(error => {
+    console.error('Error fetching stats:', error);
+    // Set default values if API fails
+    document.getElementById('totalEntriesCount').textContent = '0';
+    document.getElementById('completedTodayCount').textContent = '0';
   });
 }
 
@@ -901,9 +946,54 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+function loadNutritionStats(date) {
+  fetch(`/dashboard/nutrition_stats?date=${date}`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const calories = Math.round(data.calories || 0);
+    const protein = Math.round(data.protein || 0);
+    const fat = Math.round(data.fat || 0); 
+    const carbs = Math.round(data.carbs || 0);
+    
+    document.getElementById('todayCaloriesCount').textContent = calories;
+    document.getElementById('todayProtein').textContent = protein;
+    document.getElementById('todayFat').textContent = fat;
+    document.getElementById('todayCarbs').textContent = carbs;
+  })
+  .catch(error => {
+    console.log('Nutrition stats not available:', error);
+    document.getElementById('todayCaloriesCount').textContent = '0';
+    document.getElementById('todayProtein').textContent = '0';
+    document.getElementById('todayFat').textContent = '0';
+    document.getElementById('todayCarbs').textContent = '0';
+  });
+}
+
 // Initialize stats on page load
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
-  updateDayStats(today);
+  // Don't override server data on initial load - only update when user selects different date
+  // updateDayStats(today);
+  
+  // Set initial nutrition stats from server data
+  <% if @nutrition_totals %>
+    document.getElementById('todayCaloriesCount').textContent = '<%= @nutrition_totals[:calories].to_i %>';
+    document.getElementById('todayProtein').textContent = '<%= @nutrition_totals[:protein].to_f.round(0) %>';
+    document.getElementById('todayFat').textContent = '<%= @nutrition_totals[:fat].to_f.round(0) %>';
+    document.getElementById('todayCarbs').textContent = '<%= @nutrition_totals[:carbs].to_f.round(0) %>';
+  <% else %>
+    document.getElementById('todayCaloriesCount').textContent = '0';
+    document.getElementById('todayProtein').textContent = '0';
+    document.getElementById('todayFat').textContent = '0';
+    document.getElementById('todayCarbs').textContent = '0';
+  <% end %>
+  
+  // Set initial tasks stats from server data
+  document.getElementById('totalEntriesCount').textContent = '<%= @today_tasks_count || 0 %>';
+  document.getElementById('completedTodayCount').textContent = '<%= @completed_today_count || 0 %>';
 });
 </script>

@@ -19,10 +19,12 @@ module Telegram
         handle_location_message
       elsif message.voice
         handle_voice_message
+      elsif message.photo
+        handle_photo_message
       elsif message.text
         handle_text_message
       else
-        send_reply("Извините, я пока поддерживаю только текстовые, голосовые сообщения и геолокацию.")
+        send_reply("Извините, я пока поддерживаю только текстовые, голосовые сообщения, фото и геолокацию.")
       end
     end
 
@@ -66,6 +68,8 @@ module Telegram
         handle_autoplan_command
       when "/timezone"
         handle_timezone_command
+      when "/nutrition"
+        handle_nutrition_command
       else
         send_reply("Неизвестная команда. Используй /help для списка команд.")
       end
@@ -82,6 +86,7 @@ module Telegram
         💡 Сохранять идеи и инсайты
         📅 Планировать задачи и события
         🔔 Напоминать о важном
+        🍽️ Отслеживать питание и калории
 
         Просто отправь мне голосовое или текстовое сообщение, и я всё сохраню!
 
@@ -122,6 +127,9 @@ module Telegram
         /optimize — Оптимизировать расписание
         /suggest — Умные предложения задач
         /autoplan — Полное автопланирование
+        
+        *Питание:*
+        /nutrition — Статистика питания за день
 
         *Как использовать:*
 
@@ -142,6 +150,9 @@ module Telegram
 
         💬 "Завтра в 15:00 встреча с клиентом"
         → Создам событие в календаре и напоминание
+        
+        💬 "Съел овсянку с бананом на завтрак, примерно 300 ккал"
+        → Сохраню как запись о питании с подсчётом БЖУ
       TEXT
 
       send_reply(help_text)
@@ -206,6 +217,117 @@ module Telegram
 
     def handle_text_message
       process_content(message.text)
+    end
+
+    def handle_photo_message
+      send_reply("📸 Анализирую фото еды...")
+
+      # Get the highest resolution photo
+      photo = message.photo.last
+      photo_data = BotService.download_file(photo.file_id)
+
+      unless photo_data
+        send_reply("Не удалось скачать фото. Попробуй еще раз.")
+        return
+      end
+
+      # Analyze photo with OpenAI Vision
+      food_analysis = Ai::VisionService.analyze_food_photo(photo_data)
+
+      unless food_analysis
+        send_reply("Не удалось распознать еду на фото. Попробуй другое фото или опиши еду текстом.")
+        return
+      end
+
+      # Add caption if provided
+      caption_text = message.caption.present? ? " #{message.caption}" : ""
+      combined_text = "#{food_analysis[:description]}#{caption_text}"
+
+      # Process as nutrition content
+      process_nutrition_photo(combined_text, food_analysis, photo.file_id)
+    end
+
+    def process_nutrition_photo(text, vision_analysis, photo_file_id)
+      # Create nutrition entry directly from vision analysis
+      nutrition_data = {
+        calories: vision_analysis[:nutrition][:calories] || 0,
+        protein: vision_analysis[:nutrition][:protein] || 0,
+        fat: vision_analysis[:nutrition][:fat] || 0,
+        carbs: vision_analysis[:nutrition][:carbs] || 0,
+        meal_type: vision_analysis[:meal_type] || determine_meal_type_by_time,
+        food_items: vision_analysis[:food_items]&.join(', '),
+        meal_description: vision_analysis[:description] || text.truncate(200)
+      }
+
+      # Create Entry record
+      entry = user.entries.create!(
+        entry_type: 'nutrition',
+        content: text,
+        metadata: {
+          photo_file_id: photo_file_id,
+          vision_analysis: vision_analysis,
+          auto_detected: true
+        }
+      )
+
+      # Create NutritionEntry
+      nutrition_entry = user.nutrition_entries.create!(
+        entry: entry,
+        calories: nutrition_data[:calories],
+        protein: nutrition_data[:protein],
+        fat: nutrition_data[:fat],
+        carbs: nutrition_data[:carbs],
+        meal_type: nutrition_data[:meal_type],
+        food_items: nutrition_data[:food_items],
+        meal_description: nutrition_data[:meal_description],
+        recorded_at: Time.current,
+        photo_url: photo_file_id, # Store Telegram file_id
+        analysis_data: vision_analysis
+      )
+
+      # Send enhanced confirmation with confidence
+      send_photo_nutrition_confirmation(nutrition_entry, vision_analysis)
+
+    rescue StandardError => e
+      Rails.logger.error "Error processing nutrition photo: #{e.message}"
+      send_reply("Произошла ошибка при анализе фото. Попробуй еще раз или опиши еду текстом.")
+    end
+
+    def send_photo_nutrition_confirmation(nutrition_entry, vision_analysis)
+      meal_emoji = case nutrition_entry.meal_type
+      when 'breakfast' then '🌅'
+      when 'lunch' then '☀️'
+      when 'dinner' then '🌙'
+      when 'snack' then '🍎'
+      else '🍽️'
+      end
+
+      confidence_emoji = case vision_analysis[:confidence_score] || 70
+      when 80..100 then '🎯'
+      when 60..79 then '✅'
+      else '⚠️'
+      end
+
+      confirmation_text = <<~TEXT
+        #{meal_emoji} *Распознал еду на фото!*
+
+        #{confidence_emoji} *Уверенность: #{vision_analysis[:confidence_score] || 70}%*
+
+        🍽️ *Что вижу:*
+        #{vision_analysis[:description] || nutrition_entry.meal_description}
+
+        📊 *Примерная пищевая ценность:*
+        • Калории: #{nutrition_entry.calories.to_i} ккал
+        • Белки: #{nutrition_entry.protein.to_f.round(1)} г
+        • Жиры: #{nutrition_entry.fat.to_f.round(1)} г  
+        • Углеводы: #{nutrition_entry.carbs.to_f.round(1)} г
+
+        #{nutrition_entry.food_items.present? ? "🥘 *Продукты:* #{nutrition_entry.food_items}" : ""}
+
+        💡 Если данные неточные, исправь через /nutrition или добавь текстом
+      TEXT
+
+      send_reply(confirmation_text)
     end
 
     def process_content(text, audio_file_id: nil)
@@ -337,6 +459,11 @@ module Telegram
         if analysis[:create_reminder] && analysis[:reminder_time]
           create_reminder(current_entry, analysis)
         end
+
+        # Create nutrition entry if needed
+        if analysis[:type] == 'nutrition' && analysis[:nutrition]
+          create_nutrition_entry(current_entry, analysis)
+        end
       end
 
       # Send comprehensive confirmation
@@ -436,7 +563,8 @@ module Telegram
         "diary" => "Дневник",
         "idea" => "Идея",
         "plan" => "План",
-        "plan_update" => "Обновление плана"
+        "plan_update" => "Обновление плана",
+        "nutrition" => "Питание"
       }[type] || type
     end
 
@@ -503,6 +631,78 @@ module Telegram
       end
     rescue StandardError => e
       Rails.logger.error "Error creating reminder: #{e.message}"
+    end
+
+    def create_nutrition_entry(entry, analysis)
+      nutrition_data = analysis[:nutrition]
+      return unless nutrition_data
+
+      # Determine meal type based on time if not provided
+      meal_type = nutrition_data[:meal_type] || determine_meal_type_by_time
+
+      nutrition_entry = user.nutrition_entries.create!(
+        entry: entry,
+        calories: nutrition_data[:calories] || 0,
+        protein: nutrition_data[:protein] || 0,
+        fat: nutrition_data[:fat] || 0,
+        carbs: nutrition_data[:carbs] || 0,
+        meal_type: meal_type,
+        food_items: nutrition_data[:food_items],
+        meal_description: nutrition_data[:meal_description] || entry.content.truncate(200),
+        recorded_at: Time.current,
+        analysis_data: analysis.except(:nutrition)
+      )
+
+      # Send nutrition confirmation
+      send_nutrition_confirmation(nutrition_entry)
+
+    rescue StandardError => e
+      Rails.logger.error "Error creating nutrition entry: #{e.message}"
+    end
+
+    def determine_meal_type_by_time
+      hour = Time.current.in_time_zone(user.timezone).hour
+      
+      case hour
+      when 5..10
+        'breakfast'
+      when 11..15
+        'lunch'
+      when 16..18
+        'snack'
+      when 19..23
+        'dinner'
+      else
+        'snack'
+      end
+    end
+
+    def send_nutrition_confirmation(nutrition_entry)
+      meal_emoji = case nutrition_entry.meal_type
+      when 'breakfast' then '🌅'
+      when 'lunch' then '☀️'
+      when 'dinner' then '🌙'
+      when 'snack' then '🍎'
+      else '🍽️'
+      end
+
+      confirmation_text = <<~TEXT
+        #{meal_emoji} *Записал приём пищи!*
+
+        *#{nutrition_entry.meal_type_display}* в #{nutrition_entry.recorded_at.in_time_zone(user.timezone).strftime('%H:%M')}
+
+        🍽️ *Пищевая ценность:*
+        • Калории: #{nutrition_entry.calories.to_i} ккал
+        • Белки: #{nutrition_entry.protein.to_f.round(1)} г
+        • Жиры: #{nutrition_entry.fat.to_f.round(1)} г  
+        • Углеводы: #{nutrition_entry.carbs.to_f.round(1)} г
+
+        #{nutrition_entry.food_items.present? ? "🥘 *Продукты:* #{nutrition_entry.food_items}" : ""}
+
+        💡 Посмотреть статистику питания: /nutrition
+      TEXT
+
+      send_reply(confirmation_text)
     end
 
     def should_update_existing_event?(analysis)
@@ -1023,6 +1223,88 @@ module Telegram
         Rails.logger.error "Error in autoplan: #{e.message}"
         send_reply("Произошла ошибка при автоматическом планировании. Попробуй позже.")
       end
+    end
+
+    def handle_nutrition_command
+      today = Date.current
+      daily_totals = NutritionEntry.daily_totals(user, today)
+      recent_entries = user.nutrition_entries.active.for_date(today).recent.limit(5)
+
+      if recent_entries.empty?
+        send_reply(<<~TEXT)
+          🍽️ *Питание за сегодня*
+          
+          📊 Пока нет записей о питании на сегодня.
+          
+          💡 *Как добавить:*
+          • Отправь фото еды 📸
+          • Опиши что ел: "Съел овсянку с бананом"
+          • Укажи калории: "Обед 450 ккал"
+          
+          Я автоматически подсчитаю БЖУ!
+        TEXT
+        return
+      end
+
+      nutrition_text = <<~TEXT
+        🍽️ *Питание за #{today.strftime('%d %B')}*
+
+        📊 *Итого за день:*
+        • Калории: #{daily_totals[:calories].to_i} ккал
+        • Белки: #{daily_totals[:protein].to_f.round(1)} г
+        • Жиры: #{daily_totals[:fat].to_f.round(1)} г
+        • Углеводы: #{daily_totals[:carbs].to_f.round(1)} г
+        • Приёмов пищи: #{daily_totals[:meals_count]}
+
+        🥘 *Последние приёмы:*
+      TEXT
+
+      recent_entries.each do |entry|
+        meal_emoji = case entry.meal_type
+        when 'breakfast' then '🌅'
+        when 'lunch' then '☀️'
+        when 'dinner' then '🌙'
+        when 'snack' then '🍎'
+        else '🍽️'
+        end
+
+        time_str = entry.recorded_at.in_time_zone(user.timezone).strftime('%H:%M')
+        nutrition_text += "\n#{meal_emoji} #{time_str} - #{entry.meal_type_display}\n"
+        nutrition_text += "   └ #{entry.calories.to_i} ккал"
+        
+        if entry.food_items.present?
+          food_preview = entry.food_items_list.first(2).join(', ')
+          nutrition_text += " • #{food_preview}"
+          if entry.food_items_list.count > 2
+            nutrition_text += " и др."
+          end
+        end
+        nutrition_text += "\n"
+      end
+
+      # Calculate macro percentages
+      total_macros = daily_totals[:protein] + daily_totals[:fat] + daily_totals[:carbs]
+      if total_macros > 0
+        protein_pct = ((daily_totals[:protein] / total_macros) * 100).round(1)
+        fat_pct = ((daily_totals[:fat] / total_macros) * 100).round(1)
+        carbs_pct = ((daily_totals[:carbs] / total_macros) * 100).round(1)
+        
+        nutrition_text += <<~TEXT
+
+          📈 *Соотношение БЖУ:*
+          🔵 Белки: #{protein_pct}%
+          🟠 Жиры: #{fat_pct}%
+          🟣 Углеводы: #{carbs_pct}%
+
+          💡 Открыть полную статистику: #{ENV['APP_URL'] || 'echo.app'}/nutrition
+        TEXT
+      end
+
+      send_reply(nutrition_text)
+
+    rescue StandardError => e
+      Rails.logger.error "Error handling nutrition command: #{e.message}"
+      send_reply("Произошла ошибка при получении данных о питании. Попробуй позже.")
     end
 
     private

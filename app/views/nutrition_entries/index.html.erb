@@ -1,0 +1,489 @@
+<style>
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.1);
+  }
+  
+  .dark .glass-card {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .gradient-green {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%);
+  }
+  
+  .gradient-orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+  }
+  
+  .gradient-blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  }
+  
+  .gradient-pink {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(219, 39, 119, 0.1) 100%);
+  }
+  
+  .nutrition-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .nutrition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+  
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    transform-origin: 50% 50%;
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease;
+  }
+  
+  .stagger-animation > * {
+    animation: fadeIn 0.5s ease both;
+  }
+  
+  .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+  .stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
+  .stagger-animation > *:nth-child(6) { animation-delay: 0.6s; }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+  <div class="max-w-7xl mx-auto p-4 md:p-8">
+    
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            🍽️ Питание
+          </h1>
+          <p class="text-gray-600 mt-2">Отслеживайте калории и БЖУ</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center gap-3">
+          <div class="glass-card px-4 py-2 rounded-full">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span class="text-lg font-medium text-gray-800">
+                <%= @selected_date.strftime("%d %B") %>
+              </span>
+            </div>
+          </div>
+          <%= link_to new_nutrition_entry_path, class: "glass-card px-4 py-2 rounded-full hover:bg-green-50 transition flex items-center gap-2" do %>
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            <span class="text-sm font-medium text-gray-700">Добавить приём пищи</span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 stagger-animation">
+      
+      <!-- Daily Stats Cards -->
+      <div class="lg:col-span-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          
+          <!-- Calories Card -->
+          <div class="nutrition-card glass-card rounded-2xl p-6 shadow-xl gradient-green">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 rounded-lg bg-green-500">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-green-700"><%= @daily_totals[:calories].to_i %></p>
+                <p class="text-sm text-green-600">ккал</p>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Калории</h3>
+            <p class="text-sm text-gray-600"><%= @daily_totals[:meals_count] %> приёмов пищи</p>
+          </div>
+
+          <!-- Protein Card -->
+          <div class="nutrition-card glass-card rounded-2xl p-6 shadow-xl gradient-blue">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 rounded-lg bg-blue-500">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-blue-700"><%= @daily_totals[:protein].to_f.round(1) %></p>
+                <p class="text-sm text-blue-600">г</p>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Белки</h3>
+            <p class="text-sm text-gray-600">Строительный материал</p>
+          </div>
+
+          <!-- Fat Card -->
+          <div class="nutrition-card glass-card rounded-2xl p-6 shadow-xl gradient-orange">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 rounded-lg bg-orange-500">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-orange-700"><%= @daily_totals[:fat].to_f.round(1) %></p>
+                <p class="text-sm text-orange-600">г</p>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Жиры</h3>
+            <p class="text-sm text-gray-600">Источник энергии</p>
+          </div>
+
+          <!-- Carbs Card -->
+          <div class="nutrition-card glass-card rounded-2xl p-6 shadow-xl gradient-pink">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-3 rounded-lg bg-pink-500">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-pink-700"><%= @daily_totals[:carbs].to_f.round(1) %></p>
+                <p class="text-sm text-pink-600">г</p>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Углеводы</h3>
+            <p class="text-sm text-gray-600">Быстрая энергия</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Meals Section -->
+      <div class="lg:col-span-3">
+        <div class="glass-card rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Приёмы пищи
+            </h2>
+            <div class="flex gap-2">
+              <button onclick="changeDate(-1)" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+              <button onclick="changeDate(1)" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <% %w[breakfast lunch dinner snack].each do |meal_type| %>
+              <% meals = @meals[meal_type] || [] %>
+              <div class="border-l-4 border-green-400 pl-4">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-lg font-medium text-gray-800 flex items-center gap-2">
+                    <% case meal_type %>
+                    <% when 'breakfast' %>
+                      <span>🌅</span> Завтрак
+                    <% when 'lunch' %>
+                      <span>☀️</span> Обед
+                    <% when 'dinner' %>
+                      <span>🌙</span> Ужин
+                    <% when 'snack' %>
+                      <span>🍎</span> Перекус
+                    <% end %>
+                    <span class="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                      <%= meals.count %>
+                    </span>
+                  </h3>
+                  <%= link_to new_nutrition_entry_path(meal_type: meal_type), class: "text-green-600 hover:text-green-700 text-sm font-medium flex items-center gap-1" do %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Добавить
+                  <% end %>
+                </div>
+
+                <% if meals.any? %>
+                  <div class="space-y-3">
+                    <% meals.each do |nutrition_entry| %>
+                      <div id="nutrition-entry-<%= nutrition_entry.id %>" class="glass-card p-4 rounded-lg border border-gray-200 hover:border-green-300 transition">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                              <% if nutrition_entry.has_photo? %>
+                                <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
+                                  <img src="<%= nutrition_entry.photo_url %>" alt="Фото еды" class="w-full h-full object-cover">
+                                </div>
+                              <% else %>
+                                <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                  </svg>
+                                </div>
+                              <% end %>
+                              <div>
+                                <h4 class="font-medium text-gray-800">
+                                  <%= nutrition_entry.meal_description.presence || nutrition_entry.food_items.presence || 'Приём пищи' %>
+                                </h4>
+                                <p class="text-sm text-gray-500">
+                                  <%= nutrition_entry.recorded_at.strftime('%H:%M') %>
+                                  <% if nutrition_entry.food_items.present? %>
+                                    • <%= nutrition_entry.food_items_list.first(3).join(', ') %>
+                                    <% if nutrition_entry.food_items_list.count > 3 %>
+                                      и ещё <%= nutrition_entry.food_items_list.count - 3 %>
+                                    <% end %>
+                                  <% end %>
+                                </p>
+                              </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm">
+                              <span class="text-green-700 font-medium">
+                                <span class="font-bold"><%= nutrition_entry.calories.to_i %></span> ккал
+                              </span>
+                              <span class="text-blue-600">
+                                Б: <span class="font-medium"><%= nutrition_entry.protein.to_f.round(1) %>г</span>
+                              </span>
+                              <span class="text-orange-600">
+                                Ж: <span class="font-medium"><%= nutrition_entry.fat.to_f.round(1) %>г</span>
+                              </span>
+                              <span class="text-pink-600">
+                                У: <span class="font-medium"><%= nutrition_entry.carbs.to_f.round(1) %>г</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-2 ml-4">
+                            <%= link_to edit_nutrition_entry_path(nutrition_entry), class: "p-2 hover:bg-gray-100 rounded-lg transition" do %>
+                              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                              </svg>
+                            <% end %>
+                            <button onclick="deleteNutritionEntry('<%= nutrition_entry.id %>')" class="p-2 hover:bg-red-50 rounded-lg transition">
+                              <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <div class="text-center py-8 text-gray-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <p>Пока нет записей</p>
+                    <%= link_to new_nutrition_entry_path(meal_type: meal_type), class: "text-green-600 hover:text-green-700 text-sm font-medium" do %>
+                      Добавить первую запись
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Stats Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="glass-card rounded-2xl p-6 shadow-xl">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Статистика недели
+          </h3>
+          
+          <div class="space-y-4">
+            <div class="text-center">
+              <p class="text-2xl font-bold text-emerald-700"><%= @weekly_averages[:avg_calories] %></p>
+              <p class="text-sm text-gray-600">ккал в среднем</p>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Белки</span>
+                <span class="font-medium text-blue-600"><%= @weekly_averages[:avg_protein] %>г</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Жиры</span>
+                <span class="font-medium text-orange-600"><%= @weekly_averages[:avg_fat] %>г</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Углеводы</span>
+                <span class="font-medium text-pink-600"><%= @weekly_averages[:avg_carbs] %>г</span>
+              </div>
+            </div>
+            
+            <div class="pt-4 border-t border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Всего приёмов</span>
+                <span class="font-medium text-emerald-600"><%= @weekly_averages[:total_meals] %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="glass-card rounded-2xl p-6 shadow-xl mt-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            Быстрые действия
+          </h3>
+          <div class="space-y-3">
+            <%= link_to new_nutrition_entry_path(meal_type: 'breakfast'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-amber-50 transition" do %>
+              <span class="text-lg">🌅</span>
+              <span class="text-gray-700">Завтрак</span>
+            <% end %>
+            
+            <%= link_to new_nutrition_entry_path(meal_type: 'lunch'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition" do %>
+              <span class="text-lg">☀️</span>
+              <span class="text-gray-700">Обед</span>
+            <% end %>
+            
+            <%= link_to new_nutrition_entry_path(meal_type: 'dinner'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-purple-50 transition" do %>
+              <span class="text-lg">🌙</span>
+              <span class="text-gray-700">Ужин</span>
+            <% end %>
+            
+            <%= link_to new_nutrition_entry_path(meal_type: 'snack'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-green-50 transition" do %>
+              <span class="text-lg">🍎</span>
+              <span class="text-gray-700">Перекус</span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function changeDate(days) {
+  const currentDate = new Date('<%= @selected_date.iso8601 %>');
+  currentDate.setDate(currentDate.getDate() + days);
+  
+  const newDate = currentDate.toISOString().split('T')[0];
+  window.location.href = '<%= nutrition_entries_path %>?date=' + newDate;
+}
+
+function deleteNutritionEntry(entryId) {
+  if (!confirm('Удалить запись о питании?')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  console.log('Deleting nutrition entry:', entryId);
+  
+  fetch(`/nutrition/${entryId}.json`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => {
+    console.log('Delete response status:', response.status);
+    console.log('Delete response headers:', response.headers.get('content-type'));
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    // Check if response is actually JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      // If not JSON, get text to see what we actually received
+      return response.text().then(text => {
+        console.error('Expected JSON but got:', text);
+        throw new Error('Server returned non-JSON response');
+      });
+    }
+  })
+  .then(data => {
+    console.log('Delete response data:', data);
+    console.log('Data type:', typeof data);
+    
+    if (data && data.success) {
+      // Remove entry from DOM with animation
+      const entryElement = document.getElementById(`nutrition-entry-${entryId}`);
+      if (entryElement) {
+        entryElement.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          entryElement.remove();
+          // Reload page to update stats
+          location.reload();
+        }, 300);
+      }
+    } else {
+      alert('Ошибка при удалении записи о питании');
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert(`Ошибка при удалении записи: ${error.message}`);
+  });
+}
+
+// Auto-refresh every 5 minutes to update stats
+setInterval(() => {
+  if (document.hidden) return; // Don't refresh if tab is not active
+  location.reload();
+}, 300000);
+</script>
