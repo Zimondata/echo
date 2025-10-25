@@ -14,7 +14,7 @@ Rails.application.routes.draw do
   
 
   # Entries (Diary, Ideas, Plans)
-  resources :entries, only: [:index, :show, :destroy] do
+  resources :entries, only: [:index, :show, :update, :destroy] do
     collection do
       get :diary
       get :ideas

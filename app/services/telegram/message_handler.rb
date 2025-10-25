@@ -334,6 +334,12 @@ module Telegram
       # Use multi-plan analyzer to extract multiple plans from one message
       analyses = Ai::MultiPlanAnalyzer.analyze(text, user: user)
       
+      # Check if any analysis is a command - if so, handle it and don't save
+      if analyses.any? { |a| a[:type] == 'command' }
+        handle_user_command(text)
+        return
+      end
+      
       Rails.logger.info "PROCESS_CONTENT: Received #{analyses.count} analyses from MultiPlanAnalyzer"
       analyses.each_with_index do |a, i|
         Rails.logger.info "  Analysis #{i+1}: create_calendar_event=#{a[:create_calendar_event]}, event_title='#{a[:event_title]}'"
@@ -492,7 +498,30 @@ module Telegram
         #{entry.content}
       TEXT
 
-      send_reply(confirmation_text)
+      # Create inline keyboard for fixing classification
+      keyboard = []
+      
+      # Add buttons for other types (excluding current type)
+      if entry.entry_type != 'idea'
+        keyboard << [{ text: "💡 Это идея", callback_data: "fix_type_#{entry.id}_idea" }]
+      end
+      
+      if entry.entry_type != 'plan'
+        keyboard << [{ text: "📅 Это план", callback_data: "fix_type_#{entry.id}_plan" }]
+      end
+      
+      if entry.entry_type != 'diary'
+        keyboard << [{ text: "📔 Это дневник", callback_data: "fix_type_#{entry.id}_diary" }]
+      end
+
+      # Only add correction buttons if there are alternatives
+      if keyboard.any?
+        keyboard << [{ text: "✅ Все правильно", callback_data: "fix_ok_#{entry.id}" }]
+        
+        send_reply_with_keyboard(confirmation_text, keyboard)
+      else
+        send_reply(confirmation_text)
+      end
     end
 
     def send_multi_entry_confirmation(entries, analyses, original_text)
@@ -1604,6 +1633,76 @@ module Telegram
         chat_id: chat_id,
         text: text
       )
+    end
+
+    def send_reply_with_keyboard(text, keyboard)
+      BotService.send_message_with_keyboard(
+        chat_id: chat_id,
+        text: text,
+        keyboard: keyboard
+      )
+    end
+
+    def handle_user_command(text)
+      # Handle user questions and commands that shouldn't be saved as entries
+      command_response = generate_command_response(text)
+      send_reply(command_response)
+    end
+
+    def generate_command_response(text)
+      text_lower = text.downcase
+      
+      if text_lower.include?("какие") && text_lower.include?("идеи")
+        # Handle "какие есть у меня идеи" type questions
+        ideas = user.entries.active.where(entry_type: 'idea').recent.limit(5)
+        if ideas.any?
+          ideas_list = ideas.map.with_index(1) do |idea, i|
+            "#{i}. #{idea.content.truncate(100)}"
+          end.join("\n")
+          
+          "💡 *Ваши последние идеи:*\n\n#{ideas_list}\n\n📝 Всего идей: #{user.entries.active.where(entry_type: 'idea').count}"
+        else
+          "💡 У вас пока нет сохранённых идей. Расскажите что-нибудь интересное!"
+        end
+      elsif text_lower.include?("план") && (text_lower.include?("какие") || text_lower.include?("что"))
+        # Handle "какие планы" type questions
+        plans = user.entries.active.where(entry_type: 'plan').recent.limit(5)
+        if plans.any?
+          plans_list = plans.map.with_index(1) do |plan, i|
+            "#{i}. #{plan.content.truncate(100)}"
+          end.join("\n")
+          
+          "📅 *Ваши планы:*\n\n#{plans_list}\n\n📋 Всего планов: #{user.entries.active.where(entry_type: 'plan').count}"
+        else
+          "📅 У вас пока нет планов. Создайте новый план!"
+        end
+      elsif text_lower.include?("калори") || text_lower.include?("бжу") || text_lower.include?("питан")
+        # Handle nutrition stats questions
+        today = Date.current
+        nutrition_entries = user.nutrition_entries.where(recorded_at: today.beginning_of_day..today.end_of_day)
+        
+        if nutrition_entries.any?
+          total_calories = nutrition_entries.sum(:calories)
+          total_protein = nutrition_entries.sum(:protein)
+          total_fat = nutrition_entries.sum(:fat)
+          total_carbs = nutrition_entries.sum(:carbs)
+          
+          "🍽️ *Питание за сегодня:*\n\n📊 Калории: #{total_calories.to_i} ккал\n🥩 Белки: #{total_protein.round(1)} г\n🥑 Жиры: #{total_fat.round(1)} г\n🍞 Углеводы: #{total_carbs.round(1)} г\n\n🍽️ Приёмов пищи: #{nutrition_entries.count}"
+        else
+          "🍽️ Сегодня ещё нет записей о питании. Отправьте фото еды или опишите что съели!"
+        end
+      elsif text_lower.include?("записи") || text_lower.include?("что у меня")
+        # Handle general entries questions
+        total_entries = user.entries.active.count
+        total_ideas = user.entries.active.where(entry_type: 'idea').count
+        total_plans = user.entries.active.where(entry_type: 'plan').count
+        total_diary = user.entries.active.where(entry_type: 'diary').count
+        
+        "📊 *Ваша статистика:*\n\n📝 Всего записей: #{total_entries}\n💡 Идеи: #{total_ideas}\n📅 Планы: #{total_plans}\n📔 Дневник: #{total_diary}\n🍽️ Питание: #{user.nutrition_entries.count}"
+      else
+        # Default response for unrecognized commands
+        "🤖 Я понял, что это команда, но пока не знаю как на неё ответить.\n\nПопробуйте:\n• \"какие у меня идеи\"\n• \"покажи планы\"\n• \"статистика калорий\"\n• \"что у меня записей\"\n\nИли используйте /help для полного списка команд."
+      end
     end
   end
 end

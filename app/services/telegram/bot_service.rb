@@ -21,6 +21,25 @@ module Telegram
         nil
       end
 
+      def send_message_with_keyboard(chat_id:, text:, keyboard:, **options)
+        return unless chat_id && text && keyboard
+
+        reply_markup = {
+          inline_keyboard: keyboard
+        }
+
+        client.api.send_message(
+          chat_id: chat_id,
+          text: text,
+          parse_mode: "Markdown",
+          reply_markup: reply_markup,
+          **options
+        )
+      rescue StandardError => e
+        Rails.logger.error "Failed to send Telegram message with keyboard: #{e.message}"
+        nil
+      end
+
       def send_typing(chat_id)
         client.api.send_chat_action(
           chat_id: chat_id,

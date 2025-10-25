@@ -3,6 +3,7 @@ class Entry < ApplicationRecord
   belongs_to :user
   has_one :calendar_event, dependent: :destroy
   has_many :reminders, dependent: :destroy
+  has_one :nutrition_entry, dependent: :destroy
   
   # Self-referential associations for grouped entries
   belongs_to :parent_entry, class_name: 'Entry', optional: true
@@ -12,7 +13,7 @@ class Entry < ApplicationRecord
   has_neighbors :embedding
 
   # Validations
-  validates :entry_type, presence: true, inclusion: { in: %w[diary idea plan plan_update] }
+  validates :entry_type, presence: true, inclusion: { in: %w[diary idea plan plan_update nutrition] }
   validates :content, presence: true
   validates :status, presence: true, inclusion: { in: %w[active archived deleted] }
   validates :category, presence: true, inclusion: { in: %w[inbox work life health ideas projects] }
@@ -23,6 +24,7 @@ class Entry < ApplicationRecord
   scope :diaries, -> { where(entry_type: "diary") }
   scope :ideas, -> { where(entry_type: "idea") }
   scope :plans, -> { where(entry_type: "plan") }
+  scope :nutrition, -> { where(entry_type: "nutrition") }
   scope :recent, -> { order(occurred_at: :desc) }
   scope :by_priority, -> { order(priority: :desc) }
   
@@ -59,6 +61,10 @@ class Entry < ApplicationRecord
 
   def plan_update?
     entry_type == "plan_update"
+  end
+
+  def nutrition?
+    entry_type == "nutrition"
   end
 
   # Dashboard status helpers

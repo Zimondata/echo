@@ -139,7 +139,30 @@
                       </button>
                       
                       <!-- Dropdown menu -->
-                      <div id="menu-<%= entry.id %>" class="hidden absolute right-0 top-full mt-1 w-32 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div id="menu-<%= entry.id %>" class="hidden absolute right-0 top-full mt-1 w-48 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-10">
+                        <!-- Change type section -->
+                        <div class="px-3 py-2 border-b border-gray-200">
+                          <div class="text-xs text-gray-500 mb-1">Переместить в:</div>
+                          <div class="space-y-1">
+                            <% if entry.entry_type != 'idea' %>
+                              <button onclick="changeEntryType('<%= entry.id %>', 'idea')" class="w-full px-2 py-1 text-left text-xs text-yellow-600 hover:bg-yellow-50 rounded flex items-center gap-2">
+                                💡 Идеи
+                              </button>
+                            <% end %>
+                            <% if entry.entry_type != 'plan' %>
+                              <button onclick="changeEntryType('<%= entry.id %>', 'plan')" class="w-full px-2 py-1 text-left text-xs text-blue-600 hover:bg-blue-50 rounded flex items-center gap-2">
+                                📋 Планы
+                              </button>
+                            <% end %>
+                            <% if entry.entry_type != 'diary' %>
+                              <button onclick="changeEntryType('<%= entry.id %>', 'diary')" class="w-full px-2 py-1 text-left text-xs text-purple-600 hover:bg-purple-50 rounded flex items-center gap-2">
+                                📔 Дневник
+                              </button>
+                            <% end %>
+                          </div>
+                        </div>
+                        
+                        <!-- Delete button -->
                         <button onclick="deleteEntry('<%= entry.id %>')" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -342,6 +365,76 @@
     menu.classList.toggle('hidden');
   }
   
+  // Change entry type
+  function changeEntryType(entryId, newType) {
+    if (!confirm(`Переместить запись в раздел "${getTypeName(newType)}"?`)) {
+      return;
+    }
+    
+    const csrfToken = document.querySelector('[name="csrf-token"]');
+    if (!csrfToken) {
+      alert('CSRF токен не найден');
+      return;
+    }
+    
+    console.log('Changing entry type:', entryId, 'to', newType);
+    
+    fetch(`/entries/${entryId}.json`, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken.content
+      },
+      body: JSON.stringify({
+        entry: {
+          entry_type: newType
+        }
+      })
+    })
+    .then(response => {
+      console.log('Change type response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json();
+      } else {
+        return response.text().then(text => {
+          console.error('Expected JSON but got:', text);
+          throw new Error('Server returned non-JSON response');
+        });
+      }
+    })
+    .then(data => {
+      console.log('Change type response data:', data);
+      
+      if (data && data.success) {
+        // Show success message and reload page
+        alert(`Запись перемещена в "${getTypeName(newType)}"`);
+        location.reload();
+      } else {
+        alert('Ошибка при изменении типа записи');
+      }
+    })
+    .catch(error => {
+      console.error('Change type error:', error);
+      alert(`Ошибка при изменении типа: ${error.message}`);
+    });
+  }
+  
+  function getTypeName(type) {
+    const typeNames = {
+      'idea': 'Идеи',
+      'plan': 'Планы', 
+      'diary': 'Дневник'
+    };
+    return typeNames[type] || type;
+  }
+
   // Delete entry
   function deleteEntry(entryId) {
     if (!confirm('Вы уверены, что хотите удалить эту запись?')) {

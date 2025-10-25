@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :calendar_events, dependent: :destroy
   has_many :reminders, dependent: :destroy
   has_many :insights, dependent: :destroy
+  has_many :nutrition_entries, dependent: :destroy
 
   # Scopes
   scope :active, -> { where.not(telegram_id: nil) }

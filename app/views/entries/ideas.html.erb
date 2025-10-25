@@ -243,14 +243,33 @@
       <div class="border-t border-gray-200 px-8 py-4 bg-gray-50/50">
         <div class="flex items-center justify-between">
           <div class="flex gap-3">
+            <!-- Move to different section dropdown -->
+            <div class="relative">
+              <button onclick="toggleModalMenu()" class="p-2 hover:bg-purple-100 rounded-lg transition-colors group">
+                <svg class="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+              </button>
+              
+              <!-- Dropdown menu -->
+              <div id="modalChangeMenu" class="hidden absolute bottom-full mb-2 left-0 w-40 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-20">
+                <div class="px-3 py-2">
+                  <div class="text-xs text-gray-500 mb-2">Переместить в:</div>
+                  <div class="space-y-1">
+                    <button onclick="changeModalEntryType('plan')" class="w-full px-2 py-1 text-left text-xs text-blue-600 hover:bg-blue-50 rounded flex items-center gap-2">
+                      📋 Планы
+                    </button>
+                    <button onclick="changeModalEntryType('diary')" class="w-full px-2 py-1 text-left text-xs text-purple-600 hover:bg-purple-50 rounded flex items-center gap-2">
+                      📔 Дневник
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <button class="p-2 hover:bg-purple-100 rounded-lg transition-colors group">
               <svg class="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-            </button>
-            <button class="p-2 hover:bg-purple-100 rounded-lg transition-colors group">
-              <svg class="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-2.796 0-5.29 1.28-6.716 3.284m9.032 4.026a9.003 9.003 0 01-9.032-4.026"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
               </svg>
             </button>
           </div>
@@ -312,6 +331,7 @@ function filterByTag(tag) {
 }
 
 function openIdeaModal(ideaId) {
+  currentModalEntryId = ideaId; // Save for change type functionality
   const idea = ideasData.find(i => i.id === ideaId);
   if (!idea) return;
   
@@ -374,6 +394,68 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// Change entry type functions for ideas modal
+let currentModalEntryId = null;
+
+function toggleModalMenu() {
+  const menu = document.getElementById('modalChangeMenu');
+  menu.classList.toggle('hidden');
+}
+
+function changeModalEntryType(newType) {
+  if (!currentModalEntryId) {
+    alert('Ошибка: ID записи не найден');
+    return;
+  }
+  
+  if (!confirm(`Переместить запись в раздел "${getTypeName(newType)}"?`)) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  fetch(`/entries/${currentModalEntryId}.json`, {
+    method: 'PATCH',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    },
+    body: JSON.stringify({
+      entry: {
+        entry_type: newType
+      }
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data && data.success) {
+      alert(`Запись перемещена в "${getTypeName(newType)}"`);
+      closeIdeaModal();
+      location.reload();
+    } else {
+      alert('Ошибка при изменении типа записи');
+    }
+  })
+  .catch(error => {
+    console.error('Change type error:', error);
+    alert(`Ошибка при изменении типа: ${error.message}`);
+  });
+}
+
+function getTypeName(type) {
+  const typeNames = {
+    'idea': 'Идеи',
+    'plan': 'Планы', 
+    'diary': 'Дневник'
+  };
+  return typeNames[type] || type;
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {

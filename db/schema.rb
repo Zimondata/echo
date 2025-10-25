@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_15_143536) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_095802) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -89,6 +89,30 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_15_143536) do
     t.index ["generated_at"], name: "index_insights_on_generated_at"
     t.index ["insight_type"], name: "index_insights_on_insight_type"
     t.index ["user_id"], name: "index_insights_on_user_id"
+  end
+
+  create_table "nutrition_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "entry_id"
+    t.decimal "calories", precision: 8, scale: 2
+    t.decimal "protein", precision: 6, scale: 2
+    t.decimal "fat", precision: 6, scale: 2
+    t.decimal "carbs", precision: 6, scale: 2
+    t.string "meal_type", null: false
+    t.text "food_items"
+    t.datetime "recorded_at", null: false
+    t.text "meal_description"
+    t.string "photo_url"
+    t.jsonb "analysis_data", default: {}
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entry_id"], name: "index_nutrition_entries_on_entry_id"
+    t.index ["meal_type"], name: "index_nutrition_entries_on_meal_type"
+    t.index ["recorded_at"], name: "index_nutrition_entries_on_recorded_at"
+    t.index ["status"], name: "index_nutrition_entries_on_status"
+    t.index ["user_id", "recorded_at"], name: "index_nutrition_entries_on_user_id_and_recorded_at"
+    t.index ["user_id"], name: "index_nutrition_entries_on_user_id"
   end
 
   create_table "reminders", force: :cascade do |t|
@@ -246,6 +270,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_15_143536) do
   add_foreign_key "calendar_events", "users"
   add_foreign_key "entries", "users"
   add_foreign_key "insights", "users"
+  add_foreign_key "nutrition_entries", "entries"
+  add_foreign_key "nutrition_entries", "users"
   add_foreign_key "reminders", "entries"
   add_foreign_key "reminders", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
