@@ -1,0 +1,189 @@
+<% content_for :title, "Мои квесты" %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Заголовок -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">🎯 Мои квесты</h1>
+    <div class="flex space-x-4">
+      <%= link_to "Дашборд идей", ideas_dashboard_path, class: "bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition" %>
+      <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
+    </div>
+  </div>
+
+  <!-- Статистика -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-blue-100 rounded-lg">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Всего квестов</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:total] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-green-100 rounded-lg">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Активных</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:active] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-purple-100 rounded-lg">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Завершенных</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:completed] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-yellow-100 rounded-lg">
+          <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Средний прогресс</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:avg_completion] %>%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Фильтры -->
+  <div class="mb-6">
+    <div class="flex space-x-2">
+      <%= link_to "Все", quests_path, 
+          class: "px-4 py-2 rounded-lg transition #{params[:status].blank? ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
+      <%= link_to "Активные", quests_path(status: 'active'), 
+          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
+      <%= link_to "Завершенные", quests_path(status: 'completed'), 
+          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'completed' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
+      <%= link_to "Приостановленные", quests_path(status: 'paused'), 
+          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'paused' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
+    </div>
+  </div>
+
+  <!-- Список квестов -->
+  <div class="space-y-6">
+    <% if @quests.any? %>
+      <% @quests.each do |quest| %>
+        <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition">
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+              <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                  <%= link_to quest.title, quest_path(quest), class: "hover:text-blue-600 transition" %>
+                </h3>
+                <p class="text-gray-600 mb-4"><%= quest.description %></p>
+                
+                <!-- Теги и статусы -->
+                <div class="flex items-center space-x-4 text-sm">
+                  <span class="px-3 py-1 bg-<%= quest.status == 'active' ? 'green' : quest.status == 'completed' ? 'purple' : quest.status == 'paused' ? 'yellow' : 'red' %>-100 text-<%= quest.status == 'active' ? 'green' : quest.status == 'completed' ? 'purple' : quest.status == 'paused' ? 'yellow' : 'red' %>-800 rounded-full">
+                    <%= quest.status_display %>
+                  </span>
+                  <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full">
+                    Приоритет: <%= quest.priority %>
+                  </span>
+                  <span class="text-gray-500">
+                    Создан: <%= quest.created_at.strftime("%d.%m.%Y") %>
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Прогресс -->
+              <div class="text-right ml-6">
+                <div class="text-2xl font-bold text-gray-900 mb-2">
+                  <%= quest.completion_percentage %>%
+                </div>
+                <div class="w-24 bg-gray-200 rounded-full h-2">
+                  <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                       style="width: <%= quest.completion_percentage %>%"></div>
+                </div>
+                <div class="text-sm text-gray-500 mt-1">
+                  <%= quest.completed_steps_count %>/<%= quest.total_steps_count %> задач
+                </div>
+              </div>
+            </div>
+
+            <!-- Следующая задача -->
+            <% if quest.next_task.present? %>
+              <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                <h4 class="font-medium text-blue-900 mb-1">Следующая задача:</h4>
+                <p class="text-blue-800"><%= quest.next_task['task'] %></p>
+                <% if quest.next_task['priority'] == 'high' %>
+                  <span class="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                    🔥 Высокий приоритет
+                  </span>
+                <% end %>
+              </div>
+            <% end %>
+
+            <!-- Действия -->
+            <div class="flex justify-between items-center">
+              <div class="flex space-x-3">
+                <%= link_to "Посмотреть", quest_path(quest), 
+                    class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm" %>
+                
+                <% if quest.status == 'active' %>
+                  <%= link_to "Приостановить", quest_path(quest, new_status: 'paused'), 
+                      method: :patch, 
+                      action: :update_status,
+                      class: "bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition text-sm",
+                      data: { confirm: "Приостановить этот квест?" } %>
+                <% elsif quest.status == 'paused' %>
+                  <%= link_to "Возобновить", quest_path(quest, new_status: 'active'), 
+                      method: :patch, 
+                      action: :update_status,
+                      class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm",
+                      data: { confirm: "Возобновить этот квест?" } %>
+                <% end %>
+              </div>
+              
+              <div class="text-sm text-gray-500">
+                <% if quest.entry.present? %>
+                  Из идеи: <%= link_to truncate(quest.entry.content, length: 40), ideas_entries_path, class: "text-blue-600 hover:text-blue-800" %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-16">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+          <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
+          <%= params[:status].present? ? "Нет квестов с таким статусом" : "Пока нет квестов" %>
+        </h3>
+        <p class="text-purple-600 font-medium max-w-md mx-auto mb-6">
+          Создавайте квесты из своих идей для структурированной работы над ними
+        </p>
+        <%= link_to "Перейти к идеям", ideas_entries_path, 
+            class: "bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all hover:scale-105" %>
+      </div>
+    <% end %>
+  </div>
+</div>

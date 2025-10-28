@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  activity_type: MyString
+  duration_minutes: 1
+  distance_km: 9.99
+  calories_burned: 1
+  average_heart_rate: 1
+  max_heart_rate: 1
+  average_pace: MyString
+  activity_date: 2025-10-25 11:24:38
+  notes: MyText
+  garmin_data: 
+  screenshot_url: MyString
+
+two:
+  user: two
+  activity_type: MyString
+  duration_minutes: 1
+  distance_km: 9.99
+  calories_burned: 1
+  average_heart_rate: 1
+  max_heart_rate: 1
+  average_pace: MyString
+  activity_date: 2025-10-25 11:24:38
+  notes: MyText
+  garmin_data: 
+  screenshot_url: MyString

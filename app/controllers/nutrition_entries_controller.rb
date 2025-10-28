@@ -31,6 +31,26 @@ class NutritionEntriesController < ApplicationController
     # Recent nutrition entries for quick view
     @recent_entries = @user.nutrition_entries.active.recent.limit(5)
     
+    # Activity data for the day
+    @activity_entries = @user.activity_entries.active
+                             .where(activity_date: @selected_date.beginning_of_day..@selected_date.end_of_day)
+                             .recent
+    
+    # Activity totals for the day
+    @activity_totals = {
+      total_duration: @activity_entries.sum(:duration_minutes),
+      total_calories_burned: @activity_entries.sum(:calories_burned),
+      total_distance: @activity_entries.sum(:distance_km),
+      activity_count: @activity_entries.count
+    }
+    
+    # AI analysis of the day (only if we have data)
+    if @nutrition_entries.any? || @activity_entries.any?
+      @daily_analysis = Ai::DailyHealthAnalyzer.analyze_day(@user, @selected_date)
+    else
+      @daily_analysis = nil
+    end
+    
     # Calendar dates with nutrition data
     @calendar_dates = generate_calendar_dates(@selected_date)
   end

@@ -45,9 +45,21 @@
     
     <!-- Header with animation -->
     <div class="mb-8 animate-fade-in">
-      <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
-        💡 Мои идеи
-      </h1>
+      <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
+          💡 Мои идеи
+        </h1>
+        <div class="flex space-x-3">
+          <%= link_to ideas_dashboard_path, class: "bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all hover:scale-105 flex items-center space-x-2" do %>
+            <span>📊</span>
+            <span>Дашборд идей</span>
+          <% end %>
+          <%= link_to quests_path, class: "bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all hover:scale-105 flex items-center space-x-2" do %>
+            <span>🎯</span>
+            <span>Мои квесты</span>
+          <% end %>
+        </div>
+      </div>
       <p class="text-lg text-purple-700 font-medium">
         Коллекция инновационных идей и концепций
       </p>
@@ -136,9 +148,57 @@
                     </p>
                   </div>
                 </div>
-                <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg">
-                  Идея
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg">
+                    Идея
+                  </span>
+                  
+                  <!-- Action Menu -->
+                  <div class="relative" onclick="event.stopPropagation();">
+                    <button onclick="toggleIdeaActionMenu(<%= entry.id %>)" class="p-1.5 rounded-full hover:bg-gray-100 transition-colors" title="Действия">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="ideaActionMenu<%= entry.id %>" class="hidden absolute right-0 mt-1 w-36 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div class="py-1">
+                        <% unless entry.research_data.present? %>
+                          <button onclick="researchIdea(<%= entry.id %>)" class="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2">
+                            🔬
+                            AI Research
+                          </button>
+                        <% else %>
+                          <a href="/ideas_dashboard/<%= entry.id %>/research" class="w-full px-3 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2 block">
+                            📊
+                            Посмотреть анализ
+                          </a>
+                        <% end %>
+                        
+                        <% unless entry.quest_generated? %>
+                          <button onclick="generateQuest(<%= entry.id %>)" class="w-full px-3 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 flex items-center gap-2">
+                            ⚡
+                            Создать квест
+                          </button>
+                        <% end %>
+                        
+                        <button onclick="editIdeaFromCard(<%= entry.id %>)" class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                          Редактировать
+                        </button>
+                        <button onclick="deleteIdeaFromCard(<%= entry.id %>)" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                          Удалить
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Title -->
@@ -267,8 +327,22 @@
               </div>
             </div>
             
-            <button class="p-2 hover:bg-purple-100 rounded-lg transition-colors group">
+            <button onclick="researchIdea(currentModalEntryId)" class="p-2 hover:bg-blue-100 rounded-lg transition-colors group" title="AI Research">
+              🔬
+            </button>
+            
+            <button onclick="generateQuest(currentModalEntryId)" class="p-2 hover:bg-purple-100 rounded-lg transition-colors group" title="Создать квест">
+              ⚡
+            </button>
+            
+            <button onclick="editIdea(currentModalEntryId)" class="p-2 hover:bg-purple-100 rounded-lg transition-colors group" title="Редактировать">
               <svg class="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            
+            <button onclick="deleteIdea(currentModalEntryId)" class="p-2 hover:bg-red-100 rounded-lg transition-colors group" title="Удалить">
+              <svg class="w-5 h-5 text-red-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
               </svg>
             </button>
@@ -389,6 +463,10 @@ style.textContent = `
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  @keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+  }
   .animate-fade-in {
     animation: fadeIn 0.5s ease;
   }
@@ -457,11 +535,250 @@ function getTypeName(type) {
   return typeNames[type] || type;
 }
 
+// Edit and delete functions for ideas
+function editIdea(ideaId) {
+  if (!ideaId) {
+    alert('Ошибка: ID идеи не найден');
+    return;
+  }
+  
+  // Navigate to edit page
+  window.location.href = `/entries/${ideaId}/edit`;
+}
+
+function editIdeaFromCard(ideaId) {
+  window.location.href = `/entries/${ideaId}/edit`;
+}
+
+// Toggle action menu for idea cards
+function toggleIdeaActionMenu(ideaId) {
+  const menu = document.getElementById(`ideaActionMenu${ideaId}`);
+  const allMenus = document.querySelectorAll('[id^="ideaActionMenu"]');
+  
+  // Close all other menus
+  allMenus.forEach(m => {
+    if (m.id !== `ideaActionMenu${ideaId}`) {
+      m.classList.add('hidden');
+    }
+  });
+  
+  // Toggle current menu
+  menu.classList.toggle('hidden');
+}
+
+function deleteIdeaFromCard(ideaId) {
+  if (!ideaId) {
+    alert('Ошибка: ID идеи не найден');
+    return;
+  }
+  
+  if (!confirm('Вы уверены, что хотите удалить эту идею? Это действие нельзя отменить.')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  // Close menu
+  const menu = document.getElementById(`ideaActionMenu${ideaId}`);
+  if (menu) {
+    menu.classList.add('hidden');
+  }
+  
+  fetch(`/entries/${ideaId}.json`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data && data.success) {
+      alert('Идея успешно удалена');
+      // Remove the card from the grid
+      const ideaCard = document.querySelector(`[data-idea-id="${ideaId}"]`);
+      if (ideaCard) {
+        ideaCard.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          ideaCard.remove();
+        }, 300);
+      }
+    } else {
+      alert('Ошибка при удалении идеи');
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert(`Ошибка при удалении: ${error.message}`);
+  });
+}
+
+function deleteIdea(ideaId) {
+  if (!ideaId) {
+    alert('Ошибка: ID идеи не найден');
+    return;
+  }
+  
+  if (!confirm('Вы уверены, что хотите удалить эту идею? Это действие нельзя отменить.')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  // Show loading state
+  const deleteButton = event.target.closest('button');
+  const originalContent = deleteButton.innerHTML;
+  deleteButton.innerHTML = `
+    <svg class="w-5 h-5 text-red-600 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  `;
+  deleteButton.disabled = true;
+  
+  fetch(`/entries/${ideaId}.json`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data && data.success) {
+      alert('Идея успешно удалена');
+      closeIdeaModal();
+      // Remove the card from the grid
+      const ideaCard = document.querySelector(`[data-idea-id="${ideaId}"]`);
+      if (ideaCard) {
+        ideaCard.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          ideaCard.remove();
+        }, 300);
+      }
+    } else {
+      alert('Ошибка при удалении идеи');
+      deleteButton.innerHTML = originalContent;
+      deleteButton.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert(`Ошибка при удалении: ${error.message}`);
+    deleteButton.innerHTML = originalContent;
+    deleteButton.disabled = false;
+  });
+}
+
+// Research idea function
+function researchIdea(ideaId) {
+  if (!ideaId) {
+    alert('Ошибка: ID идеи не найден');
+    return;
+  }
+  
+  if (!confirm('Провести AI-исследование этой идеи? Это может занять несколько минут.')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  // Show loading message
+  alert('Исследование началось. Пожалуйста, подождите...');
+  
+  fetch(`/ideas_dashboard/${ideaId}/research`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      alert('Исследование завершено! Страница будет перезагружена.');
+      window.location.reload();
+    } else {
+      alert('Ошибка при проведении исследования');
+    }
+  })
+  .catch(error => {
+    console.error('Research error:', error);
+    alert(`Ошибка при исследовании: ${error.message}`);
+  });
+}
+
+// Generate quest function
+function generateQuest(ideaId) {
+  if (!ideaId) {
+    alert('Ошибка: ID идеи не найден');
+    return;
+  }
+  
+  if (!confirm('Создать квест из этой идеи?')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  // Show loading message
+  alert('Создание квеста началось. Пожалуйста, подождите...');
+  
+  fetch(`/ideas_dashboard/${ideaId}/generate_quest`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      alert('Квест создан! Вы будете перенаправлены к квесту.');
+      // The controller handles the redirect
+      window.location.reload();
+    } else {
+      alert('Ошибка при создании квеста');
+    }
+  })
+  .catch(error => {
+    console.error('Quest generation error:', error);
+    alert(`Ошибка при создании квеста: ${error.message}`);
+  });
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   // Add staggered animation to cards
   document.querySelectorAll('.idea-card').forEach((card, index) => {
     card.style.animation = `fadeIn 0.5s ease ${index * 0.1}s both`;
+  });
+  
+  // Close all menus when clicking outside
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('[id^="ideaActionMenu"]') && !event.target.closest('button[onclick*="toggleIdeaActionMenu"]')) {
+      document.querySelectorAll('[id^="ideaActionMenu"]').forEach(menu => {
+        menu.classList.add('hidden');
+      });
+    }
   });
 });
 </script>

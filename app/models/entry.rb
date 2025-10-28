@@ -4,6 +4,7 @@ class Entry < ApplicationRecord
   has_one :calendar_event, dependent: :destroy
   has_many :reminders, dependent: :destroy
   has_one :nutrition_entry, dependent: :destroy
+  has_many :quests, dependent: :destroy
   
   # Self-referential associations for grouped entries
   belongs_to :parent_entry, class_name: 'Entry', optional: true
@@ -147,6 +148,52 @@ class Entry < ApplicationRecord
     else
       [content]
     end
+  end
+
+  # Idea management methods
+  def idea_category_display
+    return nil unless idea?
+    
+    {
+      'business' => '💼 Бизнес',
+      'tech' => '⚙️ Технологии', 
+      'content' => '📝 Контент',
+      'personal' => '🎯 Личное',
+      'creative' => '🎨 Креатив'
+    }[idea_category] || idea_category&.humanize
+  end
+
+  def idea_status_display
+    return nil unless idea?
+    
+    {
+      'new' => '📥 Новая',
+      'research' => '🔍 Исследование',
+      'quest' => '🎯 Квест',
+      'in_progress' => '🚀 В работе',
+      'done' => '✅ Готово',
+      'archive' => '🗄️ Архив'
+    }[idea_status] || idea_status&.humanize
+  end
+
+  def idea_priority_display
+    return nil unless idea?
+    
+    case idea_priority
+    when 9..10 then '🔥 Горячая'
+    when 7..8 then '⭐ Актуальная'
+    when 4..6 then '💡 Перспективная'
+    when 1..3 then '🗄️ Архивная'
+    else '💡 Обычная'
+    end
+  end
+
+  def can_generate_quest?
+    idea? && !quest_generated && ['new', 'research'].include?(idea_status)
+  end
+
+  def has_research?
+    research_data.present? && research_data.any?
   end
 
   private

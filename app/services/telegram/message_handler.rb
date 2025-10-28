@@ -220,7 +220,7 @@ module Telegram
     end
 
     def handle_photo_message
-      send_reply("📸 Анализирую фото еды...")
+      send_reply("📸 Анализирую фото...")
 
       # Get the highest resolution photo
       photo = message.photo.last
@@ -231,7 +231,16 @@ module Telegram
         return
       end
 
-      # Analyze photo with OpenAI Vision
+      # First, try to analyze as Garmin screenshot
+      garmin_analysis = Ai::GarminAnalyzer.analyze_screenshot(photo_data)
+      
+      if garmin_analysis[:is_garmin_screenshot] && garmin_analysis[:confidence_score] > 60
+        # Process as activity/training data
+        process_garmin_screenshot(garmin_analysis, photo.file_id)
+        return
+      end
+
+      # If not Garmin, analyze as food photo
       food_analysis = Ai::VisionService.analyze_food_photo(photo_data)
 
       unless food_analysis
@@ -255,7 +264,7 @@ module Telegram
         fat: vision_analysis[:nutrition][:fat] || 0,
         carbs: vision_analysis[:nutrition][:carbs] || 0,
         meal_type: vision_analysis[:meal_type] || determine_meal_type_by_time,
-        food_items: vision_analysis[:food_items]&.join(', '),
+        food_items: vision_analysis[:food_items].is_a?(Array) ? vision_analysis[:food_items].join(', ') : vision_analysis[:food_items],
         meal_description: vision_analysis[:description] || text.truncate(200)
       }
 
@@ -288,6 +297,9 @@ module Telegram
       # Send enhanced confirmation with confidence
       send_photo_nutrition_confirmation(nutrition_entry, vision_analysis)
 
+      # Update user's last entry context for corrections
+      user.update_last_entry_context([entry.id])
+
     rescue StandardError => e
       Rails.logger.error "Error processing nutrition photo: #{e.message}"
       send_reply("Произошла ошибка при анализе фото. Попробуй еще раз или опиши еду текстом.")
@@ -303,11 +315,13 @@ module Telegram
       end
 
       confidence_emoji = case vision_analysis[:confidence_score] || 70
-      when 80..100 then '🎯'
-      when 60..79 then '✅'
+      when 90..100 then '🎯'
+      when 80..89 then '✅'
+      when 70..79 then '👍'
       else '⚠️'
       end
 
+      # Build enhanced reply with cultural context and component breakdown
       confirmation_text = <<~TEXT
         #{meal_emoji} *Распознал еду на фото!*
 
@@ -315,22 +329,77 @@ module Telegram
 
         🍽️ *Что вижу:*
         #{vision_analysis[:description] || nutrition_entry.meal_description}
+      TEXT
+      
+      # Add cultural context if available
+      if vision_analysis[:cultural_context].present?
+        confirmation_text += "\n🌍 *Кухня:* #{vision_analysis[:cultural_context]}"
+      end
+      
+      # Add component breakdown if available
+      if vision_analysis[:components]&.any?
+        confirmation_text += "\n\n📋 *Анализ по компонентам:*"
+        vision_analysis[:components].each do |component|
+          weight = component[:estimated_weight] || component["estimated_weight"]
+          name = component[:name] || component["name"]
+          calories = component[:calories] || component["calories"]
+          confirmation_text += "\n• #{name} (#{weight}): #{calories} ккал"
+        end
+      end
+      
+      # Add total nutrition
+      confirmation_text += <<~TEXT
 
-        📊 *Примерная пищевая ценность:*
+
+        📊 *Общая пищевая ценность:*
         • Калории: #{nutrition_entry.calories.to_i} ккал
         • Белки: #{nutrition_entry.protein.to_f.round(1)} г
         • Жиры: #{nutrition_entry.fat.to_f.round(1)} г  
         • Углеводы: #{nutrition_entry.carbs.to_f.round(1)} г
-
-        #{nutrition_entry.food_items.present? ? "🥘 *Продукты:* #{nutrition_entry.food_items}" : ""}
-
-        💡 Если данные неточные, исправь через /nutrition или добавь текстом
       TEXT
+      
+      # Add total weight if available
+      if vision_analysis[:portion_analysis]&.[](:total_weight)
+        confirmation_text += "\n⚖️ *Общий вес:* #{vision_analysis[:portion_analysis][:total_weight]}"
+      end
+      
+      # Add food items
+      if nutrition_entry.food_items.present?
+        confirmation_text += "\n\n🥘 *Продукты:* #{nutrition_entry.food_items}"
+      end
+      
+      # Add preparation notes if available
+      if vision_analysis[:preparation_notes].present?
+        confirmation_text += "\n\n👨‍🍳 *Особенности:* #{vision_analysis[:preparation_notes]}"
+      end
+      
+      confirmation_text += "\n\n💡 Если данные неточные, исправь через /nutrition или добавь текстом"
 
       send_reply(confirmation_text)
     end
 
     def process_content(text, audio_file_id: nil)
+      # First, check if this might be a correction to recent entries
+      if user.can_correct_recent_entries?
+        recent_entries = user.get_recent_entries_for_correction
+        
+        if recent_entries.any?
+          correction_result = Ai::CorrectionDetector.analyze(text, recent_entries, user: user)
+          
+          if correction_result[:is_correction]
+            correction_response = Ai::CorrectionApplier.apply(correction_result, user)
+            
+            if correction_response
+              send_correction_confirmation(correction_response)
+              return
+            else
+              Rails.logger.error "Failed to apply correction: #{correction_result}"
+              # Fall through to normal processing
+            end
+          end
+        end
+      end
+
       # Use multi-plan analyzer to extract multiple plans from one message
       analyses = Ai::MultiPlanAnalyzer.analyze(text, user: user)
       
@@ -474,6 +543,11 @@ module Telegram
 
       # Send comprehensive confirmation
       send_multi_entry_confirmation(created_entries, analyses, text)
+
+      # Update user's last entry context for corrections
+      if created_entries.any?
+        user.update_last_entry_context(created_entries.map(&:id))
+      end
 
     rescue StandardError => e
       Rails.logger.error "Error processing content: #{e.message}"
@@ -1338,6 +1412,79 @@ module Telegram
 
     private
 
+    def send_correction_confirmation(correction_response)
+      entry = correction_response[:updated_entry]
+      success_message = correction_response[:success_message]
+      correction_type = correction_response[:correction_type]
+      
+      confirmation_text = "✏️ *Исправление применено!*\n\n#{success_message}"
+      
+      # Add updated data based on correction type
+      case correction_type
+      when "nutrition_correction"
+        if entry.nutrition_entry
+          nutrition = entry.nutrition_entry
+          confirmation_text += <<~TEXT
+            
+            
+            📊 *Обновленная пищевая ценность:*
+            • Калории: #{nutrition.calories.to_i} ккал
+            • Белки: #{nutrition.protein.to_f.round(1)} г
+            • Жиры: #{nutrition.fat.to_f.round(1)} г  
+            • Углеводы: #{nutrition.carbs.to_f.round(1)} г
+            
+            #{nutrition.food_items.present? ? "🥘 *Продукты:* #{nutrition.food_items}" : ""}
+          TEXT
+        end
+        
+      when "time_correction"
+        if entry.calendar_event
+          event_time = entry.calendar_event.start_time.in_time_zone(user.timezone)
+          if entry.calendar_event.all_day?
+            confirmation_text += "\n\n📅 *Обновленное время:* #{event_time.strftime('%d.%m')} (весь день)"
+          else
+            confirmation_text += "\n\n📅 *Обновленное время:* #{event_time.strftime('%d.%m в %H:%M')}"
+          end
+        end
+        
+      when "content_correction"
+        confirmation_text += "\n\n📝 *Обновленное содержание:*\n#{entry.content}"
+        
+        # If it's a nutrition entry, also show updated nutrition data
+        if entry.nutrition_entry
+          nutrition = entry.nutrition_entry
+          confirmation_text += <<~TEXT
+            
+            
+            📊 *Пищевая ценность:*
+            • Калории: #{nutrition.calories.to_i} ккал
+            • Белки: #{nutrition.protein.to_f.round(1)} г
+            • Жиры: #{nutrition.fat.to_f.round(1)} г  
+            • Углеводы: #{nutrition.carbs.to_f.round(1)} г
+            
+            #{nutrition.food_items.present? ? "🥘 *Продукты:* #{nutrition.food_items}" : ""}
+          TEXT
+        end
+        
+      when "type_correction"
+        type_names = {
+          'diary' => 'дневник',
+          'idea' => 'идея',
+          'plan' => 'план',
+          'nutrition' => 'питание'
+        }
+        confirmation_text += "\n\n📝 *Новый тип:* #{type_names[entry.entry_type] || entry.entry_type}"
+        
+        if entry.calendar_event
+          confirmation_text += "\n📅 Создано календарное событие"
+        end
+      end
+      
+      send_reply(confirmation_text)
+    end
+
+    private
+
     def format_daily_plan(plan_data)
       text = "📋 *#{plan_data[:summary]}*\n\n"
       
@@ -1703,6 +1850,62 @@ module Telegram
         # Default response for unrecognized commands
         "🤖 Я понял, что это команда, но пока не знаю как на неё ответить.\n\nПопробуйте:\n• \"какие у меня идеи\"\n• \"покажи планы\"\n• \"статистика калорий\"\n• \"что у меня записей\"\n\nИли используйте /help для полного списка команд."
       end
+    end
+
+    def process_garmin_screenshot(garmin_analysis, photo_file_id)
+      begin
+        # Create ActivityEntry from Garmin data
+        activity_entry = user.activity_entries.create!(
+          activity_type: garmin_analysis[:activity_type],
+          duration_minutes: garmin_analysis[:duration_minutes],
+          distance_km: garmin_analysis[:distance_km],
+          calories_burned: garmin_analysis[:calories_burned],
+          average_heart_rate: garmin_analysis[:average_heart_rate],
+          max_heart_rate: garmin_analysis[:max_heart_rate],
+          average_pace: garmin_analysis[:average_pace],
+          activity_date: garmin_analysis[:activity_date] || Time.current,
+          notes: garmin_analysis[:notes],
+          garmin_data: garmin_analysis[:garmin_data],
+          screenshot_url: photo_file_id,
+          ai_analysis: "Автоматически извлечено из Garmin (уверенность: #{garmin_analysis[:confidence_score]}%)"
+        )
+
+        # Send confirmation with extracted data
+        send_garmin_confirmation(activity_entry, garmin_analysis)
+
+        # Update user's last entry context for corrections (if there's an associated entry)
+        # Note: ActivityEntry might not have an associated Entry, so we need to handle this case
+
+      rescue StandardError => e
+        Rails.logger.error "Error processing Garmin screenshot: #{e.message}"
+        send_reply("Произошла ошибка при сохранении данных тренировки. Попробуй еще раз.")
+      end
+    end
+
+    def send_garmin_confirmation(activity_entry, garmin_analysis)
+      activity_emoji = activity_entry.activity_emoji
+      confidence_emoji = case garmin_analysis[:confidence_score]
+      when 80..100 then '🎯'
+      when 60..79 then '✅'
+      else '⚠️'
+      end
+
+      confirmation_text = <<~TEXT
+        #{activity_emoji} *Обнаружил тренировку Garmin!*
+
+        #{confidence_emoji} *Уверенность: #{garmin_analysis[:confidence_score]}%*
+
+        🏃‍♂️ *Тип:* #{activity_entry.activity_name}
+        ⏱️ *Время:* #{activity_entry.formatted_duration}
+        #{activity_entry.distance_km ? "📏 *Дистанция:* #{activity_entry.formatted_distance}" : ""}
+        #{activity_entry.calories_burned ? "🔥 *Калории:* #{activity_entry.calories_burned} ккал" : ""}
+        #{activity_entry.average_heart_rate ? "💓 *Средний пульс:* #{activity_entry.average_heart_rate} bpm" : ""}
+        #{activity_entry.average_pace ? "⚡ *Темп:* #{activity_entry.average_pace}" : ""}
+
+        📊 Данные сохранены в разделе "Здоровье → Активность"
+      TEXT
+
+      send_reply(confirmation_text.strip)
     end
   end
 end

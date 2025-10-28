@@ -31,10 +31,11 @@ module Ai
       - "plan" — задачи, планы, события с датой и временем
       - "plan_update" — изменения существующих планов (отмена, перенос)
       - "nutrition" — записи о питании, еде, напитках, калориях, БЖУ
+      - "activity" — записи о тренировках, физической активности, спорте
 
       Ответь ТОЛЬКО в формате JSON:
       {
-        "type": "command|diary|idea|plan|plan_update|nutrition",
+        "type": "command|diary|idea|plan|plan_update|nutrition|activity",
         "summary": "краткое резюме (1-2 предложения)",
         "priority": 0-10,
         "create_calendar_event": true|false,
@@ -58,6 +59,14 @@ module Ai
           "meal_type": "breakfast|lunch|dinner|snack или null",
           "food_items": "список продуктов через запятую или null",
           "meal_description": "описание приёма пищи или null"
+        } или null,
+        "activity_data": {
+          "activity_type": "running|cycling|strength|swimming|walking|hiking|yoga|other или null",
+          "duration_minutes": число_минут или null,
+          "distance_km": число_километров или null,
+          "calories_burned": число_калорий или null,
+          "intensity": "low|medium|high или null",
+          "notes": "дополнительные_заметки или null"
         } или null
       }
 
@@ -86,6 +95,21 @@ module Ai
         * "Выпил протеин на воде" → nutrition с meal_type: snack, food_items: "протеиновый коктейль"
         * "В обед выпил протеин на воде" → nutrition с meal_type: lunch, food_items: "протеиновый коктейль"
         * "выпил протеин на воде в обед" → nutrition с meal_type: lunch, food_items: "протеиновый коктейль"
+
+      КРИТИЧЕСКИ ВАЖНОЕ ПРАВИЛО ДЛЯ ACTIVITY:
+      - ЛЮБОЕ упоминание тренировок, спорта, физической активности ВСЕГДА означает "activity"!
+      - Ключевые слова активности: бег, бегал, пробежка, тренировка, спорт, зал, фитнес, йога, плавание, велосипед, ходьба, пеший, туризм, футбол, теннис, бокс, качалка, приседания, отжимания, подтягивания, кардио, силовая
+      - Если это activity, заполни поле "activity_data" с извлечёнными данными:
+        * activity_type: тип активности (running, cycling, strength, swimming, etc.)
+        * duration_minutes: длительность в минутах
+        * distance_km: дистанция в километрах (если есть)
+        * calories_burned: сожжённые калории (если упомянуто)
+        * intensity: интенсивность (low, medium, high)
+        * notes: дополнительные заметки
+      - Примеры activity записей:
+        * "Сегодня бегал 5 км за 30 минут" → activity с activity_type: running, duration_minutes: 30, distance_km: 5
+        * "Час в спортзале, силовая тренировка" → activity с activity_type: strength, duration_minutes: 60
+        * "Покатался на велике 2 часа" → activity с activity_type: cycling, duration_minutes: 120
 
       ВАЖНО: 
       - Если пользователь НЕ указал время окончания события, оставь event_end_time как null
@@ -259,7 +283,8 @@ module Ai
           reminder_message: nil,
           tags: [],
           metadata: {},
-          nutrition: nil
+          nutrition: nil,
+          activity_data: nil
         }
       end
     end

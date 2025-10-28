@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # Activity Entries
+  resources :activity_entries, only: [:index, :show, :new, :create, :edit, :update, :destroy]
   # Root path - Landing page
   root "landing#index"
   
@@ -30,6 +32,22 @@ Rails.application.routes.draw do
 
   # Reminders
   resources :reminders, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+
+  # Ideas Dashboard
+  get 'ideas_dashboard', to: 'ideas_dashboard#index'
+  post 'ideas_dashboard/:id/research', to: 'ideas_dashboard#research_idea', as: :research_idea
+  post 'ideas_dashboard/:id/generate_quest', to: 'ideas_dashboard#generate_quest', as: :generate_quest
+  get 'ideas_dashboard/:id/research', to: 'ideas_dashboard#show_research', as: :show_research
+
+  # Quests
+  resources :quests, only: [:index, :show, :edit, :update, :destroy] do
+    member do
+      patch :toggle_step
+      patch :complete_step
+      patch :uncomplete_step
+      patch :update_status
+    end
+  end
 
   # API routes
   namespace :api do

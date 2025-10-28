@@ -1,0 +1,217 @@
+<% content_for :title, "Дашборд идей" %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Заголовок -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">💡 Дашборд идей</h1>
+    <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
+  </div>
+
+  <!-- Статистика -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-blue-100 rounded-lg">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Всего идей</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:total_ideas] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-green-100 rounded-lg">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">С исследованием</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:with_research] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-purple-100 rounded-lg">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">С квестами</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:with_quests] %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex items-center">
+        <div class="p-2 bg-red-100 rounded-lg">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Высокий приоритет</p>
+          <p class="text-2xl font-bold text-gray-900"><%= @stats[:high_priority] %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Приоритетные идеи -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🔥 Приоритетные идеи</h2>
+      </div>
+      <div class="p-6">
+        <% if @priority_ideas.any? %>
+          <div class="space-y-4">
+            <% @priority_ideas.each do |idea| %>
+              <div class="border rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                        <%= idea.idea_priority_display || 'Не указан' %>
+                      </span>
+                      <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                    </div>
+                  </div>
+                  <div class="flex space-x-2 ml-4">
+                    <% unless idea.research_data.present? %>
+                      <%= link_to research_idea_path(idea), method: :post, 
+                          class: "text-blue-600 hover:text-blue-800 p-1", 
+                          title: "Сделать research",
+                          data: { confirm: "Провести AI-исследование идеи?" } do %>
+                        🔬
+                      <% end %>
+                    <% else %>
+                      <%= link_to show_research_path(idea), 
+                          class: "text-green-600 hover:text-green-800 p-1", 
+                          title: "Посмотреть анализ" do %>
+                        📊
+                      <% end %>
+                    <% end %>
+                    
+                    <% unless idea.quest_generated? %>
+                      <%= link_to generate_quest_path(idea), method: :post, 
+                          class: "text-purple-600 hover:text-purple-800 p-1", 
+                          title: "Создать квест",
+                          data: { confirm: "Создать квест из идеи?" } do %>
+                        ⚡
+                      <% end %>
+                    <% else %>
+                      <span class="text-green-600 p-1" title="Квест создан">✅</span>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-8">Нет приоритетных идей</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Готовые к исследованию -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🔬 Готовые к исследованию</h2>
+      </div>
+      <div class="p-6">
+        <% if @research_ready.any? %>
+          <div class="space-y-4">
+            <% @research_ready.each do |idea| %>
+              <div class="border rounded-lg p-4 hover:shadow-md transition">
+                <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-500"><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                  <%= link_to research_idea_path(idea), method: :post, 
+                      class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition",
+                      data: { confirm: "Провести AI-исследование идеи?" } do %>
+                    🔬 Исследовать
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-8">Все идеи исследованы</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Кандидаты в квесты -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">⚡ Кандидаты в квесты</h2>
+      </div>
+      <div class="p-6">
+        <% if @quest_candidates.any? %>
+          <div class="space-y-4">
+            <% @quest_candidates.each do |idea| %>
+              <div class="border rounded-lg p-4 hover:shadow-md transition">
+                <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
+                <div class="flex justify-between items-center">
+                  <div class="text-sm text-gray-500">
+                    <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                    <% if idea.research_data.present? %>
+                      <span class="text-green-600 ml-2">📊 Исследована</span>
+                    <% end %>
+                  </div>
+                  <%= link_to generate_quest_path(idea), method: :post, 
+                      class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition",
+                      data: { confirm: "Создать квест из идеи?" } do %>
+                    ⚡ Создать квест
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-8">Все квесты созданы</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Последние квесты -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🎯 Последние квесты</h2>
+      </div>
+      <div class="p-6">
+        <% if @recent_quests.any? %>
+          <div class="space-y-4">
+            <% @recent_quests.each do |quest| %>
+              <div class="border rounded-lg p-4 hover:shadow-md transition">
+                <h3 class="font-medium text-gray-900 mb-2"><%= quest.title %></h3>
+                <div class="flex justify-between items-center">
+                  <div class="text-sm text-gray-500">
+                    <span>Прогресс: <%= quest.steps.dig('progress', 'completion_percentage') || 0 %>%</span>
+                  </div>
+                  <%= link_to quest_path(quest), 
+                      class: "bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition" do %>
+                    Открыть
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-8">Нет квестов</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

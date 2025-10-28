@@ -1,0 +1,310 @@
+<% content_for :title, "Исследование идеи" %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Заголовок -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">🔬 Исследование идеи</h1>
+    <%= link_to "← Назад к дашборду", ideas_dashboard_path, class: "text-blue-600 hover:text-blue-800" %>
+  </div>
+
+  <!-- Оригинальная идея -->
+  <div class="bg-white rounded-xl shadow-sm border mb-8">
+    <div class="p-6 border-b">
+      <h2 class="text-lg font-semibold text-gray-900">💡 Исходная идея</h2>
+    </div>
+    <div class="p-6">
+      <p class="text-gray-700 leading-relaxed"><%= @entry.content %></p>
+      <div class="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+        <span>Создана: <%= @entry.created_at.strftime("%d.%m.%Y в %H:%M") %></span>
+        <span>Приоритет: <%= @entry.idea_priority&.humanize || 'Не указан' %></span>
+        <span>Статус: <%= @entry.idea_status&.humanize || 'Новая' %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- ICP Анализ -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🎯 Анализ целевой аудитории (ICP)</h2>
+      </div>
+      <div class="p-6">
+        <% if @research['icp_analysis'].present? %>
+          <% icp = @research['icp_analysis'] %>
+          
+          <div class="space-y-4">
+            <div>
+              <h3 class="font-medium text-gray-900 mb-2">Целевая аудитория</h3>
+              <p class="text-gray-700"><%= icp['target_audience'] %></p>
+            </div>
+
+            <% if icp['demographics'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Демография</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% icp['demographics'].each do |demo| %>
+                    <li><%= demo %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if icp['pain_points'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Боли и потребности</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% icp['pain_points'].each do |pain| %>
+                    <li><%= pain %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div>
+              <h3 class="font-medium text-gray-900 mb-2">Размер рынка</h3>
+              <p class="text-gray-700"><%= icp['market_size'] %></p>
+            </div>
+
+            <% if icp['willingness_to_pay'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Готовность платить</h3>
+                <p class="text-gray-700"><%= icp['willingness_to_pay'] %></p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Анализ ICP недоступен</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Исследование рынка -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">📈 Исследование рынка</h2>
+      </div>
+      <div class="p-6">
+        <% if @research['market_research'].present? %>
+          <% market = @research['market_research'] %>
+          
+          <div class="space-y-4">
+            <% if market['market_trends'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Тренды рынка</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% market['market_trends'].each do |trend| %>
+                    <li><%= trend %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if market['opportunities'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Возможности</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% market['opportunities'].each do |opportunity| %>
+                    <li><%= opportunity %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if market['risks'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Риски</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% market['risks'].each do |risk| %>
+                    <li><%= risk %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if market['market_maturity'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Зрелость рынка</h3>
+                <p class="text-gray-700"><%= market['market_maturity'] %></p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Исследование рынка недоступно</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Go-to-Market стратегия -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🚀 Go-to-Market стратегия</h2>
+      </div>
+      <div class="p-6">
+        <% if @research['go_to_market'].present? %>
+          <% gtm = @research['go_to_market'] %>
+          
+          <div class="space-y-4">
+            <% if gtm['channels'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Каналы привлечения</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% gtm['channels'].each do |channel| %>
+                    <li><%= channel %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if gtm['pricing'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Ценообразование</h3>
+                <p class="text-gray-700"><%= gtm['pricing'] %></p>
+              </div>
+            <% end %>
+
+            <% if gtm['mvp_features'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Функции MVP</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% gtm['mvp_features'].each do |feature| %>
+                    <li><%= feature %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if gtm['success_metrics'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Метрики успеха</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% gtm['success_metrics'].each do |metric| %>
+                    <li><%= metric %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Go-to-Market стратегия недоступна</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Техническая осуществимость -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">⚙️ Техническая осуществимость</h2>
+      </div>
+      <div class="p-6">
+        <% if @research['technical_feasibility'].present? %>
+          <% feasibility = @research['technical_feasibility'] %>
+          
+          <div class="space-y-4">
+            <% if feasibility['complexity'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Сложность реализации</h3>
+                <span class="px-3 py-1 rounded-full text-sm bg-<%= feasibility['complexity'] == 'low' ? 'green' : feasibility['complexity'] == 'medium' ? 'yellow' : 'red' %>-100 text-<%= feasibility['complexity'] == 'low' ? 'green' : feasibility['complexity'] == 'medium' ? 'yellow' : 'red' %>-800">
+                  <%= feasibility['complexity']&.humanize %>
+                </span>
+              </div>
+            <% end %>
+
+            <% if feasibility['required_skills'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Необходимые навыки</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1">
+                  <% feasibility['required_skills'].each do |skill| %>
+                    <li><%= skill %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if feasibility['timeline'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Временные рамки</h3>
+                <p class="text-gray-700"><%= feasibility['timeline'] %></p>
+              </div>
+            <% end %>
+
+            <% if feasibility['initial_investment'].present? %>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">Начальные инвестиции</h3>
+                <p class="text-gray-700"><%= feasibility['initial_investment'] %></p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Анализ осуществимости недоступен</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Конкурентный анализ -->
+  <div class="bg-white rounded-xl shadow-sm border mt-8">
+    <div class="p-6 border-b">
+      <h2 class="text-lg font-semibold text-gray-900">🥊 Конкурентный анализ</h2>
+    </div>
+    <div class="p-6">
+      <% if @research['competition_analysis'].present? %>
+        <% competition = @research['competition_analysis'] %>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <% if competition['direct_competitors'].present? %>
+            <div>
+              <h3 class="font-medium text-gray-900 mb-3">Прямые конкуренты</h3>
+              <ul class="space-y-2">
+                <% competition['direct_competitors'].each do |competitor| %>
+                  <li class="bg-red-50 text-red-800 px-3 py-2 rounded"><%= competitor %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <% if competition['indirect_competitors'].present? %>
+            <div>
+              <h3 class="font-medium text-gray-900 mb-3">Косвенные конкуренты</h3>
+              <ul class="space-y-2">
+                <% competition['indirect_competitors'].each do |competitor| %>
+                  <li class="bg-yellow-50 text-yellow-800 px-3 py-2 rounded"><%= competitor %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <% if competition['competitive_advantage'].present? %>
+            <div>
+              <h3 class="font-medium text-gray-900 mb-3">Конкурентные преимущества</h3>
+              <ul class="space-y-2">
+                <% competition['competitive_advantage'].each do |advantage| %>
+                  <li class="bg-green-50 text-green-800 px-3 py-2 rounded"><%= advantage %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-gray-500">Конкурентный анализ недоступен</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Действия -->
+  <div class="mt-8 flex justify-center space-x-4">
+    <% unless @entry.quest_generated? %>
+      <%= link_to generate_quest_path(@entry), method: :post, 
+          class: "bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition",
+          data: { confirm: "Создать квест на основе этого исследования?" } do %>
+        ⚡ Создать квест из исследования
+      <% end %>
+    <% else %>
+      <span class="bg-green-100 text-green-800 px-6 py-3 rounded-lg">✅ Квест уже создан</span>
+    <% end %>
+  </div>
+
+  <!-- Метаинформация -->
+  <div class="mt-8 text-center text-sm text-gray-500">
+    Исследование сгенерировано: <%= Time.parse(@research['generated_at']).strftime("%d.%m.%Y в %H:%M") if @research['generated_at'] %>
+  </div>
+</div>

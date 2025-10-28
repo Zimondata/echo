@@ -10,10 +10,35 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_095802) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_27_210317) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
+
+  create_table "activity_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "activity_type", null: false
+    t.integer "duration_minutes"
+    t.decimal "distance_km", precision: 8, scale: 3
+    t.integer "calories_burned"
+    t.integer "average_heart_rate"
+    t.integer "max_heart_rate"
+    t.string "average_pace"
+    t.datetime "activity_date", null: false
+    t.text "notes"
+    t.jsonb "garmin_data", default: {}
+    t.string "screenshot_url"
+    t.string "status", default: "active"
+    t.integer "effort_level"
+    t.text "ai_analysis"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_date"], name: "index_activity_entries_on_activity_date"
+    t.index ["user_id", "activity_date"], name: "index_activity_entries_on_user_id_and_activity_date"
+    t.index ["user_id", "activity_type"], name: "index_activity_entries_on_user_id_and_activity_type"
+    t.index ["user_id", "status"], name: "index_activity_entries_on_user_id_and_status"
+    t.index ["user_id"], name: "index_activity_entries_on_user_id"
+  end
 
   create_table "calendar_events", force: :cascade do |t|
     t.bigint "entry_id"
@@ -63,11 +88,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_095802) do
     t.datetime "processed_at"
     t.string "group_id"
     t.integer "parent_entry_id"
+    t.string "idea_category"
+    t.string "idea_status", default: "new"
+    t.integer "idea_priority", default: 5
+    t.json "research_data"
+    t.boolean "quest_generated", default: false
     t.index ["category"], name: "index_entries_on_category"
     t.index ["dashboard_status"], name: "index_entries_on_dashboard_status"
     t.index ["embedding"], name: "index_entries_on_embedding", opclass: :vector_cosine_ops, using: :ivfflat
     t.index ["entry_type"], name: "index_entries_on_entry_type"
     t.index ["group_id"], name: "index_entries_on_group_id"
+    t.index ["idea_category"], name: "index_entries_on_idea_category"
+    t.index ["idea_priority"], name: "index_entries_on_idea_priority"
+    t.index ["idea_status"], name: "index_entries_on_idea_status"
     t.index ["occurred_at"], name: "index_entries_on_occurred_at"
     t.index ["parent_entry_id"], name: "index_entries_on_parent_entry_id"
     t.index ["processed_at"], name: "index_entries_on_processed_at"
@@ -113,6 +146,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_095802) do
     t.index ["status"], name: "index_nutrition_entries_on_status"
     t.index ["user_id", "recorded_at"], name: "index_nutrition_entries_on_user_id_and_recorded_at"
     t.index ["user_id"], name: "index_nutrition_entries_on_user_id"
+  end
+
+  create_table "quests", force: :cascade do |t|
+    t.bigint "entry_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "status", default: "active"
+    t.integer "priority", default: 5
+    t.datetime "due_date"
+    t.json "steps", default: []
+    t.integer "completion_rate", default: 0
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["due_date"], name: "index_quests_on_due_date"
+    t.index ["entry_id"], name: "index_quests_on_entry_id"
+    t.index ["priority"], name: "index_quests_on_priority"
+    t.index ["status"], name: "index_quests_on_status"
+    t.index ["user_id", "status"], name: "index_quests_on_user_id_and_status"
+    t.index ["user_id"], name: "index_quests_on_user_id"
   end
 
   create_table "reminders", force: :cascade do |t|
@@ -263,15 +316,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_095802) do
     t.jsonb "settings", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "last_entry_ids"
+    t.datetime "last_entry_timestamp"
     t.index ["telegram_id"], name: "index_users_on_telegram_id", unique: true
   end
 
+  add_foreign_key "activity_entries", "users"
   add_foreign_key "calendar_events", "entries"
   add_foreign_key "calendar_events", "users"
   add_foreign_key "entries", "users"
   add_foreign_key "insights", "users"
   add_foreign_key "nutrition_entries", "entries"
   add_foreign_key "nutrition_entries", "users"
+  add_foreign_key "quests", "entries"
+  add_foreign_key "quests", "users"
   add_foreign_key "reminders", "entries"
   add_foreign_key "reminders", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

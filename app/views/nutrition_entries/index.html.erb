@@ -1,3 +1,6 @@
+<!-- Health Dashboard with tabs for Nutrition, Activity, and Analysis -->
+<% content_for :title, "Дневник здоровья - Echo" %>
+
 <style>
   .glass-card {
     background: rgba(255, 255, 255, 0.7);
@@ -26,6 +29,65 @@
   
   .gradient-blue {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  }
+
+  /* Tab Styles */
+  .tab-button {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .tab-button:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #374151;
+  }
+  
+  .tab-button.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+  
+  .tab-panel {
+    transition: all 0.3s ease;
+  }
+  
+  .tab-panel.hidden {
+    display: none;
+  }
+  
+  .tab-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
   }
   
   .gradient-pink {
@@ -96,9 +158,9 @@
       <div class="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-            🍽️ Питание
+            🏃‍♂️ Дневник здоровья
           </h1>
-          <p class="text-gray-600 mt-2">Отслеживайте калории и БЖУ</p>
+          <p class="text-gray-600 mt-2">Питание, активность и анализ дня</p>
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-3">
           <div class="glass-card px-4 py-2 rounded-full">
@@ -121,7 +183,57 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 stagger-animation">
+    <!-- Health Dashboard Tabs -->
+    <div class="mb-8">
+      <div class="glass-card rounded-lg p-1">
+        <div class="flex gap-1" role="tablist">
+          <!-- Nutrition Tab -->
+          <button 
+            class="tab-button active" 
+            role="tab" 
+            aria-selected="true" 
+            onclick="switchTab('nutrition')"
+            id="nutrition-tab">
+            <span class="flex items-center gap-2">
+              <span class="text-lg">🍽️</span>
+              <span class="font-medium">Питание</span>
+            </span>
+          </button>
+          
+          <!-- Activity Tab -->
+          <button 
+            class="tab-button" 
+            role="tab" 
+            aria-selected="false" 
+            onclick="switchTab('activity')"
+            id="activity-tab">
+            <span class="flex items-center gap-2">
+              <span class="text-lg">🏃‍♂️</span>
+              <span class="font-medium">Активность</span>
+            </span>
+          </button>
+          
+          <!-- Analysis Tab -->
+          <button 
+            class="tab-button" 
+            role="tab" 
+            aria-selected="false" 
+            onclick="switchTab('analysis')"
+            id="analysis-tab">
+            <span class="flex items-center gap-2">
+              <span class="text-lg">📊</span>
+              <span class="font-medium">Анализ дня</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content Panels -->
+    
+    <!-- Nutrition Tab Panel -->
+    <div id="nutrition-panel" class="tab-panel active">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 stagger-animation">
       
       <!-- Daily Stats Cards -->
       <div class="lg:col-span-4">
@@ -403,11 +515,465 @@
         </div>
       </div>
 
+      </div>
     </div>
+    <!-- End Nutrition Tab Panel -->
+
+    <!-- Activity Tab Panel -->
+    <div id="activity-panel" class="tab-panel hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 stagger-animation">
+        
+        <!-- Activity Stats Cards -->
+        <div class="lg:col-span-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Total Duration Card -->
+            <div class="glass-card rounded-xl p-6 gradient-blue animate-slide-up">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span class="text-xl">⏱️</span>
+                </div>
+                <div>
+                  <% duration = @activity_totals[:total_duration] %>
+                  <% formatted_duration = duration > 0 ? (duration >= 60 ? "#{duration/60}ч #{duration%60}м" : "#{duration}м") : "0м" %>
+                  <p class="text-2xl font-bold text-gray-800"><%= formatted_duration %></p>
+                  <p class="text-sm text-gray-600">Время тренировок</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Distance Card -->
+            <div class="glass-card rounded-xl p-6 gradient-green animate-slide-up" style="animation-delay: 0.1s">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <span class="text-xl">📏</span>
+                </div>
+                <div>
+                  <% distance = @activity_totals[:total_distance] %>
+                  <% formatted_distance = distance > 0 ? "#{distance.round(1)} км" : "0 км" %>
+                  <p class="text-2xl font-bold text-gray-800"><%= formatted_distance %></p>
+                  <p class="text-sm text-gray-600">Дистанция</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calories Burned Card -->
+            <div class="glass-card rounded-xl p-6 gradient-orange animate-slide-up" style="animation-delay: 0.2s">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span class="text-xl">🔥</span>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-gray-800"><%= @activity_totals[:total_calories_burned] %></p>
+                  <p class="text-sm text-gray-600">Сожжено калорий</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activities Count Card -->
+            <div class="glass-card rounded-xl p-6 gradient-blue animate-slide-up" style="animation-delay: 0.3s">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span class="text-xl">🏃‍♂️</span>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-gray-800"><%= @activity_totals[:activity_count] %></p>
+                  <p class="text-sm text-gray-600">Тренировок</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity List -->
+        <div class="lg:col-span-3">
+          <div class="glass-card rounded-xl p-6 animate-slide-up" style="animation-delay: 0.4s">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold text-gray-800">📊 Активность за день</h2>
+              <%= link_to new_activity_entry_path, class: "glass-card px-4 py-2 rounded-full hover:bg-blue-50 transition flex items-center gap-2" do %>
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Добавить тренировку</span>
+              <% end %>
+            </div>
+            
+            <div class="space-y-4">
+              <% if @activity_entries.any? %>
+                <% @activity_entries.each do |activity| %>
+                  <div id="activity-entry-<%= activity.id %>" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl"><%= activity.activity_emoji %></span>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-gray-800"><%= activity.activity_name %></h3>
+                        <div class="flex items-center gap-4 text-sm text-gray-600">
+                          <span>⏱️ <%= activity.formatted_duration %></span>
+                          <% if activity.distance_km %>
+                            <span>📏 <%= activity.formatted_distance %></span>
+                          <% end %>
+                          <% if activity.calories_burned %>
+                            <span>🔥 <%= activity.calories_burned %> ккал</span>
+                          <% end %>
+                          <% if activity.average_heart_rate %>
+                            <span>💓 <%= activity.average_heart_rate %> bpm</span>
+                          <% end %>
+                        </div>
+                        <% if activity.notes.present? %>
+                          <p class="text-xs text-gray-500 mt-1"><%= activity.notes.truncate(50) %></p>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="text-right text-sm text-gray-500">
+                        <%= activity.activity_date.strftime("%H:%M") %>
+                      </div>
+                      
+                      <!-- Actions Menu -->
+                      <div class="relative">
+                        <button 
+                          onclick="toggleActivityMenu('<%= activity.id %>')" 
+                          class="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                          title="Действия">
+                          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                          </svg>
+                        </button>
+                        
+                        <!-- Dropdown menu -->
+                        <div id="activity-menu-<%= activity.id %>" class="hidden absolute right-0 top-full mt-1 w-48 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg z-10">
+                          <%= link_to edit_activity_entry_path(activity), class: "w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-2" do %>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Редактировать
+                          <% end %>
+                          
+                          <button onclick="deleteActivity('<%= activity.id %>')" class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Удалить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="text-center py-12">
+                  <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-4xl">🏃‍♂️</span>
+                  </div>
+                  <p class="text-gray-500">Пока нет записей о тренировках</p>
+                  <p class="text-sm text-gray-400 mt-2">Отправьте скриншот из Garmin в Telegram бота</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="lg:col-span-1">
+          <div class="glass-card rounded-xl p-6 animate-slide-up" style="animation-delay: 0.5s">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">⚡ Быстрые действия</h3>
+            <div class="space-y-3">
+              <%= link_to new_activity_entry_path(activity_type: 'running'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition" do %>
+                <span class="text-lg">🏃‍♂️</span>
+                <span class="text-gray-700">Бег</span>
+              <% end %>
+              
+              <%= link_to new_activity_entry_path(activity_type: 'cycling'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition" do %>
+                <span class="text-lg">🚴‍♂️</span>
+                <span class="text-gray-700">Велосипед</span>
+              <% end %>
+              
+              <%= link_to new_activity_entry_path(activity_type: 'strength'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition" do %>
+                <span class="text-lg">🏋️‍♂️</span>
+                <span class="text-gray-700">Силовая</span>
+              <% end %>
+              
+              <%= link_to new_activity_entry_path(activity_type: 'swimming'), class: "w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition" do %>
+                <span class="text-lg">🏊‍♂️</span>
+                <span class="text-gray-700">Плавание</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- End Activity Tab Panel -->
+
+    <!-- Analysis Tab Panel -->
+    <div id="analysis-panel" class="tab-panel hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 stagger-animation">
+        
+        <!-- Daily Summary -->
+        <div class="glass-card rounded-xl p-6 animate-slide-up">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">📊 Сводка дня</h2>
+          
+          <div class="space-y-4">
+            <% if @daily_analysis %>
+              <!-- Consumed Calories -->
+              <% balance = @daily_analysis[:calorie_balance] %>
+              <div class="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+                <span class="font-medium text-gray-700">Потреблено калорий</span>
+                <span class="text-lg font-bold text-green-600">
+                  <%= balance[:consumed] %> ккал
+                </span>
+              </div>
+              
+              <!-- Burned Calories -->
+              <div class="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
+                <span class="font-medium text-gray-700">Сожжено калорий</span>
+                <span class="text-lg font-bold text-orange-600">
+                  <%= balance[:burned] %> ккал
+                </span>
+              </div>
+              
+              <!-- Active Time -->
+              <div class="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+                <span class="font-medium text-gray-700">Активное время</span>
+                <span class="text-lg font-bold text-blue-600">
+                  <% duration = @daily_analysis[:activity_analysis][:total_duration_minutes] %>
+                  <%= duration >= 60 ? "#{duration/60}ч #{duration%60}м" : "#{duration}м" %>
+                </span>
+              </div>
+              
+            <% else %>
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Потреблено калорий</span>
+                <span class="text-lg font-bold text-gray-600">0 ккал</span>
+              </div>
+              
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Сожжено калорий</span>
+                <span class="text-lg font-bold text-gray-600">0 ккал</span>
+              </div>
+              
+              <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-700">Активное время</span>
+                <span class="text-lg font-bold text-gray-600">0м</span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- AI Analysis -->
+        <div class="glass-card rounded-xl p-6 animate-slide-up" style="animation-delay: 0.1s">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">🤖 AI анализ</h2>
+          
+          <div class="space-y-4">
+            <% if @daily_analysis %>
+              <!-- Recommendations -->
+              <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">💡 Рекомендации</h3>
+                <% if @daily_analysis[:tomorrow_recommendations].any? %>
+                  <ul class="text-sm text-gray-600 space-y-1">
+                    <% @daily_analysis[:tomorrow_recommendations].take(3).each do |rec| %>
+                      <li>• <%= rec %></li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="text-sm text-gray-600">Продолжайте в том же духе!</p>
+                <% end %>
+              </div>
+              
+              <!-- Achievements -->
+              <div class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">✅ Достижения</h3>
+                <% if @daily_analysis[:achievements].any? %>
+                  <ul class="text-sm text-gray-600 space-y-1">
+                    <% @daily_analysis[:achievements].take(3).each do |achievement| %>
+                      <li>• <%= achievement %></li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="text-sm text-gray-600">Добавьте данные, чтобы увидеть достижения!</p>
+                <% end %>
+              </div>
+              
+              <!-- Warnings -->
+              <div class="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">⚠️ Предупреждения</h3>
+                <% if @daily_analysis[:warnings].any? %>
+                  <ul class="text-sm text-gray-600 space-y-1">
+                    <% @daily_analysis[:warnings].take(3).each do |warning| %>
+                      <li>• <%= warning %></li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="text-sm text-gray-600">Все показатели в норме!</p>
+                <% end %>
+              </div>
+
+              <!-- Motivation Message -->
+              <% if @daily_analysis[:motivation_message] %>
+                <div class="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg text-center">
+                  <p class="text-sm font-medium text-gray-800"><%= @daily_analysis[:motivation_message] %></p>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">💡 Рекомендации</h3>
+                <p class="text-sm text-gray-600">
+                  Недостаточно данных для анализа. Добавьте информацию о питании и тренировках.
+                </p>
+              </div>
+              
+              <div class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">✅ Достижения</h3>
+                <p class="text-sm text-gray-600">
+                  Начните отслеживать активность для получения персональных достижений.
+                </p>
+              </div>
+              
+              <div class="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">⚠️ Предупреждения</h3>
+                <p class="text-sm text-gray-600">
+                  Все системы работают нормально.
+                </p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- Weekly Trends -->
+        <div class="lg:col-span-2">
+          <div class="glass-card rounded-xl p-6 animate-slide-up" style="animation-delay: 0.2s">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">📈 Тенденции недели</h2>
+            
+            <div class="text-center py-12">
+              <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-4xl">📊</span>
+              </div>
+              <p class="text-gray-500">Графики появятся после накопления данных</p>
+              <p class="text-sm text-gray-400 mt-2">Добавьте несколько записей о питании и тренировках</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- End Analysis Tab Panel -->
+
   </div>
 </div>
 
 <script>
+// Activity menu functions
+function toggleActivityMenu(activityId) {
+  // Close all other menus
+  document.querySelectorAll('[id^="activity-menu-"]').forEach(menu => {
+    if (menu.id !== `activity-menu-${activityId}`) {
+      menu.classList.add('hidden');
+    }
+  });
+  
+  // Toggle current menu
+  const menu = document.getElementById(`activity-menu-${activityId}`);
+  menu.classList.toggle('hidden');
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('[onclick*="toggleActivityMenu"]') && !event.target.closest('[id^="activity-menu-"]')) {
+    document.querySelectorAll('[id^="activity-menu-"]').forEach(menu => {
+      menu.classList.add('hidden');
+    });
+  }
+});
+
+// Delete activity function
+function deleteActivity(activityId) {
+  if (!confirm('Вы уверены, что хотите удалить эту тренировку?')) {
+    return;
+  }
+  
+  const csrfToken = document.querySelector('[name="csrf-token"]');
+  if (!csrfToken) {
+    alert('CSRF токен не найден');
+    return;
+  }
+  
+  console.log('Deleting activity:', activityId);
+  
+  fetch(`/activity_entries/${activityId}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.content
+    }
+  })
+  .then(response => {
+    console.log('Delete response status:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      return response.text().then(text => {
+        console.error('Expected JSON but got:', text);
+        throw new Error('Server returned non-JSON response');
+      });
+    }
+  })
+  .then(data => {
+    console.log('Delete response data:', data);
+    
+    if (data && data.success) {
+      // Remove activity from DOM with animation
+      const activityElement = document.getElementById(`activity-entry-${activityId}`);
+      if (activityElement) {
+        activityElement.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          activityElement.remove();
+          // Reload page to update stats
+          location.reload();
+        }, 300);
+      }
+    } else {
+      alert('Ошибка при удалении тренировки');
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    alert(`Ошибка при удалении тренировки: ${error.message}`);
+  });
+}
+
+// Tab switching functionality
+function switchTab(tabName) {
+  // Remove active class from all tabs
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.classList.remove('active');
+    button.setAttribute('aria-selected', 'false');
+  });
+  
+  // Hide all tab panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+    panel.classList.add('hidden');
+  });
+  
+  // Activate selected tab
+  const selectedTab = document.getElementById(`${tabName}-tab`);
+  const selectedPanel = document.getElementById(`${tabName}-panel`);
+  
+  if (selectedTab && selectedPanel) {
+    selectedTab.classList.add('active');
+    selectedTab.setAttribute('aria-selected', 'true');
+    selectedPanel.classList.remove('hidden');
+    selectedPanel.classList.add('active');
+  }
+}
+
 function changeDate(days) {
   const currentDate = new Date('<%= @selected_date.iso8601 %>');
   currentDate.setDate(currentDate.getDate() + days);
