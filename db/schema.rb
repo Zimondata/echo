@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_27_210317) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -179,8 +179,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_27_210317) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "smart_type"
+    t.string "smart_trigger"
+    t.json "related_entry_ids", default: []
+    t.integer "confidence_score"
+    t.jsonb "ai_context", default: {}
+    t.jsonb "action_buttons", default: []
+    t.string "priority", default: "medium"
+    t.string "recurrence_rule"
+    t.string "user_feedback"
+    t.index ["confidence_score"], name: "index_reminders_on_confidence_score"
     t.index ["entry_id"], name: "index_reminders_on_entry_id"
+    t.index ["priority"], name: "index_reminders_on_priority"
     t.index ["remind_at"], name: "index_reminders_on_remind_at"
+    t.index ["smart_type"], name: "index_reminders_on_smart_type"
     t.index ["status", "remind_at"], name: "index_reminders_on_status_and_remind_at"
     t.index ["user_id"], name: "index_reminders_on_user_id"
   end

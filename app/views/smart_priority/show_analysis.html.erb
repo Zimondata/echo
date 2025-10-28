@@ -1,0 +1,225 @@
+<% content_for :title, "AI Анализ приоритета" %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Заголовок -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">🧠 AI Анализ приоритета</h1>
+    <%= link_to "← Назад к дашборду", ideas_dashboard_path, class: "text-blue-600 hover:text-blue-800" %>
+  </div>
+
+  <!-- Основная идея -->
+  <div class="bg-white rounded-xl shadow-sm border mb-8">
+    <div class="p-6 border-b">
+      <h2 class="text-lg font-semibold text-gray-900">💡 Анализируемая идея</h2>
+    </div>
+    <div class="p-6">
+      <p class="text-gray-700 leading-relaxed text-lg"><%= @entry.content %></p>
+      <div class="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+        <span>Создана: <%= @entry.created_at.strftime("%d.%m.%Y в %H:%M") %></span>
+        <span>Анализ: <%= Time.parse(@analysis['last_analyzed']).strftime("%d.%m.%Y в %H:%M") if @analysis['last_analyzed'] %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Общий балл -->
+  <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg text-white mb-8 p-8">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold mb-4">🎯 Общий балл приоритета</h2>
+      <div class="text-6xl font-bold mb-2">
+        <%= @analysis['priority_score'].round(1) %>
+        <span class="text-3xl">/10</span>
+      </div>
+      <div class="text-xl">
+        <% case @analysis['priority_level'] %>
+        <% when 'critical' %>
+          🔥 КРИТИЧЕСКИЙ ПРИОРИТЕТ
+        <% when 'high' %>
+          ⭐ ВЫСОКИЙ ПРИОРИТЕТ
+        <% when 'medium' %>
+          💡 СРЕДНИЙ ПРИОРИТЕТ
+        <% when 'low' %>
+          📝 НИЗКИЙ ПРИОРИТЕТ
+        <% else %>
+          🗄️ АРХИВНЫЙ
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Детальная разбивка -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Факторы анализа -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">📊 Детальная разбивка</h2>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <% if @analysis['scores_breakdown'] %>
+            <% @analysis['scores_breakdown'].each do |factor, score| %>
+              <% next if factor == 'total_score' %>
+              <div class="flex justify-between items-center">
+                <div class="flex-1">
+                  <h3 class="font-medium text-gray-900">
+                    <% case factor.to_s %>
+                    <% when 'market_timing' %>
+                      ⏰ Рыночный тайминг
+                    <% when 'innovation_level' %>
+                      💎 Уровень инноваций
+                    <% when 'feasibility' %>
+                      ⚙️ Осуществимость
+                    <% when 'competitive_advantage' %>
+                      🥊 Конкурентные преимущества
+                    <% when 'resource_match' %>
+                      🎯 Соответствие ресурсам
+                    <% when 'trend_momentum' %>
+                      📈 Трендовость
+                    <% when 'urgency_factor' %>
+                      🚨 Фактор срочности
+                    <% else %>
+                      <%= factor.humanize %>
+                    <% end %>
+                  </h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-24 bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" 
+                         style="width: <%= [score.to_f * 10, 100].min %>%"></div>
+                  </div>
+                  <span class="font-bold text-gray-900 w-8 text-right">
+                    <%= score.to_f.round(1) %>
+                  </span>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Рекомендации -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">🤖 AI Рекомендации</h2>
+      </div>
+      <div class="p-6">
+        <% if @analysis['recommendations']&.any? %>
+          <div class="space-y-4">
+            <% @analysis['recommendations'].each do |rec| %>
+              <div class="border rounded-lg p-4 <%= rec['priority'] == 'critical' ? 'border-red-200 bg-red-50' : rec['priority'] == 'high' ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50' %>">
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <% case rec['priority'] %>
+                    <% when 'critical' %>
+                      <span class="text-red-600 text-xl">🚨</span>
+                    <% when 'high' %>
+                      <span class="text-amber-600 text-xl">⚠️</span>
+                    <% else %>
+                      <span class="text-blue-600 text-xl">💡</span>
+                    <% end %>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="font-medium text-gray-900 mb-1">
+                      <% case rec['type'] %>
+                      <% when 'timing' %>
+                        Рыночный тайминг
+                      <% when 'innovation' %>
+                        Инновационность
+                      <% when 'feasibility' %>
+                        Осуществимость
+                      <% when 'urgency' %>
+                        Срочность
+                      <% else %>
+                        <%= rec['type']&.humanize %>
+                      <% end %>
+                    </h3>
+                    <p class="text-gray-700 text-sm"><%= rec['message'] %></p>
+                    
+                    <% if rec['action'] %>
+                      <div class="mt-2">
+                        <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                          Действие: <%= rec['action'].humanize %>
+                        </span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500 text-center py-8">Рекомендации не найдены</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Действия -->
+  <div class="bg-white rounded-xl shadow-sm border">
+    <div class="p-6 border-b">
+      <h2 class="text-lg font-semibold text-gray-900">⚡ Рекомендуемые действия</h2>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Создать квест -->
+        <% unless @entry.quest_generated? %>
+          <%= link_to generate_quest_path(@entry), 
+              class: "block p-4 border-2 border-purple-200 rounded-lg hover:border-purple-400 transition text-center",
+              data: { 
+                "turbo-method": "post",
+                "turbo-confirm": "Создать квест из этой идеи?" 
+              } do %>
+            <div class="text-purple-600 text-2xl mb-2">⚡</div>
+            <h3 class="font-medium text-gray-900 mb-1">Создать квест</h3>
+            <p class="text-sm text-gray-600">Структурированный план реализации</p>
+          <% end %>
+        <% else %>
+          <div class="block p-4 border-2 border-green-200 rounded-lg text-center bg-green-50">
+            <div class="text-green-600 text-2xl mb-2">✅</div>
+            <h3 class="font-medium text-gray-900 mb-1">Квест создан</h3>
+            <p class="text-sm text-gray-600">План реализации готов</p>
+          </div>
+        <% end %>
+
+        <!-- Провести исследование -->
+        <% unless @entry.research_data.present? %>
+          <%= link_to research_idea_path(@entry), 
+              class: "block p-4 border-2 border-blue-200 rounded-lg hover:border-blue-400 transition text-center",
+              data: { 
+                "turbo-method": "post",
+                "turbo-confirm": "Провести детальное исследование идеи?" 
+              } do %>
+            <div class="text-blue-600 text-2xl mb-2">🔬</div>
+            <h3 class="font-medium text-gray-900 mb-1">Провести research</h3>
+            <p class="text-sm text-gray-600">Глубокий анализ рынка и конкурентов</p>
+          <% end %>
+        <% else %>
+          <%= link_to show_research_path(@entry),
+              class: "block p-4 border-2 border-green-200 rounded-lg hover:border-green-400 transition text-center" do %>
+            <div class="text-green-600 text-2xl mb-2">📊</div>
+            <h3 class="font-medium text-gray-900 mb-1">Посмотреть research</h3>
+            <p class="text-sm text-gray-600">Результаты исследования готовы</p>
+          <% end %>
+        <% end %>
+
+        <!-- Обновить анализ -->
+        <%= link_to smart_priority_analyze_idea_path(@entry), 
+            class: "block p-4 border-2 border-gray-200 rounded-lg hover:border-gray-400 transition text-center",
+            data: { 
+              "turbo-method": "post",
+              "turbo-confirm": "Пересчитать приоритет идеи?" 
+            } do %>
+          <div class="text-gray-600 text-2xl mb-2">🔄</div>
+          <h3 class="font-medium text-gray-900 mb-1">Обновить анализ</h3>
+          <p class="text-sm text-gray-600">Пересчитать приоритет</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Техническая информация -->
+  <div class="mt-8 text-center text-sm text-gray-500">
+    <p>Анализ версии <%= @analysis['analyzer_version'] || '1.0' %></p>
+    <p>Обновлен: <%= Time.parse(@analysis['last_analyzed']).strftime("%d.%m.%Y в %H:%M") if @analysis['last_analyzed'] %></p>
+  </div>
+</div>

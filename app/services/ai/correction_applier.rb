@@ -55,36 +55,47 @@ module Ai
 
       def apply_nutrition_correction(entry, nutrition_data)
         return nil unless nutrition_data && entry.nutrition_entry
-        
+
         nutrition_entry = entry.nutrition_entry
         changes = []
-        
+
         if nutrition_data[:calories] && nutrition_data[:calories] != nutrition_entry.calories
           old_calories = nutrition_entry.calories
           nutrition_entry.update!(calories: nutrition_data[:calories])
           changes << "калории: #{old_calories} → #{nutrition_data[:calories]}"
         end
-        
+
         if nutrition_data[:protein] && nutrition_data[:protein] != nutrition_entry.protein
           old_protein = nutrition_entry.protein
           nutrition_entry.update!(protein: nutrition_data[:protein])
           changes << "белки: #{old_protein}г → #{nutrition_data[:protein]}г"
         end
-        
+
         if nutrition_data[:fat] && nutrition_data[:fat] != nutrition_entry.fat
           old_fat = nutrition_entry.fat
           nutrition_entry.update!(fat: nutrition_data[:fat])
           changes << "жиры: #{old_fat}г → #{nutrition_data[:fat]}г"
         end
-        
+
         if nutrition_data[:carbs] && nutrition_data[:carbs] != nutrition_entry.carbs
           old_carbs = nutrition_entry.carbs
           nutrition_entry.update!(carbs: nutrition_data[:carbs])
           changes << "углеводы: #{old_carbs}г → #{nutrition_data[:carbs]}г"
         end
-        
+
+        # Update food items if provided
+        if nutrition_data[:food_items] && nutrition_data[:food_items] != nutrition_entry.food_items
+          nutrition_entry.update!(food_items: nutrition_data[:food_items])
+          changes << "обновил продукты"
+        end
+
+        # Update meal description if provided
+        if nutrition_data[:meal_description] && nutrition_data[:meal_description] != nutrition_entry.meal_description
+          nutrition_entry.update!(meal_description: nutrition_data[:meal_description])
+        end
+
         return nil if changes.empty?
-        
+
         "исправил БЖУ: #{changes.join(', ')}"
       end
 

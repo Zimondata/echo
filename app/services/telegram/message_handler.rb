@@ -70,6 +70,12 @@ module Telegram
         handle_timezone_command
       when "/nutrition"
         handle_nutrition_command
+      when "/remind"
+        handle_remind_command
+      when "/reminders"
+        handle_reminders_command
+      when "/smart"
+        handle_smart_reminders_command
       else
         send_reply("Неизвестная команда. Используй /help для списка команд.")
       end
@@ -130,6 +136,11 @@ module Telegram
         
         *Питание:*
         /nutrition — Статистика питания за день
+
+        *Напоминания:*
+        /remind — Создать напоминание
+        /reminders — Список напоминаний
+        /smart — Управление умными напоминаниями
 
         *Как использовать:*
 
@@ -1424,16 +1435,19 @@ module Telegram
       when "nutrition_correction"
         if entry.nutrition_entry
           nutrition = entry.nutrition_entry
+          confirmation_text += "\n\n"
+
+          # Show updated food items prominently if available
+          if nutrition.food_items.present?
+            confirmation_text += "🥘 *Обновленные продукты:*\n#{nutrition.food_items}\n\n"
+          end
+
           confirmation_text += <<~TEXT
-            
-            
             📊 *Обновленная пищевая ценность:*
             • Калории: #{nutrition.calories.to_i} ккал
             • Белки: #{nutrition.protein.to_f.round(1)} г
-            • Жиры: #{nutrition.fat.to_f.round(1)} г  
+            • Жиры: #{nutrition.fat.to_f.round(1)} г
             • Углеводы: #{nutrition.carbs.to_f.round(1)} г
-            
-            #{nutrition.food_items.present? ? "🥘 *Продукты:* #{nutrition.food_items}" : ""}
           TEXT
         end
         
@@ -1906,6 +1920,233 @@ module Telegram
       TEXT
 
       send_reply(confirmation_text.strip)
+    end
+
+    # ===== REMINDER COMMANDS =====
+
+    def handle_remind_command
+      # Parse command: /remind <time> <message>
+      # Examples:
+      # /remind 17:00 Позвонить маме
+      # /remind завтра в 10:00 Встреча с командой
+      # /remind через 30 минут Выйти на прогулку
+
+      parts = message.text.split(' ', 2)
+
+      if parts.length < 2
+        send_reply(<<~TEXT)
+          ⏰ *Создание напоминания*
+
+          Используй формат:
+          `/remind <время> <текст>`
+
+          *Примеры:*
+          • `/remind 17:00 Позвонить маме`
+          • `/remind завтра в 10:00 Встреча`
+          • `/remind через 30 минут Выйти на прогулку`
+          • `/remind 15.04 в 14:00 День рождения`
+
+          Или просто скажи голосом:
+          "Напомни мне в 17:00 позвонить маме"
+        TEXT
+        return
+      end
+
+      reminder_text = parts[1]
+
+      # Use AI to parse the time and message
+      result = parse_reminder_request(reminder_text)
+
+      if result[:success]
+        reminder = user.reminders.create!(
+          reminder_type: "one_time",
+          remind_at: result[:remind_at],
+          message: result[:message],
+          status: "pending",
+          priority: "medium"
+        )
+
+        time_str = result[:remind_at].in_time_zone(user.timezone).strftime('%d.%m в %H:%M')
+
+        send_reply(<<~TEXT)
+          ✅ *Напоминание создано!*
+
+          📝 #{result[:message]}
+          ⏰ #{time_str}
+
+          Я напомню тебе в указанное время.
+        TEXT
+      else
+        send_reply(<<~TEXT)
+          ❌ Не смог разобрать время напоминания.
+
+          Попробуй формат:
+          • `/remind 17:00 Позвонить маме`
+          • `/remind завтра в 10:00 Встреча`
+        TEXT
+      end
+    end
+
+    def handle_reminders_command
+      pending_reminders = user.reminders.pending.order(:remind_at).limit(20)
+
+      if pending_reminders.empty?
+        send_reply(<<~TEXT)
+          📋 *Твои напоминания*
+
+          У тебя пока нет активных напоминаний.
+
+          Создай напоминание:
+          `/remind 17:00 Позвонить маме`
+
+          Или скажи голосом:
+          "Напомни мне завтра в 10:00 про встречу"
+        TEXT
+        return
+      end
+
+      # Group by type
+      regular_reminders = pending_reminders.regular
+      smart_reminders = pending_reminders.smart
+
+      response = "📋 *Твои напоминания*\n\n"
+
+      if regular_reminders.any?
+        response += "⏰ *Обычные:*\n"
+        regular_reminders.each do |reminder|
+          time_str = reminder.remind_at.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')
+          response += "• #{time_str} - #{reminder.message.truncate(60)}\n"
+        end
+        response += "\n"
+      end
+
+      if smart_reminders.any?
+        response += "🤖 *Умные:*\n"
+        smart_reminders.each do |reminder|
+          time_str = reminder.remind_at.in_time_zone(user.timezone).strftime('%d.%m в %H:%M')
+          type_emoji = case reminder.smart_type
+          when "idea" then "💡"
+          when "pattern" then "📊"
+          when "goal" then "🎯"
+          when "context" then "🧠"
+          when "suggestion" then "✨"
+          else "🔔"
+          end
+          response += "• #{type_emoji} #{time_str} - #{reminder.message.truncate(60)}\n"
+        end
+        response += "\n"
+      end
+
+      response += "_Всего: #{pending_reminders.count}_"
+
+      send_reply(response)
+    end
+
+    def handle_smart_reminders_command
+      # Check user's smart reminders preference
+      # For now, just show stats
+
+      total_smart = user.reminders.smart.count
+      pending_smart = user.reminders.smart.pending.count
+      sent_smart = user.reminders.smart.where(status: "sent").count
+
+      # Get feedback stats
+      helpful_count = user.reminders.smart.where(user_feedback: "helpful").count
+      not_helpful_count = user.reminders.smart.where(user_feedback: "not_helpful").count
+
+      response = <<~TEXT
+        🤖 *Умные напоминания*
+
+        Система умных напоминаний анализирует твои записи и предлагает:
+        💡 Напоминания о забытых идеях
+        📊 Напоминания о нарушенных привычках
+        🎯 Напоминания о целях и планах
+        🧠 Контекстные предложения
+        ✨ AI-рекомендации
+
+        *Статистика:*
+        • Всего создано: #{total_smart}
+        • Ожидают отправки: #{pending_smart}
+        • Отправлено: #{sent_smart}
+        #{helpful_count > 0 ? "• Полезных: #{helpful_count}" : ""}
+        #{not_helpful_count > 0 ? "• Неполезных: #{not_helpful_count}" : ""}
+
+        Умные напоминания генерируются автоматически каждые 6 часов на основе твоих идей, планов и паттернов поведения.
+
+        _Следующая проверка через #{next_smart_reminder_check}_
+      TEXT
+
+      send_reply(response)
+    end
+
+    # Helper methods for reminders
+
+    def parse_reminder_request(text)
+      # Use AI to parse natural language time
+      client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY"))
+
+      current_time = Time.current.in_time_zone(user.timezone)
+
+      prompt = <<~PROMPT
+        Текущее время: #{current_time.strftime('%Y-%m-%d %H:%M')} (#{user.timezone})
+
+        Пользователь хочет создать напоминание:
+        "#{text}"
+
+        Извлеки:
+        1. Время напоминания (в формате ISO8601)
+        2. Текст сообщения
+
+        Ответь в JSON:
+        {
+          "remind_at": "2025-01-15T17:00:00+03:00",
+          "message": "Позвонить маме"
+        }
+      PROMPT
+
+      response = client.chat(
+        parameters: {
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        }
+      )
+
+      result = JSON.parse(response.dig("choices", 0, "message", "content"), symbolize_names: true)
+
+      {
+        success: true,
+        remind_at: Time.zone.parse(result[:remind_at]),
+        message: result[:message]
+      }
+
+    rescue StandardError => e
+      Rails.logger.error "Error parsing reminder: #{e.message}"
+      { success: false }
+    end
+
+    def next_smart_reminder_check
+      # Calculate next 6-hour interval
+      current_hour = Time.current.hour
+      next_check_hour = ((current_hour / 6) + 1) * 6
+      hours_until = next_check_hour - current_hour
+
+      if hours_until <= 0
+        hours_until += 6
+      end
+
+      "#{hours_until} #{hours_word(hours_until)}"
+    end
+
+    def hours_word(hours)
+      case hours
+      when 1 then "час"
+      when 2..4 then "часа"
+      else "часов"
+      end
     end
   end
 end

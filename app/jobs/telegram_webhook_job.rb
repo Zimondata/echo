@@ -68,6 +68,9 @@ class TelegramWebhookJob < ApplicationJob
         chat_id: chat_id,
         text: "👍 Отлично!"
       )
+    elsif data.start_with?('reminder_')
+      # Handle reminder button clicks
+      handle_reminder_callback(user, data, chat_id)
     end
     
     # Answer callback query to remove loading state
@@ -81,6 +84,191 @@ class TelegramWebhookJob < ApplicationJob
       callback_query_id: callback_query.id,
       text: "Ошибка обработки"
     ) rescue nil
+  end
+
+  def handle_reminder_callback(user, data, chat_id)
+    # Parse callback data: reminder_<id>_<action>
+    parts = data.split('_')
+    reminder_id = parts[1].to_i
+    action = parts[2..-1].join('_')
+
+    reminder = user.reminders.find_by(id: reminder_id)
+
+    unless reminder
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "❌ Напоминание не найдено"
+      )
+      return
+    end
+
+    case action
+    when "snooze"
+      # Snooze for 1 hour
+      reminder.snooze!(60)
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "⏰ Напомню через час"
+      )
+
+    when "dismiss"
+      # Mark as sent and helpful
+      reminder.mark_as_sent!
+      reminder.mark_helpful!
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "✅ Принято"
+      )
+
+    when /^discuss_idea_(\d+)$/
+      # User wants to discuss an idea
+      idea_id = $1.to_i
+      idea = user.entries.find_by(id: idea_id)
+
+      if idea
+        # Create a follow-up plan
+        Telegram::BotService.send_message(
+          chat_id: chat_id,
+          text: "💡 Отлично! Давай обсудим идею: \"#{idea.content.truncate(100)}\"\n\nЧто хочешь сделать первым делом?"
+        )
+        reminder.mark_as_sent!
+        reminder.mark_helpful!
+      end
+
+    when /^snooze_idea_(\d+)_7d$/
+      # Snooze idea reminder for 7 days
+      reminder.update!(
+        remind_at: 7.days.from_now,
+        status: "pending"
+      )
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "⏰ Напомню через неделю"
+      )
+
+    when /^archive_idea_(\d+)$/
+      # Archive/cancel the idea reminder
+      reminder.cancel!
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "📦 Идея отложена"
+      )
+
+    when "log_meal"
+      # Prompt user to log a meal
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "🍽️ Отправь фото блюда или опиши текстом что ты ел"
+      )
+      reminder.mark_as_sent!
+
+    when "skip_pattern_nutrition", "skip_pattern_activity"
+      # User doesn't want to log today
+      reminder.mark_as_sent!
+      reminder.mark_not_helpful!
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "👌 Понятно, не буду беспокоить"
+      )
+
+    when "log_activity"
+      # Prompt user to log activity
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "💪 Отправь скриншот Garmin или опиши тренировку текстом"
+      )
+      reminder.mark_as_sent!
+
+    when /^plan_ready_(\d+)$/
+      # User is ready for the plan
+      reminder.mark_as_sent!
+      reminder.mark_helpful!
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "✅ Отлично, все готово!"
+      )
+
+    when /^plan_prepare_(\d+)$/
+      # User needs help preparing
+      event_id = $1.to_i
+      event = user.calendar_events.find_by(id: event_id)
+
+      if event
+        Telegram::BotService.send_message(
+          chat_id: chat_id,
+          text: "📝 Что нужно подготовить для: \"#{event.title}\"?\n\nОпиши и я сохраню как план подготовки"
+        )
+        reminder.mark_as_sent!
+      end
+
+    when /^plan_reschedule_(\d+)$/
+      # User wants to reschedule
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "📅 На какое время перенести? Напиши в формате:\n\"Перенести на завтра в 15:00\""
+      )
+      reminder.mark_as_sent!
+
+    when "plan_rest"
+      # User wants to plan rest
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "🏖️ Отлично! Когда хочешь отдохнуть? Напиши:\n\"Выходной в субботу\" или \"Отпуск с 1 по 7 июня\""
+      )
+      reminder.mark_as_sent!
+      reminder.mark_helpful!
+
+    when "show_relaxation"
+      # Show relaxation techniques
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: <<~TEXT
+          🧘 *Техники релаксации:*
+
+          1. *Дыхание 4-7-8*
+          Вдох 4 сек, задержка 7 сек, выдох 8 сек
+
+          2. *Прогрессивная мышечная релаксация*
+          Напрягай и расслабляй мышцы по очереди
+
+          3. *5-4-3-2-1*
+          5 вещей которые видишь
+          4 которые слышишь
+          3 которые чувствуешь
+          2 которые пахнут
+          1 которую чувствуешь на вкус
+
+          4. *Медитация 5 минут*
+          Просто сиди и наблюдай за дыханием
+        TEXT
+      )
+      reminder.mark_as_sent!
+      reminder.mark_helpful!
+
+    when "acknowledge_context"
+      # User acknowledges the context
+      reminder.mark_as_sent!
+      reminder.mark_helpful!
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "👍 Береги себя!"
+      )
+
+    else
+      # Unknown action
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "✅ Принято"
+      )
+      reminder.mark_as_sent! unless reminder.status == "sent"
+    end
+
+  rescue StandardError => e
+    Rails.logger.error "Reminder callback error: #{e.message}"
+    Telegram::BotService.send_message(
+      chat_id: chat_id,
+      text: "❌ Ошибка обработки действия"
+    )
   end
 
   def find_or_create_user(from)

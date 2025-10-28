@@ -22,7 +22,17 @@ Rails.application.configure do
               ScheduleContextualNotificationsJob.perform_later
               Rails.logger.info "Contextual notifications job scheduled at #{now}"
             end
-            
+
+            # Каждую минуту - отправка напоминаний (обычных и умных)
+            SendRemindersJob.perform_later
+            Rails.logger.info "Send reminders job scheduled at #{now}"
+
+            # Каждые 6 часов - генерация умных напоминаний
+            if now.hour % 6 == 0 && now.min < 5
+              GenerateSmartRemindersJob.perform_later
+              Rails.logger.info "Generate smart reminders job scheduled at #{now}"
+            end
+
             # Проверяем каждые 5 минут
             sleep(5.minutes)
           end

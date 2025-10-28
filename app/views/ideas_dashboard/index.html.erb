@@ -3,8 +3,19 @@
 <div class="container mx-auto px-4 py-8">
   <!-- Заголовок -->
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">💡 Дашборд идей</h1>
-    <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
+    <h1 class="text-3xl font-bold text-gray-900">🧠 Smart Ideas Dashboard</h1>
+    <div class="flex space-x-3">
+      <%= link_to smart_priority_analyze_all_path, 
+          class: "bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all hover:scale-105 flex items-center space-x-2",
+          data: { 
+            "turbo-method": "post",
+            "turbo-confirm": "Запустить AI анализ всех идей? Это может занять несколько минут." 
+          } do %>
+        <span>🧠</span>
+        <span>AI Анализ</span>
+      <% end %>
+      <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
+    </div>
   </div>
 
   <!-- Статистика -->
@@ -76,38 +87,106 @@
         <% if @priority_ideas.any? %>
           <div class="space-y-4">
             <% @priority_ideas.each do |idea| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition">
+              <% ai_analysis = idea.metadata&.dig('ai_analysis') %>
+              <% priority_score = ai_analysis&.dig('priority_score') %>
+              <% priority_level = ai_analysis&.dig('priority_level') %>
+              
+              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer <%= priority_level == 'critical' ? 'border-red-300 bg-red-50' : priority_level == 'high' ? 'border-amber-300 bg-amber-50' : '' %>" onclick="toggleIdeaContent('<%= idea.id %>')">
                 <div class="flex justify-between items-start">
                   <div class="flex-1">
-                    <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
-                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <!-- Заголовок с AI индикатором -->
+                    <div class="flex items-center space-x-2 mb-2">
+                      <h3 class="font-medium text-gray-900 flex-1">
+                        <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
+                        <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
+                        <% if idea.content.length > 80 %>
+                          <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
+                        <% end %>
+                      </h3>
+                      <% if priority_score %>
+                        <div class="flex items-center space-x-1">
+                          <span class="text-xs font-bold px-2 py-1 rounded-full <%= priority_level == 'critical' ? 'bg-red-600 text-white' : priority_level == 'high' ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white' %>">
+                            🧠 <%= priority_score.round(1) %>
+                          </span>
+                        </div>
+                      <% end %>
+                    </div>
+                    
+                    <!-- Метаданные и индикаторы -->
+                    <div class="flex items-center space-x-3 text-sm text-gray-500 mb-2">
                       <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                         <%= idea.idea_priority_display || 'Не указан' %>
                       </span>
                       <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                      
+                      <% if priority_level == 'critical' %>
+                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs animate-pulse">
+                          🔥 КРИТИЧНО
+                        </span>
+                      <% elsif priority_level == 'high' %>
+                        <span class="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">
+                          ⭐ ВАЖНО
+                        </span>
+                      <% end %>
                     </div>
+                    
+                    <!-- AI рекомендации -->
+                    <% if ai_analysis&.dig('recommendations')&.any? %>
+                      <% top_recommendation = ai_analysis['recommendations'].first %>
+                      <div class="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                        🤖 <%= top_recommendation['message'] %>
+                      </div>
+                    <% end %>
                   </div>
-                  <div class="flex space-x-2 ml-4">
+                  
+                  <div class="flex flex-col space-y-1 ml-4">
+                    <!-- AI анализ приоритета -->
+                    <% unless priority_score %>
+                      <%= link_to smart_priority_analyze_idea_path(idea), 
+                          class: "text-purple-600 hover:text-purple-800 p-1", 
+                          title: "AI анализ приоритета",
+                          data: { 
+                            "turbo-method": "post",
+                            "turbo-confirm": "Проанализировать приоритет идеи с помощью AI?" 
+                          } do %>
+                        🧠
+                      <% end %>
+                    <% else %>
+                      <%= link_to smart_priority_show_analysis_path(idea), 
+                          class: "text-purple-600 hover:text-purple-800 p-1", 
+                          title: "Подробный AI анализ" do %>
+                        📊
+                      <% end %>
+                    <% end %>
+                    
+                    <!-- Research -->
                     <% unless idea.research_data.present? %>
-                      <%= link_to research_idea_path(idea), method: :post, 
+                      <%= link_to research_idea_path(idea), 
                           class: "text-blue-600 hover:text-blue-800 p-1", 
                           title: "Сделать research",
-                          data: { confirm: "Провести AI-исследование идеи?" } do %>
+                          data: { 
+                            "turbo-method": "post",
+                            "turbo-confirm": "Провести AI-исследование идеи?" 
+                          } do %>
                         🔬
                       <% end %>
                     <% else %>
                       <%= link_to show_research_path(idea), 
                           class: "text-green-600 hover:text-green-800 p-1", 
                           title: "Посмотреть анализ" do %>
-                        📊
+                        📋
                       <% end %>
                     <% end %>
                     
+                    <!-- Quest -->
                     <% unless idea.quest_generated? %>
-                      <%= link_to generate_quest_path(idea), method: :post, 
-                          class: "text-purple-600 hover:text-purple-800 p-1", 
+                      <%= link_to generate_quest_path(idea), 
+                          class: "text-amber-600 hover:text-amber-800 p-1", 
                           title: "Создать квест",
-                          data: { confirm: "Создать квест из идеи?" } do %>
+                          data: { 
+                            "turbo-method": "post",
+                            "turbo-confirm": "Создать квест из идеи?" 
+                          } do %>
                         ⚡
                       <% end %>
                     <% else %>
@@ -133,13 +212,22 @@
         <% if @research_ready.any? %>
           <div class="space-y-4">
             <% @research_ready.each do |idea| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition">
-                <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
+              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="toggleIdeaContent('<%= idea.id %>')">
+                <h3 class="font-medium text-gray-900 mb-2">
+                  <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
+                  <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
+                  <% if idea.content.length > 80 %>
+                    <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
+                  <% end %>
+                </h3>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-500"><%= idea.created_at.strftime("%d.%m.%Y") %></span>
-                  <%= link_to research_idea_path(idea), method: :post, 
+                  <%= link_to research_idea_path(idea), 
                       class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition",
-                      data: { confirm: "Провести AI-исследование идеи?" } do %>
+                      data: { 
+                        "turbo-method": "post",
+                        "turbo-confirm": "Провести AI-исследование идеи?" 
+                      } do %>
                     🔬 Исследовать
                   <% end %>
                 </div>
@@ -161,8 +249,14 @@
         <% if @quest_candidates.any? %>
           <div class="space-y-4">
             <% @quest_candidates.each do |idea| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition">
-                <h3 class="font-medium text-gray-900 mb-2"><%= truncate(idea.content, length: 80) %></h3>
+              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="toggleIdeaContent('<%= idea.id %>')">
+                <h3 class="font-medium text-gray-900 mb-2">
+                  <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
+                  <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
+                  <% if idea.content.length > 80 %>
+                    <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
+                  <% end %>
+                </h3>
                 <div class="flex justify-between items-center">
                   <div class="text-sm text-gray-500">
                     <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
@@ -170,9 +264,12 @@
                       <span class="text-green-600 ml-2">📊 Исследована</span>
                     <% end %>
                   </div>
-                  <%= link_to generate_quest_path(idea), method: :post, 
+                  <%= link_to generate_quest_path(idea), 
                       class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition",
-                      data: { confirm: "Создать квест из идеи?" } do %>
+                      data: { 
+                        "turbo-method": "post",
+                        "turbo-confirm": "Создать квест из идеи?" 
+                      } do %>
                     ⚡ Создать квест
                   <% end %>
                 </div>
@@ -215,3 +312,32 @@
     </div>
   </div>
 </div>
+
+<script>
+function toggleIdeaContent(ideaId) {
+  const preview = document.querySelector(`.idea-preview-${ideaId}`);
+  const full = document.querySelector(`.idea-full-${ideaId}`);
+  const toggle = document.querySelector(`.idea-toggle-${ideaId}`);
+  
+  if (preview && full) {
+    if (preview.classList.contains('hidden')) {
+      // Показать краткое содержание
+      preview.classList.remove('hidden');
+      full.classList.add('hidden');
+      if (toggle) toggle.textContent = 'читать далее...';
+    } else {
+      // Показать полное содержание
+      preview.classList.add('hidden');
+      full.classList.remove('hidden');
+      if (toggle) toggle.textContent = 'свернуть';
+    }
+  }
+}
+
+// Предотвратить срабатывание клика на карточке при клике на кнопки действий
+document.addEventListener('click', function(event) {
+  if (event.target.closest('a') || event.target.closest('button')) {
+    event.stopPropagation();
+  }
+});
+</script>

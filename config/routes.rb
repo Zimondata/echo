@@ -31,7 +31,11 @@ Rails.application.routes.draw do
   resources :calendar_events, only: [:index, :show, :new, :create, :edit, :update, :destroy]
 
   # Reminders
-  resources :reminders, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+  resources :reminders, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+    member do
+      post :snooze
+    end
+  end
 
   # Ideas Dashboard
   get 'ideas_dashboard', to: 'ideas_dashboard#index'
@@ -48,6 +52,14 @@ Rails.application.routes.draw do
       patch :update_status
     end
   end
+
+  # Smart Priority Analysis
+  post 'smart_priority/analyze_all', to: 'smart_priority#analyze_all', as: :smart_priority_analyze_all
+  post 'smart_priority/:id/analyze', to: 'smart_priority#analyze_idea', as: :smart_priority_analyze_idea
+  get 'smart_priority/:id/analysis', to: 'smart_priority#show_analysis', as: :smart_priority_show_analysis
+  get 'smart_priority/stats', to: 'smart_priority#stats', as: :smart_priority_stats
+  get 'smart_priority/settings', to: 'smart_priority#settings', as: :smart_priority_settings
+  patch 'smart_priority/settings', to: 'smart_priority#update_settings'
 
   # API routes
   namespace :api do

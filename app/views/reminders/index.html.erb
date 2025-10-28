@@ -1,2 +1,225 @@
-<h1>Reminders#index</h1>
-<p>Find me in app/views/reminders/index.html.erb</p>
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">📋 Напоминания</h1>
+    <p class="text-gray-600">Управление обычными и умными напоминаниями</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="ml-5">
+          <p class="text-sm font-medium text-gray-500">Активных</p>
+          <p class="text-2xl font-semibold text-gray-900"><%= @pending_reminders.count %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <div class="ml-5">
+          <p class="text-sm font-medium text-gray-500">Умных</p>
+          <p class="text-2xl font-semibold text-gray-900"><%= @smart_total %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+          <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+          </svg>
+        </div>
+        <div class="ml-5">
+          <p class="text-sm font-medium text-gray-500">Полезных</p>
+          <p class="text-2xl font-semibold text-gray-900"><%= @helpful_count %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if @pending_reminders.empty? %>
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">Нет активных напоминаний</h3>
+      <p class="mt-1 text-sm text-gray-500">Напоминания можно создать через Telegram бота</p>
+      <div class="mt-6">
+        <p class="text-sm text-gray-600">
+          Используй команду: <code class="bg-gray-100 px-2 py-1 rounded">/remind 17:00 Позвонить маме</code>
+        </p>
+      </div>
+    </div>
+  <% else %>
+    <!-- Regular Reminders -->
+    <% if @regular_reminders.any? %>
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">⏰ Обычные напоминания</h2>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <ul class="divide-y divide-gray-200">
+            <% @regular_reminders.each do |reminder| %>
+              <li class="p-6 hover:bg-gray-50">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center">
+                      <span class="text-2xl mr-3">🔔</span>
+                      <div>
+                        <p class="text-lg font-medium text-gray-900"><%= reminder.message %></p>
+                        <p class="mt-1 text-sm text-gray-500">
+                          <%= reminder.remind_at.in_time_zone(current_user.timezone).strftime('%d.%m.%Y в %H:%M') %>
+                          <% if reminder.remind_at < Time.current %>
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Просрочено
+                            </span>
+                          <% elsif reminder.remind_at < 1.hour.from_now %>
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Скоро
+                            </span>
+                          <% end %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ml-4 flex space-x-2">
+                    <%= button_to "⏰ Отложить", snooze_reminder_path(reminder), method: :post, params: { duration: 60 }, class: "inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+                    <%= button_to "❌ Отменить", reminder_path(reminder), method: :delete, data: { confirm: 'Точно отменить?' }, class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200" %>
+                  </div>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Smart Reminders -->
+    <% if @smart_reminders.any? %>
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">🤖 Умные напоминания</h2>
+        <div class="space-y-4">
+          <% @smart_reminders.each do |reminder| %>
+            <div class="bg-white rounded-lg shadow overflow-hidden <%= 'ring-2 ring-purple-500' if reminder.priority == 'high' %>">
+              <div class="p-6">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                      <span class="text-3xl mr-3">
+                        <%= case reminder.smart_type
+                            when "idea" then "💡"
+                            when "pattern" then "📊"
+                            when "goal" then "🎯"
+                            when "context" then "🧠"
+                            when "suggestion" then "✨"
+                            else "🤖"
+                            end %>
+                      </span>
+                      <div>
+                        <div class="flex items-center space-x-2">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= reminder.priority == 'high' ? 'bg-red-100 text-red-800' : reminder.priority == 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' %>">
+                            <%= { 'high' => 'Высокий', 'medium' => 'Средний', 'low' => 'Низкий' }[reminder.priority] %>
+                          </span>
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <%= { 'idea' => 'Идея', 'pattern' => 'Паттерн', 'goal' => 'Цель', 'context' => 'Контекст', 'suggestion' => 'Предложение' }[reminder.smart_type] %>
+                          </span>
+                          <% if reminder.confidence_score %>
+                            <span class="text-xs text-gray-500">Уверенность: <%= reminder.confidence_score %>%</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="text-lg font-medium text-gray-900 mb-2"><%= reminder.message %></p>
+                    <p class="text-sm text-gray-500">
+                      📅 <%= reminder.remind_at.in_time_zone(current_user.timezone).strftime('%d.%m.%Y в %H:%M') %>
+                    </p>
+                    <% if reminder.related_entries.any? %>
+                      <div class="mt-3 p-3 bg-gray-50 rounded-md">
+                        <p class="text-xs font-medium text-gray-700 mb-1">💭 Связанные записи:</p>
+                        <% reminder.related_entries.first(2).each do |entry| %>
+                          <p class="text-sm text-gray-600">• <%= entry.content.truncate(80) %></p>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                  <div class="ml-4 flex space-x-2">
+                    <%= button_to "⏰ Отложить", snooze_reminder_path(reminder), method: :post, params: { duration: 60 }, class: "inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+                    <%= button_to "❌ Отменить", reminder_path(reminder), method: :delete, data: { confirm: 'Точно отменить?' }, class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200" %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <!-- Recently Sent -->
+  <% if @sent_reminders.any? %>
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">✅ Недавно отправленные</h2>
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <ul class="divide-y divide-gray-200">
+          <% @sent_reminders.first(5).each do |reminder| %>
+            <li class="p-4 hover:bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <span class="text-xl mr-3 opacity-50">
+                    <%= reminder.smart_reminder? ?
+                        case reminder.smart_type
+                        when "idea" then "💡"
+                        when "pattern" then "📊"
+                        when "goal" then "🎯"
+                        when "context" then "🧠"
+                        when "suggestion" then "✨"
+                        else "🤖"
+                        end : "🔔" %>
+                  </span>
+                  <div>
+                    <p class="text-sm text-gray-900"><%= reminder.message.truncate(80) %></p>
+                    <p class="text-xs text-gray-500">
+                      Отправлено: <%= reminder.sent_at&.in_time_zone(current_user.timezone)&.strftime('%d.%m.%Y в %H:%M') %>
+                      <% if reminder.user_feedback == 'helpful' %>
+                        <span class="ml-2 text-green-600">👍 Полезно</span>
+                      <% elsif reminder.user_feedback == 'not_helpful' %>
+                        <span class="ml-2 text-red-600">👎 Не полезно</span>
+                      <% end %>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Info Box -->
+  <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <h3 class="text-lg font-medium text-blue-900 mb-2">ℹ️ Как работают умные напоминания?</h3>
+    <ul class="text-sm text-blue-800 space-y-1">
+      <li>💡 Напоминают о забытых идеях (3+ дня без действий)</li>
+      <li>📊 Напоминают о нарушенных привычках (питание, тренировки)</li>
+      <li>🎯 Напоминают о приближающихся целях и планах</li>
+      <li>🧠 Анализируют дневник и дают контекстные предложения</li>
+      <li>✨ AI генерирует персонализированные рекомендации</li>
+    </ul>
+    <p class="mt-3 text-sm text-blue-700">
+      Умные напоминания генерируются автоматически каждые 6 часов на основе анализа ваших записей.
+    </p>
+  </div>
+</div>
