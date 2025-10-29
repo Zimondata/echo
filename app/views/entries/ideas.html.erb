@@ -65,6 +65,65 @@
       </p>
     </div>
 
+    <!-- Smart Notifications Panel -->
+    <% if @smart_notifications&.any? %>
+      <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-purple-100">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <span class="text-white text-lg">🤖</span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">AI Помощник</h3>
+          </div>
+          
+          <div class="space-y-3">
+            <% @smart_notifications.first(3).each do |notification| %>
+              <div class="flex items-center justify-between p-4 bg-white/70 backdrop-blur rounded-xl border border-white/50 hover:bg-white/90 transition">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl"><%= notification[:icon] %></span>
+                  <div>
+                    <h4 class="font-medium text-gray-800"><%= notification[:title] %></h4>
+                    <p class="text-sm text-gray-600"><%= notification[:message] %></p>
+                  </div>
+                </div>
+                <% if notification[:action_url] %>
+                  <%= link_to notification[:action_url], 
+                      class: "px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all hover:scale-105" do %>
+                    <%= notification[:action_text] %>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+          
+          <% if @smart_notifications.count > 3 %>
+            <button onclick="toggleAllNotifications()" class="mt-3 text-sm text-purple-600 hover:text-purple-800 font-medium">
+              Показать ещё <%= @smart_notifications.count - 3 %> уведомлений
+            </button>
+            <div id="additionalNotifications" class="hidden mt-3 space-y-3">
+              <% @smart_notifications[3..-1].each do |notification| %>
+                <div class="flex items-center justify-between p-4 bg-white/70 backdrop-blur rounded-xl border border-white/50">
+                  <div class="flex items-center gap-3">
+                    <span class="text-2xl"><%= notification[:icon] %></span>
+                    <div>
+                      <h4 class="font-medium text-gray-800"><%= notification[:title] %></h4>
+                      <p class="text-sm text-gray-600"><%= notification[:message] %></p>
+                    </div>
+                  </div>
+                  <% if notification[:action_url] %>
+                    <%= link_to notification[:action_url], 
+                        class: "px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all hover:scale-105" do %>
+                      <%= notification[:action_text] %>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
     <!-- Search and Filters -->
     <div class="mb-8 space-y-4">
       <!-- Search Bar -->
@@ -81,6 +140,52 @@
             onkeyup="filterIdeas()"
           >
         </div>
+      </div>
+
+      <!-- Smart Sorting and Filters -->
+      <div class="flex flex-wrap items-center gap-4 mb-4">
+        <!-- Sort Options -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-700">Сортировка:</span>
+          <select id="sortSelect" onchange="applySorting()" class="px-3 py-2 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-500 text-sm">
+            <option value="date_desc">По дате (новые)</option>
+            <option value="date_asc">По дате (старые)</option>
+            <option value="priority_desc">По приоритету AI</option>
+            <option value="status">По статусу</option>
+            <option value="alphabetical">По алфавиту</option>
+          </select>
+        </div>
+
+        <!-- Status Filters -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-700">Статус:</span>
+          <select id="statusFilter" onchange="applyFilters()" class="px-3 py-2 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-500 text-sm">
+            <option value="all">Все</option>
+            <option value="not_analyzed">Не проанализированы</option>
+            <option value="analyzed">Проанализированы AI</option>
+            <option value="high_priority">Высокий приоритет</option>
+            <option value="ready_for_research">Готовы к исследованию</option>
+            <option value="researched">Исследованы</option>
+            <option value="with_quests">С квестами</option>
+          </select>
+        </div>
+
+        <!-- Group Options -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-700">Группировка:</span>
+          <select id="groupSelect" onchange="applyGrouping()" class="px-3 py-2 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-500 text-sm">
+            <option value="none">Без группировки</option>
+            <option value="priority">По приоритету</option>
+            <option value="status">По статусу</option>
+            <option value="date">По дате создания</option>
+            <option value="tags">По тегам</option>
+          </select>
+        </div>
+
+        <!-- Reset Button -->
+        <button onclick="resetFilters()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+          Сбросить
+        </button>
       </div>
 
       <!-- Tag Filters -->
@@ -107,8 +212,12 @@
       </div>
     </div>
 
-    <!-- Ideas Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ideasGrid">
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Ideas Grid -->
+      <div class="lg:col-span-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="ideasGrid">
       <% @entries.each_with_index do |entry, index| %>
         <%
           gradients = [
@@ -120,6 +229,12 @@
             ['#ddd6fe', '#fdf2f8']
           ]
           gradient = gradients[index % gradients.length]
+          ai_analysis = entry.metadata&.dig('ai_analysis')
+          priority_score = ai_analysis&.dig('priority_score') || 0
+          priority_level = ai_analysis&.dig('priority_level') || 'none'
+          has_research = entry.research_data.present? ? 'yes' : 'no'
+          has_quest = entry.quest_generated? ? 'yes' : 'no'
+          is_analyzed = ai_analysis.present? ? 'yes' : 'no'
         %>
         
         <div 
@@ -127,6 +242,12 @@
           data-idea-id="<%= entry.id %>"
           data-tags="<%= entry.tags&.join(',') || '' %>"
           data-title="<%= entry.content.split('.').first&.truncate(100) || '' %>"
+          data-created-at="<%= entry.created_at.iso8601 %>"
+          data-priority-score="<%= priority_score %>"
+          data-priority-level="<%= priority_level %>"
+          data-has-research="<%= has_research %>"
+          data-has-quest="<%= has_quest %>"
+          data-is-analyzed="<%= is_analyzed %>"
           onclick="openIdeaModal(<%= entry.id %>)"
         >
           <div class="relative overflow-hidden rounded-2xl bg-white shadow-xl hover:shadow-2xl transition-all duration-300 border border-purple-100">
@@ -233,24 +354,131 @@
           </div>
         </div>
       <% end %>
-    </div>
-
-    <!-- Empty State -->
-    <% if @entries.empty? %>
-      <div class="text-center py-16">
-        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-          <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
-          </svg>
         </div>
-        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
-          Пока нет идей
-        </h3>
-        <p class="text-purple-600 font-medium max-w-md mx-auto">
-          Отправьте боту свои идеи, и они появятся здесь в красивом виде
-        </p>
+
+        <!-- Empty State -->
+        <% if @entries.empty? %>
+          <div class="text-center py-16">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+              <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
+              Пока нет идей
+            </h3>
+            <p class="text-purple-600 font-medium max-w-md mx-auto">
+              Отправьте боту свои идеи, и они появятся здесь в красивом виде
+            </p>
+          </div>
+        <% end %>
       </div>
-    <% end %>
+
+      <!-- AI Insights Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="space-y-6 sticky top-8">
+          
+          <!-- Weekly Stats -->
+          <div class="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+                <span class="text-white text-lg">📊</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-800">Недельная статистика</h3>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Новых идей</span>
+                <span class="text-2xl font-bold text-purple-600"><%= @weekly_insights[:new_ideas_count] %></span>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Исследовано</span>
+                <span class="text-xl font-semibold text-blue-600"><%= @weekly_insights[:researched_count] %></span>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600">Квестов создано</span>
+                <span class="text-xl font-semibold text-green-600"><%= @weekly_insights[:quests_created] %></span>
+              </div>
+              
+              <div class="pt-4 border-t border-purple-200">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-sm text-gray-600">Продуктивность</span>
+                  <% case @weekly_insights[:productivity_trend]
+                     when 'growing' %>
+                    <span class="text-green-600 text-sm">📈 Растёт</span>
+                  <% when 'declining' %>
+                    <span class="text-red-600 text-sm">📉 Снижается</span>
+                  <% else %>
+                    <span class="text-gray-600 text-sm">➡️ Стабильно</span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Priority Idea -->
+          <% if @weekly_insights[:top_priority_idea] %>
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 shadow-lg border border-amber-200">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                  <span class="text-white text-lg">🔥</span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800">Топ идея недели</h3>
+              </div>
+              
+              <div class="bg-white/70 rounded-xl p-4">
+                <p class="text-sm text-gray-700 leading-relaxed">
+                  <%= truncate(@weekly_insights[:top_priority_idea].content, length: 120) %>
+                </p>
+                <% ai_analysis = @weekly_insights[:top_priority_idea].metadata&.dig('ai_analysis') %>
+                <% if ai_analysis&.dig('priority_score') %>
+                  <div class="mt-3 flex items-center gap-2">
+                    <span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-600 text-white">
+                      🧠 <%= ai_analysis['priority_score'].round(1) %>
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Quick Actions -->
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 shadow-lg border border-blue-200">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                <span class="text-white text-lg">⚡</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-800">Быстрые действия</h3>
+            </div>
+            
+            <div class="space-y-3">
+              <%= link_to ideas_dashboard_path, 
+                  class: "w-full flex items-center gap-3 p-3 bg-white/70 rounded-xl hover:bg-white transition" do %>
+                <span class="text-lg">🧠</span>
+                <span class="text-sm font-medium text-gray-700">Smart Dashboard</span>
+              <% end %>
+              
+              <%= link_to quests_path, 
+                  class: "w-full flex items-center gap-3 p-3 bg-white/70 rounded-xl hover:bg-white transition" do %>
+                <span class="text-lg">🎯</span>
+                <span class="text-sm font-medium text-gray-700">Мои квесты</span>
+              <% end %>
+              
+              <button onclick="location.reload()" 
+                      class="w-full flex items-center gap-3 p-3 bg-white/70 rounded-xl hover:bg-white transition">
+                <span class="text-lg">🔄</span>
+                <span class="text-sm font-medium text-gray-700">Обновить AI</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -763,6 +991,302 @@ function generateQuest(ideaId) {
     console.error('Quest generation error:', error);
     alert(`Ошибка при создании квеста: ${error.message}`);
   });
+}
+
+// Research worthiness checker (mirrors server-side logic)
+function isResearchWorthy(card) {
+  const content = card.dataset.title.toLowerCase();
+  
+  // Критерии исключения (НЕ стоит исследовать)
+  const excludePatterns = [
+    /запись.*(дневник|мысли|чувства|настроение)/,
+    /сегодня.*(был|была|думал|чувствовал)/,
+    /(плохо|хорошо|устал|болит)/,
+    /нужно.*(купить|сделать|не забыть|позвонить)/,
+    /(завтра|сегодня|вчера).*(встреча|дела|планы)/,
+    /список.*(дел|покупок|задач)/,
+    /^(интересно|хочется|надо бы|можно было бы).{0,30}$/,
+    /^(вообще|кстати|наверное).{0,50}$/,
+    /(баг|ошибка|не работает|исправить)/,
+    /тестирование|дебаг|логи/
+  ];
+  
+  // Если попадает под исключение - не исследуем
+  if (excludePatterns.some(pattern => content.match(pattern))) {
+    return false;
+  }
+  
+  // Критерии включения (СТОИТ исследовать)
+  const includePatterns = [
+    /(проект|стартап|бизнес|приложение|сервис|платформа)/,
+    /(монетизация|доход|продажи|клиенты|пользователи)/,
+    /(mvp|прототип|тестирование гипотез)/,
+    /(ai|ии|искусственный интеллект|машинное обучение)/,
+    /(автоматизация|оптимизация|улучшение процесса)/,
+    /(новая функция|фича|возможность)/,
+    /(исследование|анализ|изучение|разработка)/,
+    /(как.*(работает|устроен|влияет|можно улучшить))/,
+    /(почему.*(происходит|нужно|важно))/,
+    /(пользователи|интерфейс|ux|ui|дизайн)/,
+    /(функциональность|возможности|решение)/,
+    /(проблема|потребность|боль пользователей)/,
+    /(стратегия|развитие|направление|тренд)/,
+    /(рынок|конкуренты|аналоги|позиционирование)/,
+    /(масштабирование|рост|экспансия)/
+  ];
+  
+  // Проверяем длину
+  if (content.length < 20) {
+    return false;
+  }
+  
+  // Проверяем наличие ключевых слов
+  const hasResearchKeywords = includePatterns.some(pattern => content.match(pattern));
+  
+  // Дополнительная проверка на сложность идеи
+  const complexityIndicators = [
+    content.includes('как') && content.includes('?'),
+    content.includes('почему') && content.includes('?'),
+    content.split(/[.!?]/).length > 2,
+    /\b(система|алгоритм|методика|подход|концепция)\b/.test(content),
+    /\b(интеграция|внедрение|реализация|разработка)\b/.test(content)
+  ];
+  
+  const complexityScore = complexityIndicators.filter(Boolean).length;
+  
+  return hasResearchKeywords || complexityScore >= 3;
+}
+
+// Smart Sorting and Filtering Functions
+function applySorting() {
+  const sortValue = document.getElementById('sortSelect').value;
+  const grid = document.getElementById('ideasGrid');
+  const cards = Array.from(grid.querySelectorAll('.idea-card'));
+  
+  cards.sort((a, b) => {
+    switch(sortValue) {
+      case 'date_desc':
+        return new Date(b.dataset.createdAt) - new Date(a.dataset.createdAt);
+      case 'date_asc':
+        return new Date(a.dataset.createdAt) - new Date(b.dataset.createdAt);
+      case 'priority_desc':
+        return parseFloat(b.dataset.priorityScore) - parseFloat(a.dataset.priorityScore);
+      case 'status':
+        const statusOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1, 'none': 0 };
+        return statusOrder[b.dataset.priorityLevel] - statusOrder[a.dataset.priorityLevel];
+      case 'alphabetical':
+        return a.dataset.title.localeCompare(b.dataset.title, 'ru');
+      default:
+        return 0;
+    }
+  });
+  
+  // Reorder cards in DOM
+  cards.forEach(card => grid.appendChild(card));
+  
+  // Add animation
+  cards.forEach((card, index) => {
+    card.style.animation = `fadeIn 0.3s ease ${index * 0.05}s both`;
+  });
+}
+
+function applyFilters() {
+  const statusFilter = document.getElementById('statusFilter').value;
+  const cards = document.querySelectorAll('.idea-card');
+  
+  cards.forEach(card => {
+    let shouldShow = true;
+    
+    switch(statusFilter) {
+      case 'not_analyzed':
+        shouldShow = card.dataset.isAnalyzed === 'no';
+        break;
+      case 'analyzed':
+        shouldShow = card.dataset.isAnalyzed === 'yes';
+        break;
+      case 'high_priority':
+        shouldShow = ['critical', 'high'].includes(card.dataset.priorityLevel);
+        break;
+      case 'ready_for_research':
+        shouldShow = card.dataset.hasResearch === 'no' && isResearchWorthy(card);
+        break;
+      case 'researched':
+        shouldShow = card.dataset.hasResearch === 'yes';
+        break;
+      case 'with_quests':
+        shouldShow = card.dataset.hasQuest === 'yes';
+        break;
+      case 'all':
+      default:
+        shouldShow = true;
+    }
+    
+    if (shouldShow) {
+      card.style.display = 'block';
+      card.style.animation = 'fadeIn 0.3s ease';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  
+  // Also apply current tag filter
+  filterIdeas();
+}
+
+function applyGrouping() {
+  const groupValue = document.getElementById('groupSelect').value;
+  const grid = document.getElementById('ideasGrid');
+  const cards = Array.from(grid.querySelectorAll('.idea-card'));
+  
+  // Remove existing group headers
+  grid.querySelectorAll('.group-header').forEach(header => header.remove());
+  
+  if (groupValue === 'none') {
+    // No grouping - just sort normally
+    applySorting();
+    return;
+  }
+  
+  // Group cards
+  const groups = {};
+  
+  cards.forEach(card => {
+    let groupKey;
+    
+    switch(groupValue) {
+      case 'priority':
+        groupKey = card.dataset.priorityLevel;
+        break;
+      case 'status':
+        if (card.dataset.hasQuest === 'yes') groupKey = 'С квестами';
+        else if (card.dataset.hasResearch === 'yes') groupKey = 'Исследованы';
+        else if (card.dataset.isAnalyzed === 'yes') groupKey = 'Проанализированы';
+        else groupKey = 'Новые';
+        break;
+      case 'date':
+        const date = new Date(card.dataset.createdAt);
+        const today = new Date();
+        const diffDays = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) groupKey = 'Сегодня';
+        else if (diffDays === 1) groupKey = 'Вчера';
+        else if (diffDays < 7) groupKey = 'На этой неделе';
+        else if (diffDays < 30) groupKey = 'В этом месяце';
+        else groupKey = 'Раньше';
+        break;
+      case 'tags':
+        const tags = card.dataset.tags;
+        groupKey = tags ? tags.split(',')[0] : 'Без тегов';
+        break;
+      default:
+        groupKey = 'Без группы';
+    }
+    
+    if (!groups[groupKey]) groups[groupKey] = [];
+    groups[groupKey].push(card);
+  });
+  
+  // Clear grid and add grouped content
+  grid.innerHTML = '';
+  
+  // Define group order
+  const groupOrder = getGroupOrder(groupValue);
+  const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+    const indexA = groupOrder.indexOf(a);
+    const indexB = groupOrder.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b, 'ru');
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+  
+  sortedGroupKeys.forEach(groupKey => {
+    // Add group header
+    const header = document.createElement('div');
+    header.className = 'group-header col-span-full mb-4 mt-8 first:mt-0';
+    header.innerHTML = `
+      <div class="flex items-center gap-3">
+        <h3 class="text-lg font-semibold text-gray-800">${getGroupDisplayName(groupKey, groupValue)}</h3>
+        <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">${groups[groupKey].length}</span>
+      </div>
+      <div class="h-px bg-gradient-to-r from-purple-200 to-transparent mt-2"></div>
+    `;
+    grid.appendChild(header);
+    
+    // Add cards in this group
+    groups[groupKey].forEach((card, index) => {
+      card.style.animation = `fadeIn 0.3s ease ${index * 0.05}s both`;
+      grid.appendChild(card);
+    });
+  });
+}
+
+function getGroupOrder(groupValue) {
+  switch(groupValue) {
+    case 'priority':
+      return ['critical', 'high', 'medium', 'low', 'none'];
+    case 'status':
+      return ['С квестами', 'Исследованы', 'Проанализированы', 'Новые'];
+    case 'date':
+      return ['Сегодня', 'Вчера', 'На этой неделе', 'В этом месяце', 'Раньше'];
+    default:
+      return [];
+  }
+}
+
+function getGroupDisplayName(groupKey, groupValue) {
+  if (groupValue === 'priority') {
+    const priorityNames = {
+      'critical': '🔥 Критический приоритет',
+      'high': '⭐ Высокий приоритет', 
+      'medium': '📝 Средний приоритет',
+      'low': '💡 Низкий приоритет',
+      'none': '❓ Не проанализированы'
+    };
+    return priorityNames[groupKey] || groupKey;
+  }
+  
+  return groupKey;
+}
+
+function resetFilters() {
+  document.getElementById('sortSelect').value = 'date_desc';
+  document.getElementById('statusFilter').value = 'all';
+  document.getElementById('groupSelect').value = 'none';
+  document.getElementById('searchInput').value = '';
+  
+  // Reset tag filters
+  document.querySelectorAll('.tag-filter').forEach(btn => {
+    if (btn.dataset.tag === 'all') {
+      btn.className = 'tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg';
+    } else {
+      btn.className = 'tag-filter px-4 py-2 rounded-full text-sm font-medium transition-all bg-white/80 backdrop-blur text-purple-700 hover:bg-white/90 shadow-md border border-purple-200/50';
+    }
+  });
+  
+  currentTag = null;
+  
+  // Show all cards
+  document.querySelectorAll('.idea-card').forEach(card => {
+    card.style.display = 'block';
+  });
+  
+  applySorting();
+}
+
+// Toggle additional notifications
+function toggleAllNotifications() {
+  const additionalNotifications = document.getElementById('additionalNotifications');
+  const button = event.target;
+  
+  if (additionalNotifications.classList.contains('hidden')) {
+    additionalNotifications.classList.remove('hidden');
+    button.textContent = 'Скрыть дополнительные уведомления';
+  } else {
+    additionalNotifications.classList.add('hidden');
+    const hiddenCount = additionalNotifications.children.length;
+    button.textContent = `Показать ещё ${hiddenCount} уведомлений`;
+  }
 }
 
 // Initialize on page load

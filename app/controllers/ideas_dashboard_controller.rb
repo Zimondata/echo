@@ -4,7 +4,12 @@ class IdeasDashboardController < ApplicationController
   def index
     @stats = calculate_idea_stats
     @priority_ideas = current_user.entries.ideas.by_priority.limit(5)
-    @research_ready = current_user.entries.ideas.where(idea_status: 'new').limit(10)
+    
+    # Используем умный фильтр для отбора идей достойных исследования
+    notifications_service = Ai::SmartNotificationsService.new(current_user)
+    unresearched_ideas = current_user.entries.where(entry_type: 'idea', research_data: nil).limit(20)
+    @research_ready = notifications_service.send(:filter_research_worthy_ideas, unresearched_ideas)
+    
     @quest_candidates = current_user.entries.ideas.where(quest_generated: false).limit(10)
     @recent_quests = current_user.quests.recent.limit(5)
     @research_completed = current_user.entries.ideas.where.not(research_data: nil).limit(5)

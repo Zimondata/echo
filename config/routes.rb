@@ -23,6 +23,11 @@ Rails.application.routes.draw do
       get :plans
     end
   end
+  
+  # Convenient redirects
+  get '/ideas', to: redirect('/entries/ideas')
+  get '/plans', to: redirect('/entries/plans')
+  get '/diary', to: redirect('/entries/diary')
 
   # Nutrition
   resources :nutrition_entries, path: 'nutrition', only: [:index, :show, :new, :create, :edit, :update, :destroy]

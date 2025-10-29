@@ -34,6 +34,12 @@ class EntriesController < ApplicationController
   def ideas
     @user = current_user
     @entries = current_user.entries.active.where(entry_type: "idea").parent_entries.order(created_at: :desc).limit(20)
+    
+    # Генерируем smart notifications
+    notifications_service = Ai::SmartNotificationsService.new(current_user)
+    @smart_notifications = notifications_service.generate_notifications
+    @weekly_insights = notifications_service.get_weekly_insights
+    
     render :ideas
   end
 
