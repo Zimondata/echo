@@ -1,46 +1,107 @@
 <style>
-  /* Glassmorphism and animations */
+  /* Professional Glassmorphism with modern effects */
   .glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow:
+      0 4px 16px 0 rgba(139, 92, 246, 0.08),
+      0 0 1px 0 rgba(139, 92, 246, 0.1);
   }
-  
+
   .dark .glass-card {
-    background: rgba(17, 24, 39, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
-  
+
+  /* Enhanced gradient backgrounds */
   .gradient-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
-  
+
+  .gradient-violet-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%);
+  }
+
   .gradient-amber {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.12) 100%);
   }
-  
+
   .gradient-blue {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
   }
-  
+
+  .gradient-green {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.12) 100%);
+  }
+
+  .gradient-orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(234, 88, 12, 0.12) 100%);
+  }
+
+  /* Stat card gradient overlays */
+  .stat-card-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    border-radius: inherit;
+  }
+
+  /* Professional Scrollbar Styling */
+  #todayTasks::-webkit-scrollbar,
+  #tomorrowTasks::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #todayTasks::-webkit-scrollbar-track,
+  #tomorrowTasks::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #todayTasks::-webkit-scrollbar-thumb {
+    background: rgba(251, 191, 36, 0.3);
+    border-radius: 10px;
+  }
+
+  #tomorrowTasks::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+  }
+
+  #todayTasks::-webkit-scrollbar-thumb:hover {
+    background: rgba(251, 191, 36, 0.5);
+  }
+
+  #tomorrowTasks::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+  }
+
   .task-item {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 3px solid var(--category-color, transparent);
   }
-  
+
   .task-item:hover {
     transform: translateX(4px);
     background: rgba(139, 92, 246, 0.05);
   }
-  
+
   .completed-task {
     opacity: 0.6;
   }
-  
+
   .completed-task .task-text {
     text-decoration: line-through;
     color: #9ca3af;
+  }
+
+  /* Category badge inline */
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1rem;
+    margin-right: 6px;
   }
   
   @keyframes fadeIn {
@@ -138,91 +199,149 @@
   }
 </style>
 
-<div class="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50">
-  <div class="max-w-7xl mx-auto p-4 md:p-8">
-    
-    <!-- Header with Stats -->
-    <div class="mb-8 animate-fade-in">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 class="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-            Личный Ассистент
+<div class="min-h-screen w-full bg-gradient-to-br from-violet-50/30 via-purple-50/30 to-pink-50/30">
+  <!-- Sticky Professional Header -->
+  <header class="sticky top-0 z-50 border-b border-gray-200/50 bg-white/80 backdrop-blur-xl shadow-sm">
+    <div class="w-full px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+        <!-- Left: Logo & Navigation -->
+        <div class="flex items-center gap-8">
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Auri
           </h1>
-          <p class="text-gray-600 mt-2">Управляйте своим днем эффективно</p>
+
+          <!-- Navigation Menu -->
+          <nav class="hidden md:flex items-center gap-1">
+            <%= link_to "Dashboard", dashboard_path, class: "px-3 py-2 rounded-lg text-sm font-medium transition-all #{current_page?(dashboard_path) ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}" %>
+            <%= link_to "Дневник", diary_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+            <%= link_to "Идеи", ideas_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+            <%= link_to "Планы", plans_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+            <%= link_to "Здоровье", nutrition_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all #{current_page?(nutrition_entries_path) ? 'bg-violet-100 text-violet-700' : ''}" %>
+            <%= link_to "Календарь", calendar_events_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+            <%= link_to "Напоминания", reminders_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+          </nav>
         </div>
-        <div class="mt-4 md:mt-0 flex items-center gap-3">
-          <div class="glass-card px-4 py-2 rounded-full">
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span class="text-lg font-medium text-gray-800">
-                <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
-              </span>
-            </div>
+
+        <!-- Right: Date & Actions -->
+        <div class="flex items-center gap-3">
+          <div class="hidden lg:flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-sm font-medium text-gray-700">
+              <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
+            </span>
           </div>
           <% if logged_in? %>
-            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "glass-card px-4 py-2 rounded-full hover:bg-red-50 transition" do %>
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                <span class="text-sm font-medium text-gray-700">Выход</span>
-              </div>
+            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "glass-card p-2 rounded-lg hover:bg-red-50 transition-all duration-200 group" do %>
+              <svg class="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
             <% end %>
           <% end %>
         </div>
       </div>
-      
-      <!-- Quick Stats -->
-      <div class="mb-4">
-        <h3 class="text-sm font-medium text-gray-500 mb-2">
-          Статистика за <span id="statsDateLabel" class="text-gray-700 font-semibold">сегодня</span>
-        </h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="glass-card p-4 rounded-xl text-center hover-scale">
-            <div id="totalEntriesCount" class="text-2xl font-bold text-violet-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Планов на сегодня</div>
-          </div>
-          <div class="glass-card p-4 rounded-xl text-center hover-scale">
-            <div id="completedTodayCount" class="text-2xl font-bold text-green-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Выполнено</div>
-          </div>
-          <a href="/nutrition" class="glass-card p-4 rounded-xl text-center hover-scale block">
-            <div class="flex justify-center space-x-2 mb-1">
-              <span id="todayProtein" class="text-sm font-bold text-blue-600">0</span>
-              <span class="text-xs text-gray-400">/</span>
-              <span id="todayFat" class="text-sm font-bold text-orange-600">0</span>
-              <span class="text-xs text-gray-400">/</span>
-              <span id="todayCarbs" class="text-sm font-bold text-purple-600">0</span>
+    </div>
+  </header>
+
+  <!-- Main Content Container - Full Width -->
+  <div class="w-full px-6 lg:px-8 py-6">
+
+    <!-- Professional Stats Grid -->
+    <div class="mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <!-- Stat Card 1: Total Tasks -->
+        <div class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer">
+          <div class="stat-card-overlay gradient-violet-purple"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-2.5 rounded-xl bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
+                <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+              </div>
             </div>
-            <div class="text-xs text-gray-600">Б/Ж/У (г)</div>
-          </a>
-          <a href="/nutrition" class="glass-card p-4 rounded-xl text-center hover-scale block">
-            <div id="todayCaloriesCount" class="text-2xl font-bold text-orange-600">0</div>
-            <div class="text-sm text-gray-600 mt-1">Калорий сегодня</div>
-          </a>
+            <p class="text-sm font-medium text-gray-600 mb-1">Планов на сегодня</p>
+            <h3 id="totalEntriesCount" class="text-3xl font-bold text-gray-900">0</h3>
+          </div>
         </div>
+
+        <!-- Stat Card 2: Completed -->
+        <div class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer">
+          <div class="stat-card-overlay gradient-green"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-2.5 rounded-xl bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-gray-600 mb-1">Выполнено</p>
+            <h3 id="completedTodayCount" class="text-3xl font-bold text-gray-900">0</h3>
+          </div>
+        </div>
+
+        <!-- Stat Card 3: Macros -->
+        <a href="/nutrition" class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer block">
+          <div class="stat-card-overlay gradient-blue"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-2.5 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-gray-600 mb-1">Б/Ж/У (г)</p>
+            <div class="flex items-baseline gap-2">
+              <span id="todayProtein" class="text-xl font-bold text-blue-600">0</span>
+              <span class="text-gray-400">/</span>
+              <span id="todayFat" class="text-xl font-bold text-orange-600">0</span>
+              <span class="text-gray-400">/</span>
+              <span id="todayCarbs" class="text-xl font-bold text-purple-600">0</span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Stat Card 4: Calories -->
+        <a href="/nutrition" class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer block">
+          <div class="stat-card-overlay gradient-orange"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-2.5 rounded-xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+                </svg>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-gray-600 mb-1">Калорий сегодня</p>
+            <h3 id="todayCaloriesCount" class="text-3xl font-bold text-gray-900">0</h3>
+          </div>
+        </a>
       </div>
     </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-animation">
-      
-      <!-- Calendar Widget -->
-      <div class="lg:col-span-1">
-        <div class="glass-card rounded-2xl p-6 shadow-xl">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="p-2 rounded-lg gradient-bg">
+    <!-- Main Grid: Sidebar + Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Sidebar: Calendar & Quick Actions -->
+      <div class="lg:col-span-3 space-y-6">
+        <!-- Calendar Widget -->
+        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="p-2.5 rounded-xl gradient-bg">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
             </div>
-            <h2 class="text-xl font-semibold text-gray-800">Календарь</h2>
+            <h2 class="text-lg font-semibold text-gray-900">Календарь</h2>
           </div>
-          
+
           <!-- Mini Calendar -->
           <div class="space-y-3">
-            <div class="grid grid-cols-7 gap-2 text-center text-xs text-gray-500 font-medium">
+            <div class="grid grid-cols-7 gap-1.5 text-center text-xs text-gray-500 font-medium">
               <div>Пн</div>
               <div>Вт</div>
               <div>Ср</div>
@@ -231,25 +350,25 @@
               <div>Сб</div>
               <div>Вс</div>
             </div>
-            <div class="grid grid-cols-7 gap-2" id="calendarDays">
-              <% 
+            <div class="grid grid-cols-7 gap-1.5" id="calendarDays">
+              <%
                 today = Date.current
                 start_date = today.beginning_of_week
-                (0..6).each do |i| 
+                (0..6).each do |i|
                   date = start_date + i.days
                   is_today = date == today
                   events_count = @user&.calendar_events&.where('DATE(start_time) = ?', date)&.count || 0
               %>
-                <div 
-                  class="calendar-day relative p-3 rounded-lg text-center <%= 'selected' if is_today %>"
+                <div
+                  class="calendar-day relative p-2.5 rounded-xl text-center <%= 'selected' if is_today %>"
                   onclick="loadDayEvents('<%= date.iso8601 %>')"
                   data-date="<%= date.iso8601 %>"
                 >
-                  <div class="text-sm font-medium <%= is_today ? 'text-white' : 'text-gray-700' %>">
+                  <div class="text-sm font-semibold <%= is_today ? 'text-white' : 'text-gray-700' %>">
                     <%= date.day %>
                   </div>
                   <% if events_count > 0 %>
-                    <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                       <%= events_count %>
                     </div>
                   <% end %>
@@ -258,261 +377,275 @@
             </div>
           </div>
         </div>
-        
+
+        <!-- Add Task Form - Compact -->
+        <div class="glass-card rounded-2xl p-4 shadow-lg border border-gray-200/50 gradient-violet-purple">
+          <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Добавить задачу
+          </h3>
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <button
+                id="todayBtn"
+                onclick="setActiveSection('today')"
+                class="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all"
+              >
+                Сегодня
+              </button>
+              <button
+                id="tomorrowBtn"
+                onclick="setActiveSection('tomorrow')"
+                class="flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all"
+              >
+                Завтра
+              </button>
+            </div>
+            <input
+              type="text"
+              id="newTaskInput"
+              placeholder="Новая задача..."
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent glass-card transition-all text-sm"
+              onkeypress="if(event.key === 'Enter') addTask()"
+            >
+            <button
+              onclick="addTask()"
+              class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Добавить
+            </button>
+          </div>
+        </div>
+
         <!-- Quick Actions -->
-        <div class="glass-card rounded-2xl p-6 shadow-xl mt-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
             Быстрые действия
           </h3>
-          <div class="space-y-3">
-            <button onclick="quickAddReminder()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-violet-50 transition">
-              <div class="p-2 rounded-lg bg-amber-100">
+          <div class="space-y-2.5">
+            <button onclick="quickAddReminder()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-amber-50/50 transition-all duration-200 group">
+              <div class="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
                 <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                 </svg>
               </div>
-              <span class="text-gray-700">Создать напоминание</span>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Создать напоминание</span>
             </button>
-            
-            <button onclick="startVoiceNote()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-blue-50 transition">
-              <div class="p-2 rounded-lg bg-blue-100">
+
+            <button onclick="startVoiceNote()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-blue-50/50 transition-all duration-200 group">
+              <div class="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
                 </svg>
               </div>
-              <span class="text-gray-700">Голосовая заметка</span>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Голосовая заметка</span>
             </button>
-            
-            <button onclick="quickAddIdea()" class="quick-action-btn w-full glass-card px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-green-50 transition">
-              <div class="p-2 rounded-lg bg-green-100">
+
+            <button onclick="quickAddIdea()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-green-50/50 transition-all duration-200 group">
+              <div class="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
                 <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
               </div>
-              <span class="text-gray-700">Новая заметка</span>
+              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Новая заметка</span>
             </button>
           </div>
         </div>
       </div>
       
-      <!-- Today and Tomorrow Tasks -->
-      <div class="lg:col-span-2 space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+      <!-- Main Content: Task Cards -->
+      <div class="lg:col-span-9">
+        <!-- Task Cards Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
           <!-- Today Section -->
-          <div class="glass-card rounded-2xl shadow-xl gradient-amber">
+          <div class="glass-card rounded-2xl shadow-lg border border-gray-200/50 gradient-amber">
             <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                  <div class="p-2 rounded-lg bg-amber-500">
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                  <div class="p-2.5 rounded-xl bg-amber-500 shadow-sm">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
                     </svg>
                   </div>
-                  <h2 class="text-xl font-semibold text-gray-800">Сегодня</h2>
+                  <h2 class="text-xl font-semibold text-gray-900">Сегодня</h2>
                 </div>
                 <div class="flex items-center gap-2">
-                  <div class="badge-pulse px-3 py-1 bg-amber-100 text-amber-700 text-sm rounded-full">
-                    <%= @today_events&.count || 0 %> задач
+                  <div class="badge-pulse px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-700 text-sm rounded-lg font-medium">
+                    <%= @today_events&.count || 0 %>
                   </div>
-                  <button 
-                    onclick="toggleExpand('today')" 
-                    id="expandTodayBtn"
-                    class="p-1 hover:bg-amber-100 rounded-lg transition"
-                    title="Развернуть"
-                  >
-                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </button>
                 </div>
               </div>
-              
+
               <div class="relative">
-                <div class="space-y-3 transition-all duration-300 pr-2" id="todayTasks" style="max-height: 320px; overflow-y: auto;">
-                  <% (@today_events || []).each do |event| %>
-                  <div class="task-item glass-card p-3 rounded-lg <%= 'completed-task' if event.done? %>" data-event-id="<%= event.id %>">
-                    <div class="flex items-start gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
-                          <%= 'checked' if event.done? %>
-                          onchange="toggleTask(<%= event.id %>)"
-                        >
-                      </label>
-                      <div class="flex-1">
-                        <p class="task-text text-gray-800 font-medium">
-                          <%= event.title %>
-                        </p>
-                        <% if event.start_time %>
-                          <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <%= event.time_display(@user.timezone) %>
+                <!-- ScrollArea with professional styling -->
+                <div class="space-y-2.5 pr-2" id="todayTasks" style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(251, 191, 36, 0.3) transparent;">
+                  <%
+                    # Sort events by category but display without group headers
+                    sorted_today = @today_events.sort_by { |e|
+                      category_order = ['work', 'health', 'personal', 'ideas', 'projects']
+                      category_order.index(e.life_category || 'work') || 999
+                    }
+                  %>
+
+                  <% sorted_today.each do |event| %>
+                    <%
+                      category_key = event.life_category.presence || 'work'
+                      category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
+                    %>
+                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-violet-300/50 hover:shadow-md <%= 'completed-task' if event.done? %> group"
+                         data-event-id="<%= event.id %>"
+                         style="--category-color: <%= category_info[:color] %>">
+                      <div class="flex items-start gap-3">
+                        <label class="flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+                          <input
+                            type="checkbox"
+                            class="w-5 h-5 text-violet-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110"
+                            <%= 'checked' if event.done? %>
+                            onchange="toggleTask(<%= event.id %>)"
+                          >
+                        </label>
+                        <div class="flex-1 min-w-0">
+                          <p class="task-text text-sm font-medium text-gray-900 flex items-center gap-2">
+                            <% unless event.title.start_with?(category_info[:icon]) %>
+                              <span class="category-badge flex-shrink-0"><%= category_info[:icon] %></span>
+                            <% end %>
+                            <span class="flex-1"><%= event.title %></span>
                           </p>
-                        <% end %>
+                          <% if event.start_time && !event.all_day? %>
+                            <p class="text-xs text-gray-600 mt-1.5 flex items-center gap-1.5">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              <%= event.time_display(@user.timezone) %>
+                            </p>
+                          <% end %>
+                        </div>
+                        <button onclick="deleteTask(<%= event.id %>)" class="delete-btn flex-shrink-0 p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
                       </div>
-                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1 hover:bg-red-50 rounded">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
                     </div>
-                  </div>
-                <% end %>
-                
+                  <% end %>
+
                   <% if @today_events.nil? || @today_events.empty? %>
-                    <div class="text-center py-8 text-gray-500">
-                      <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <p>Нет задач на сегодня</p>
+                    <div class="text-center py-12">
+                      <div class="p-4 rounded-full bg-gray-100 inline-block mb-4">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </div>
+                      <p class="text-gray-600 font-medium">Нет задач на сегодня</p>
+                      <p class="text-gray-500 text-sm mt-1">Добавьте новую задачу выше</p>
                     </div>
                   <% end %>
                 </div>
-                <% if @today_events && @today_events.count > 3 %>
-                  <div class="text-center mt-3 text-sm text-gray-500">
-                    Показано <%= [3, @today_events.count].min %> из <%= @today_events.count %> задач
-                  </div>
-                <% end %>
               </div>
             </div>
           </div>
-          
+
           <!-- Tomorrow Section -->
-          <div class="glass-card rounded-2xl shadow-xl gradient-blue">
+          <div class="glass-card rounded-2xl shadow-lg border border-gray-200/50 gradient-blue">
             <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                  <div class="p-2 rounded-lg bg-blue-500">
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                  <div class="p-2.5 rounded-xl bg-blue-500 shadow-sm">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                     </svg>
                   </div>
-                  <h2 class="text-xl font-semibold text-gray-800">Завтра</h2>
+                  <h2 class="text-xl font-semibold text-gray-900">Завтра</h2>
                 </div>
                 <div class="flex items-center gap-2">
-                  <div class="badge-pulse px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
-                    <%= @tomorrow_events&.count || 0 %> задач
+                  <div class="badge-pulse px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-700 text-sm rounded-lg font-medium">
+                    <%= @tomorrow_events&.count || 0 %>
                   </div>
-                  <button 
-                    onclick="toggleExpand('tomorrow')" 
-                    id="expandTomorrowBtn"
-                    class="p-1 hover:bg-blue-100 rounded-lg transition"
-                    title="Развернуть"
-                  >
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </button>
                 </div>
               </div>
-              
+
               <div class="relative">
-                <div class="space-y-3 transition-all duration-300 pr-2" id="tomorrowTasks" style="max-height: 320px; overflow-y: auto;">
-                  <% (@tomorrow_events || []).each do |event| %>
-                  <div class="task-item glass-card p-3 rounded-lg <%= 'completed-task' if event.done? %>" data-event-id="<%= event.id %>">
-                    <div class="flex items-start gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
-                          <%= 'checked' if event.done? %>
-                          onchange="toggleTask(<%= event.id %>)"
-                        >
-                      </label>
-                      <div class="flex-1">
-                        <p class="task-text text-gray-800 font-medium">
-                          <%= event.title %>
-                        </p>
-                        <% if event.start_time %>
-                          <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <%= event.time_display(@user.timezone) %>
+                <!-- ScrollArea with professional styling -->
+                <div class="space-y-2.5 pr-2" id="tomorrowTasks" style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(59, 130, 246, 0.3) transparent;">
+                  <%
+                    # Sort events by category but display without group headers
+                    sorted_tomorrow = @tomorrow_events.sort_by { |e|
+                      category_order = ['work', 'health', 'personal', 'ideas', 'projects']
+                      category_order.index(e.life_category || 'work') || 999
+                    }
+                  %>
+
+                  <% sorted_tomorrow.each do |event| %>
+                    <%
+                      category_key = event.life_category.presence || 'work'
+                      category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
+                    %>
+                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-violet-300/50 hover:shadow-md <%= 'completed-task' if event.done? %> group"
+                         data-event-id="<%= event.id %>"
+                         style="--category-color: <%= category_info[:color] %>">
+                      <div class="flex items-start gap-3">
+                        <label class="flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+                          <input
+                            type="checkbox"
+                            class="w-5 h-5 text-violet-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110"
+                            <%= 'checked' if event.done? %>
+                            onchange="toggleTask(<%= event.id %>)"
+                          >
+                        </label>
+                        <div class="flex-1 min-w-0">
+                          <p class="task-text text-sm font-medium text-gray-900 flex items-center gap-2">
+                            <% unless event.title.start_with?(category_info[:icon]) %>
+                              <span class="category-badge flex-shrink-0"><%= category_info[:icon] %></span>
+                            <% end %>
+                            <span class="flex-1"><%= event.title %></span>
                           </p>
-                        <% end %>
+                          <% if event.start_time && !event.all_day? %>
+                            <p class="text-xs text-gray-600 mt-1.5 flex items-center gap-1.5">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                              </svg>
+                              <%= event.time_display(@user.timezone) %>
+                            </p>
+                          <% end %>
+                        </div>
+                        <button onclick="deleteTask(<%= event.id %>)" class="delete-btn flex-shrink-0 p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
                       </div>
-                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1 hover:bg-red-50 rounded">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
                     </div>
-                  </div>
-                <% end %>
-                
+                  <% end %>
+
                   <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
-                    <div class="text-center py-8 text-gray-500">
-                      <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                      </svg>
-                      <p>Нет задач на завтра</p>
+                    <div class="text-center py-12">
+                      <div class="p-4 rounded-full bg-gray-100 inline-block mb-4">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <p class="text-gray-600 font-medium">Нет задач на завтра</p>
+                      <p class="text-gray-500 text-sm mt-1">Добавьте новую задачу выше</p>
                     </div>
                   <% end %>
                 </div>
-                <% if @tomorrow_events && @tomorrow_events.count > 3 %>
-                  <div class="text-center mt-3 text-sm text-gray-500">
-                    Показано <%= [3, @tomorrow_events.count].min %> из <%= @tomorrow_events.count %> задач
-                  </div>
-                <% end %>
               </div>
             </div>
-          </div>
-        </div>
-        
-        <!-- Add Task Section -->
-        <div class="glass-card rounded-2xl p-6 shadow-xl">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            Добавить задачу
-          </h3>
-          <div class="flex gap-3">
-            <div class="flex gap-2">
-              <button 
-                id="todayBtn"
-                onclick="setActiveSection('today')" 
-                class="px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition"
-              >
-                Сегодня
-              </button>
-              <button 
-                id="tomorrowBtn"
-                onclick="setActiveSection('tomorrow')" 
-                class="px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition"
-              >
-                Завтра
-              </button>
-            </div>
-            <input 
-              type="text" 
-              id="newTaskInput"
-              placeholder="Новая задача..." 
-              class="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              onkeypress="if(event.key === 'Enter') addTask()"
-            >
-            <button 
-              onclick="addTask()"
-              class="px-6 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white font-medium hover:shadow-lg transition"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-            </button>
           </div>
         </div>
         
         <!-- Recent Entries -->
-        <div class="glass-card rounded-2xl p-6 shadow-xl">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
+          <h3 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
             <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -522,16 +655,16 @@
             <% (@recent_entries || []).first(4).each do |entry| %>
               <%
                 type_colors = {
-                  'diary' => 'blue',
-                  'idea' => 'amber', 
-                  'plan' => 'green'
+                  'diary' => { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
+                  'idea' => { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
+                  'plan' => { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-500/20' }
                 }
-                color = type_colors[entry.entry_type] || 'gray'
+                colors = type_colors[entry.entry_type] || { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20' }
               %>
-              <div class="entry-card glass-card p-4 rounded-xl border border-gray-200 hover:border-violet-300 cursor-pointer">
+              <div class="entry-card glass-card p-4 rounded-xl border <%= colors[:border] %> hover:border-violet-300/50 hover:shadow-md cursor-pointer transition-all duration-200 group">
                 <div class="flex items-start gap-3">
-                  <div class="p-2 rounded-lg bg-<%= color %>-100">
-                    <svg class="w-4 h-4 text-<%= color %>-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="p-2.5 rounded-xl <%= colors[:bg] %> <%= colors[:text] %> group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <% if entry.entry_type == 'idea' %>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                       <% elsif entry.entry_type == 'diary' %>
@@ -542,10 +675,10 @@
                     </svg>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm text-gray-800 truncate">
-                      <%= entry.content.truncate(50) %>
+                    <p class="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+                      <%= entry.content.truncate(60) %>
                     </p>
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="text-xs text-gray-600">
                       <%= time_ago_in_words(entry.created_at) %> назад
                     </p>
                   </div>
@@ -597,13 +730,26 @@ function setActiveSection(section) {
   activeSection = section;
   const todayBtn = document.getElementById('todayBtn');
   const tomorrowBtn = document.getElementById('tomorrowBtn');
-  
+
   if (section === 'today') {
-    todayBtn.className = 'px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition';
-    tomorrowBtn.className = 'px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition';
+    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all';
+    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all';
   } else {
-    tomorrowBtn.className = 'px-4 py-2 rounded-lg bg-violet-600 text-white font-medium transition';
-    todayBtn.className = 'px-4 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition';
+    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all';
+    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all';
+  }
+}
+
+function toggleCategoryCompact(categoryId) {
+  const tasksContainer = document.getElementById(categoryId);
+  const arrow = document.getElementById('arrow-' + categoryId);
+
+  if (tasksContainer.classList.contains('collapsed')) {
+    tasksContainer.classList.remove('collapsed');
+    arrow.classList.remove('collapsed');
+  } else {
+    tasksContainer.classList.add('collapsed');
+    arrow.classList.add('collapsed');
   }
 }
 
