@@ -21,7 +21,7 @@
   }
 
   .gradient-violet-purple {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
   }
 
   .gradient-amber {
@@ -80,11 +80,23 @@
   .task-item {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 3px solid var(--category-color, transparent);
+    position: relative;
   }
 
   .task-item:hover {
-    transform: translateX(4px);
-    background: rgba(139, 92, 246, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    border-left-width: 4px;
+  }
+
+  .task-item:hover .category-badge {
+    animation: wiggle 0.5s ease-in-out;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
   }
 
   .completed-task {
@@ -501,39 +513,51 @@
                       category_key = event.life_category.presence || 'work'
                       category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
                     %>
-                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-violet-300/50 hover:shadow-md <%= 'completed-task' if event.done? %> group"
+                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-amber-300/50 <%= 'completed-task' if event.done? %> group"
                          data-event-id="<%= event.id %>"
                          style="--category-color: <%= category_info[:color] %>">
-                      <div class="flex items-start gap-3">
-                        <label class="flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+                      <div class="flex items-center gap-3">
+                        <!-- Checkbox -->
+                        <label class="flex items-center cursor-pointer flex-shrink-0">
                           <input
                             type="checkbox"
-                            class="w-5 h-5 text-violet-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110"
+                            class="w-5 h-5 text-violet-600 rounded-full border-2 focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110 active:scale-95"
                             <%= 'checked' if event.done? %>
                             onchange="toggleTask(<%= event.id %>)"
                           >
                         </label>
+
+                        <!-- Emoji Badge -->
+                        <% unless event.title.start_with?(category_info[:icon]) %>
+                          <div class="flex-shrink-0 w-8 h-8 rounded-lg glass-card border border-gray-200/50 flex items-center justify-center text-base category-badge">
+                            <%= category_info[:icon] %>
+                          </div>
+                        <% end %>
+
+                        <!-- Task Content -->
                         <div class="flex-1 min-w-0">
-                          <p class="task-text text-sm font-medium text-gray-900 flex items-center gap-2">
-                            <% unless event.title.start_with?(category_info[:icon]) %>
-                              <span class="category-badge flex-shrink-0"><%= category_info[:icon] %></span>
-                            <% end %>
-                            <span class="flex-1"><%= event.title %></span>
+                          <p class="task-text text-sm font-medium text-gray-900">
+                            <%= event.title.gsub(category_info[:icon], '').strip %>
                           </p>
+                        </div>
+
+                        <!-- Time & Delete -->
+                        <div class="flex items-center gap-2 flex-shrink-0">
                           <% if event.start_time && !event.all_day? %>
-                            <p class="text-xs text-gray-600 mt-1.5 flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5 text-gray-600">
                               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                               </svg>
-                              <%= event.time_display(@user.timezone) %>
-                            </p>
+                              <span class="text-xs font-medium"><%= event.time_display(@user.timezone) %></span>
+                            </div>
                           <% end %>
+
+                          <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                          </button>
                         </div>
-                        <button onclick="deleteTask(<%= event.id %>)" class="delete-btn flex-shrink-0 p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
-                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
                       </div>
                     </div>
                   <% end %>
@@ -589,39 +613,51 @@
                       category_key = event.life_category.presence || 'work'
                       category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
                     %>
-                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-violet-300/50 hover:shadow-md <%= 'completed-task' if event.done? %> group"
+                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-blue-300/50 <%= 'completed-task' if event.done? %> group"
                          data-event-id="<%= event.id %>"
                          style="--category-color: <%= category_info[:color] %>">
-                      <div class="flex items-start gap-3">
-                        <label class="flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+                      <div class="flex items-center gap-3">
+                        <!-- Checkbox -->
+                        <label class="flex items-center cursor-pointer flex-shrink-0">
                           <input
                             type="checkbox"
-                            class="w-5 h-5 text-violet-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110"
+                            class="w-5 h-5 text-violet-600 rounded-full border-2 focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110 active:scale-95"
                             <%= 'checked' if event.done? %>
                             onchange="toggleTask(<%= event.id %>)"
                           >
                         </label>
+
+                        <!-- Emoji Badge -->
+                        <% unless event.title.start_with?(category_info[:icon]) %>
+                          <div class="flex-shrink-0 w-8 h-8 rounded-lg glass-card border border-gray-200/50 flex items-center justify-center text-base category-badge">
+                            <%= category_info[:icon] %>
+                          </div>
+                        <% end %>
+
+                        <!-- Task Content -->
                         <div class="flex-1 min-w-0">
-                          <p class="task-text text-sm font-medium text-gray-900 flex items-center gap-2">
-                            <% unless event.title.start_with?(category_info[:icon]) %>
-                              <span class="category-badge flex-shrink-0"><%= category_info[:icon] %></span>
-                            <% end %>
-                            <span class="flex-1"><%= event.title %></span>
+                          <p class="task-text text-sm font-medium text-gray-900">
+                            <%= event.title.gsub(category_info[:icon], '').strip %>
                           </p>
+                        </div>
+
+                        <!-- Time & Delete -->
+                        <div class="flex items-center gap-2 flex-shrink-0">
                           <% if event.start_time && !event.all_day? %>
-                            <p class="text-xs text-gray-600 mt-1.5 flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5 text-gray-600">
                               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                               </svg>
-                              <%= event.time_display(@user.timezone) %>
-                            </p>
+                              <span class="text-xs font-medium"><%= event.time_display(@user.timezone) %></span>
+                            </div>
                           <% end %>
+
+                          <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                          </button>
                         </div>
-                        <button onclick="deleteTask(<%= event.id %>)" class="delete-btn flex-shrink-0 p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
-                          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
                       </div>
                     </div>
                   <% end %>
