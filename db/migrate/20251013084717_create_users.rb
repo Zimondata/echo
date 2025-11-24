@@ -10,7 +10,7 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.text :google_refresh_token
       t.text :google_access_token
       t.datetime :google_token_expires_at
-      t.jsonb :settings, default: {}
+      t.json :settings, default: {}
 
       t.timestamps
     end

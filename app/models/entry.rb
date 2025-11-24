@@ -10,9 +10,6 @@ class Entry < ApplicationRecord
   belongs_to :parent_entry, class_name: 'Entry', optional: true
   has_many :child_entries, class_name: 'Entry', foreign_key: 'parent_entry_id', dependent: :destroy
 
-  # pgvector neighbor
-  has_neighbors :embedding
-
   # Validations
   validates :entry_type, presence: true, inclusion: { in: %w[diary idea plan plan_update nutrition] }
   validates :content, presence: true

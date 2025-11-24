@@ -7,8 +7,7 @@ class CreateEntries < ActiveRecord::Migration[8.0]
       t.text :transcript
       t.string :audio_url
       t.string :audio_file_id
-      t.jsonb :metadata, default: {}
-      t.vector :embedding, limit: 1536
+      t.json :metadata, default: {}
       t.string :status, default: "active" # active, archived, deleted
       t.integer :priority, default: 0
       t.datetime :occurred_at
@@ -19,6 +18,5 @@ class CreateEntries < ActiveRecord::Migration[8.0]
     add_index :entries, :entry_type
     add_index :entries, :status
     add_index :entries, :occurred_at
-    add_index :entries, :embedding, using: :ivfflat, opclass: :vector_cosine_ops
   end
 end

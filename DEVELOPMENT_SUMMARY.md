@@ -173,8 +173,8 @@ Echo/
 │   │   ├── *_create_calendar_events.rb    ✅ Events table
 │   │   └── *_create_reminders.rb          ✅ Reminders table
 │   └── schema.rb                           ✅ Актуальная схема
-├── .env.example                            ✅ Шаблон переменных
-├── .env                                    ✅ Переменные (добавь ключи!)
+├── config/credentials.yml.enc              ✅ Зашифрованные credentials
+├── config/credentials_example.yml          ✅ Пример структуры credentials
 ├── README.md                               ✅ Основной README
 ├── QUICK_START.md                          ✅ Быстрый старт
 ├── PROJECT_ROADMAP.md                      ✅ План проекта
@@ -199,11 +199,18 @@ Echo/
 2. Создать новый ключ
 3. Скопировать ключ
 
-### 2. Добавить в .env
+### 2. Добавить в Rails credentials
 
 ```bash
-TELEGRAM_BOT_TOKEN=твой_telegram_токен
-OPENAI_API_KEY=твой_openai_ключ
+EDITOR="nano" bin/rails credentials:edit
+```
+
+Добавь в файл:
+```yaml
+telegram:
+  bot_token: твой_telegram_токен
+openai:
+  api_key: твой_openai_ключ
 ```
 
 ### 3. Установить ngrok

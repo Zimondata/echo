@@ -5,12 +5,15 @@ class DashboardController < ApplicationController
   def index
     @user = current_user
     redirect_to login_path, alert: 'Пожалуйста, войдите в систему' unless @user
-    
+
     # Используем часовой пояс пользователя
     user_tz = ActiveSupport::TimeZone.new(@user.timezone || 'UTC')
-    
+
+    # Получаем выбранную дату или сегодня
+    @selected_date = params[:date] ? Date.parse(params[:date]) : Time.current.in_time_zone(user_tz).to_date
+
     # Получаем "сегодня" и "завтра" в часовом поясе пользователя
-    today_in_tz = Time.current.in_time_zone(user_tz).to_date
+    today_in_tz = @selected_date
     tomorrow_in_tz = today_in_tz + 1.day
     
     # Конвертируем в UTC для запроса к базе
@@ -25,18 +28,33 @@ class DashboardController < ApplicationController
     @today_events = @user.calendar_events.active
                          .where('start_time >= ? AND start_time <= ?', today_start, today_end)
                          .order(:start_time)
-    
+
     # События на завтра
     @tomorrow_events = @user.calendar_events.active
                             .where('start_time >= ? AND start_time <= ?', tomorrow_start, tomorrow_end)
                             .order(:start_time)
-    
+
+    # Привычки (события без времени или с пометкой is_habit)
+    @habits = @user.calendar_events.active
+                   .where(is_habit: true)
+                   .where('DATE(start_time) = ?', today_in_tz)
+                   .order(:start_time)
+
+    # Задачи на весь день (all_day = true, но не привычки)
+    @all_day_tasks = @user.calendar_events.active
+                          .where(all_day: true, is_habit: false)
+                          .where('DATE(start_time) = ?', today_in_tz)
+                          .order(:start_time)
+
+    # Задачи с временем (для timeline)
+    @timed_tasks = @today_events.where(all_day: false, is_habit: false).order(:start_time)
+
     # Последние записи
     @recent_entries = @user.entries.order(created_at: :desc).limit(4)
-    
+
     # Питание за сегодня
     @nutrition_totals = @user ? NutritionEntry.daily_totals(@user, today_in_tz) : { calories: 0, protein: 0, fat: 0, carbs: 0, meals_count: 0 }
-    
+
     # Планы на сегодня и выполненные
     @today_tasks_count = @today_events.count
     @completed_today_count = @today_events.where(done: true).count

@@ -4,6 +4,12 @@ Rails.application.routes.draw do
   # Root path - Landing page
   root "landing#index"
   
+  # Landing page variations
+  get "landing/brutalist", to: "landing#brutalist"
+  get "landing/terminal", to: "landing#terminal"
+  get "landing/retro", to: "landing#retro"
+  get "landing/organic", to: "landing#organic"
+  
   # Auth routes
   get "/auth/telegram/callback", to: "sessions#telegram_callback"
   get "/login", to: "sessions#new"
@@ -13,7 +19,7 @@ Rails.application.routes.draw do
   # Dashboard (protected)
   get "dashboard", to: "dashboard#index"
   get "dashboard/nutrition_stats", to: "dashboard#nutrition_stats"
-  
+
 
   # Entries (Diary, Ideas, Plans)
   resources :entries, only: [:index, :show, :update, :destroy] do
@@ -65,6 +71,9 @@ Rails.application.routes.draw do
   get 'smart_priority/stats', to: 'smart_priority#stats', as: :smart_priority_stats
   get 'smart_priority/settings', to: 'smart_priority#settings', as: :smart_priority_settings
   patch 'smart_priority/settings', to: 'smart_priority#update_settings'
+
+  # Dashboard Variant 3 Test
+  get 'dashboard_v3_test', to: 'dashboard_v3_test#index'
 
   # API routes
   namespace :api do

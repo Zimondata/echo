@@ -21,12 +21,12 @@
 ### Telegram Bot
 - [ ] Бот создан через @BotFather
 - [ ] Token скопирован
-- [ ] Token добавлен в `.env` как `TELEGRAM_BOT_TOKEN`
+- [ ] Token добавлен в Rails credentials (`rails credentials:edit`) как `telegram.bot_token`
 
 ### OpenAI
 - [ ] Аккаунт создан на platform.openai.com
 - [ ] API Key создан
-- [ ] Key добавлен в `.env` как `OPENAI_API_KEY`
+- [ ] Key добавлен в Rails credentials (`rails credentials:edit`) как `openai.api_key`
 - [ ] Есть баланс на счету (минимум $1)
 
 ---
@@ -56,7 +56,7 @@ curl "https://api.telegram.org/bot<YOUR_TOKEN>/getWebhookInfo"
 
 ## 🚀 Запуск приложения
 
-- [ ] Файл `.env` существует и заполнен
+- [ ] Rails credentials настроены (`rails credentials:show` показывает telegram и openai ключи)
 - [ ] PostgreSQL запущен: `brew services list | grep postgres`
 - [ ] Сервер запущен: `bin/dev`
 - [ ] Логи чистые: `tail -f log/development.log`
@@ -121,7 +121,7 @@ bin/rails console
 - [ ] Сервер Rails запущен (`bin/dev`)
 - [ ] В логах нет ошибок (`tail -f log/development.log`)
 - [ ] PostgreSQL запущен
-- [ ] API ключи правильные в `.env`
+- [ ] API ключи правильные в Rails credentials (`rails credentials:show`)
 
 Если ошибка OpenAI:
 

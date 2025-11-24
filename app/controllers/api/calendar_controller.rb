@@ -93,10 +93,22 @@ class Api::CalendarController < Api::BaseController
 
   # PATCH /api/calendar/events/:id/toggle_done
   def toggle_done
+    was_done = @calendar_event.done?
     @calendar_event.toggle_done!
+
+    # Update habit streak if this is a habit
+    if @calendar_event.is_habit && @calendar_event.done? && !was_done
+      update_habit_streak(@calendar_event)
+    elsif @calendar_event.is_habit && !@calendar_event.done? && was_done
+      # If unchecking a habit, potentially decrease streak
+      decrease_habit_streak(@calendar_event)
+    end
+
     broadcast_calendar_update('toggled', @calendar_event)
-    render json: { 
+    render json: {
       event: serialize_event(@calendar_event),
+      done: @calendar_event.done?,
+      habit_streak: @calendar_event.habit_streak,
       message: @calendar_event.done? ? 'Событие отмечено как выполненное' : 'Событие отмечено как невыполненное'
     }
   end
@@ -243,5 +255,33 @@ class Api::CalendarController < Api::BaseController
         }
       }
     )
+  end
+
+  def update_habit_streak(habit)
+    # Check if completed yesterday or today
+    today = Date.current
+    yesterday = today - 1.day
+    last_completed = habit.last_completed_at&.to_date
+
+    if last_completed == yesterday
+      # Continuing streak
+      habit.habit_streak = (habit.habit_streak || 0) + 1
+    elsif last_completed.nil? || last_completed < yesterday
+      # Starting new streak or broken streak
+      habit.habit_streak = 1
+    end
+    # If last_completed == today, don't increment (already counted today)
+
+    habit.last_completed_at = Time.current
+    habit.save
+  end
+
+  def decrease_habit_streak(habit)
+    # Only decrease if unchecking today's completion
+    if habit.last_completed_at&.to_date == Date.current
+      habit.habit_streak = [0, (habit.habit_streak || 0) - 1].max
+      habit.last_completed_at = nil
+      habit.save
+    end
   end
 end

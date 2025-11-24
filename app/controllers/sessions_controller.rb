@@ -69,7 +69,7 @@ class SessionsController < ApplicationController
     # Skip verification in development mode
     return true if Rails.env.development? && auth_data[:hash] == 'dev_mode_hash'
     
-    bot_token = ENV['TELEGRAM_BOT_TOKEN']
+    bot_token = Rails.application.credentials.dig(:telegram, :bot_token)
     return false unless bot_token
     
     check_hash = auth_data[:hash]

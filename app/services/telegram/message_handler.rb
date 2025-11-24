@@ -251,17 +251,17 @@ module Telegram
         return
       end
 
-      # If not Garmin, analyze as food photo
-      food_analysis = Ai::VisionService.analyze_food_photo(photo_data)
+      # If not Garmin, analyze as food photo with caption context
+      caption_text = message.caption.present? ? message.caption.strip : nil
+      food_analysis = Ai::VisionService.analyze_food_photo(photo_data, caption_text)
 
       unless food_analysis
         send_reply("Не удалось распознать еду на фото. Попробуй другое фото или опиши еду текстом.")
         return
       end
 
-      # Add caption if provided
-      caption_text = message.caption.present? ? " #{message.caption}" : ""
-      combined_text = "#{food_analysis[:description]}#{caption_text}"
+      # Use the analyzed description (which now includes caption context)
+      combined_text = food_analysis[:description]
 
       # Process as nutrition content
       process_nutrition_photo(combined_text, food_analysis, photo.file_id)
@@ -2083,7 +2083,7 @@ module Telegram
 
     def parse_reminder_request(text)
       # Use AI to parse natural language time
-      client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY"))
+      client = OpenAI::Client.new(access_token: Rails.application.credentials.dig(:openai, :api_key))
 
       current_time = Time.current.in_time_zone(user.timezone)
 

@@ -3,7 +3,7 @@ class Ai::IdeaResearchService
   
   def initialize(entry)
     @entry = entry
-    @client = OpenAI::Client.new(access_token: ENV['OPENAI_API_KEY'])
+    @client = OpenAI::Client.new(access_token: Rails.application.credentials.dig(:openai, :api_key))
   end
 
   def perform_research

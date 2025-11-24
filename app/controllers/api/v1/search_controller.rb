@@ -25,16 +25,12 @@ class Api::V1::SearchController < Api::BaseController
     # Поиск по тегам
     tag_matches = search_by_tags(query)
     
-    # Векторный поиск (если есть embeddings)
-    similar_entries = vector_search(query) if can_perform_vector_search?
-    
     {
       query: query,
-      total_results: entries.count + tag_matches.count + (similar_entries&.count || 0),
+      total_results: entries.count + tag_matches.count,
       results: {
         text_matches: entries.limit(20).map { |e| serialize_search_entry(e, 'text') },
-        tag_matches: tag_matches.limit(10).map { |e| serialize_search_entry(e, 'tag') },
-        similar_content: similar_entries&.limit(10)&.map { |e| serialize_search_entry(e, 'semantic') } || []
+        tag_matches: tag_matches.limit(10).map { |e| serialize_search_entry(e, 'tag') }
       },
       filters: available_filters(query),
       suggestions: generate_search_suggestions(query)
@@ -44,34 +40,15 @@ class Api::V1::SearchController < Api::BaseController
   def search_entries(query)
     search_term = "%#{query}%"
     current_user.entries.active.where(
-      "content ILIKE ? OR transcript ILIKE ?", 
+      "content LIKE ? COLLATE NOCASE OR transcript LIKE ? COLLATE NOCASE", 
       search_term, search_term
     ).recent
   end
 
   def search_by_tags(query)
     current_user.entries.active
-      .where("tags ILIKE ?", "%#{query}%")
+      .where("tags LIKE ? COLLATE NOCASE", "%#{query}%")
       .recent
-  end
-
-  def vector_search(query)
-    # Пока заглушка - в реальности нужно сгенерировать embedding для запроса
-    # и найти похожие записи через pgvector
-    return nil unless can_perform_vector_search?
-    
-    # Для демо найдем записи, которые уже имеют embeddings
-    sample_entry = current_user.entries.active.where.not(embedding: nil).first
-    return nil unless sample_entry
-    
-    sample_entry.nearest_neighbors(:embedding, distance: "cosine")
-               .where.not(id: sample_entry.id)
-               .limit(5)
-  end
-
-  def can_perform_vector_search?
-    # Проверяем, есть ли записи с embeddings
-    current_user.entries.active.where.not(embedding: nil).exists?
   end
 
   def generate_suggestions(query)

@@ -8,7 +8,7 @@ class CreateReminders < ActiveRecord::Migration[8.0]
       t.string :status, default: "pending" # pending, sent, snoozed, cancelled
       t.text :message
       t.datetime :sent_at
-      t.jsonb :metadata, default: {}
+      t.json :metadata, default: {}
 
       t.timestamps
     end

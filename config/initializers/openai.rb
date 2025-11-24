@@ -3,7 +3,7 @@
 if defined?(OpenAI)
   begin
     OpenAI.configure do |config|
-      config.access_token = ENV["OPENAI_API_KEY"]
+      config.access_token = Rails.application.credentials.dig(:openai, :api_key)
       config.log_errors = Rails.env.development?
     end
   rescue => e

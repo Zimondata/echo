@@ -11,7 +11,7 @@ class CreateActivityEntries < ActiveRecord::Migration[8.0]
       t.string :average_pace               # Average pace (e.g., "5:30/km")
       t.datetime :activity_date, null: false  # When the activity took place
       t.text :notes                        # User notes or AI analysis
-      t.jsonb :garmin_data, default: {}    # Raw Garmin data from screenshot analysis
+      t.json :garmin_data, default: {}    # Raw Garmin data from screenshot analysis
       t.string :screenshot_url             # URL to stored screenshot
       t.string :status, default: 'active'  # active, archived, deleted
       t.integer :effort_level             # 1-10 subjective effort level

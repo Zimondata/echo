@@ -3,7 +3,7 @@ class Ai::SmartPriorityAnalyzer
   
   def initialize(user)
     @user = user
-    @client = OpenAI::Client.new(access_token: ENV['OPENAI_API_KEY'])
+    @client = OpenAI::Client.new(access_token: Rails.application.credentials.dig(:openai, :api_key))
   end
 
   def analyze_all_ideas

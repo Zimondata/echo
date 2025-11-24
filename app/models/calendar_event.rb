@@ -16,11 +16,21 @@ class CalendarEvent < ApplicationRecord
     'task' => { color: '#6B7280', label: 'Задача' }
   }.freeze
 
+  # Life categories (spheres of life)
+  LIFE_CATEGORIES = {
+    'work' => { color: '#3B82F6', icon: '💼', label: 'Работа' },
+    'health' => { color: '#10B981', icon: '💪', label: 'Здоровье' },
+    'personal' => { color: '#F59E0B', icon: '🏠', label: 'Личное' },
+    'ideas' => { color: '#8B5CF6', icon: '💡', label: 'Идеи' },
+    'projects' => { color: '#EC4899', icon: '🚀', label: 'Проекты' }
+  }.freeze
+
   # Validations
   validates :title, presence: true, length: { maximum: 255 }
   validates :start_time, presence: true
   validates :event_type, inclusion: { in: CATEGORIES.keys }
   validates :priority, inclusion: { in: priorities.keys }
+  validates :life_category, inclusion: { in: LIFE_CATEGORIES.keys }, allow_nil: true
   validates :color, format: { with: /\A#[0-9A-Fa-f]{6}\z/ }, allow_blank: true
   validate :end_time_after_start_time
 
@@ -36,6 +46,7 @@ class CalendarEvent < ApplicationRecord
     active.where("start_time <= ? AND (end_time >= ? OR end_time IS NULL)", end_datetime, start_datetime)
   }
   scope :by_category, ->(category) { active.where(event_type: category) }
+  scope :by_life_category, ->(life_category) { active.where(life_category: life_category) }
   scope :with_reminders, -> { active.where.not(reminder_minutes: nil) }
   scope :reminder_pending, -> {
     active.where(reminder_sent: false)
@@ -110,6 +121,30 @@ class CalendarEvent < ApplicationRecord
     return "Вечером" if all_day? && title.downcase.include?("вечер")
     return "Весь день" if all_day?
     start_time.in_time_zone(timezone).strftime("%H:%M")
+  end
+
+  def life_category_info
+    LIFE_CATEGORIES[life_category] || LIFE_CATEGORIES['work']
+  end
+
+  def priority_color
+    case priority
+    when 'urgent' then '#DC2626' # red
+    when 'high' then '#F59E0B'   # amber
+    when 'medium' then '#3B82F6' # blue
+    when 'low' then '#6B7280'    # gray
+    else '#6B7280'
+    end
+  end
+
+  def priority_label
+    case priority
+    when 'urgent' then '🔥 Срочно'
+    when 'high' then '⭐ Важно'
+    when 'medium' then '📋 Обычно'
+    when 'low' then '⏸️ Несрочно'
+    else '📋 Обычно'
+    end
   end
 
   # Class methods

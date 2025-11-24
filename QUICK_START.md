@@ -47,15 +47,17 @@
 # 3. Скопируй его
 ```
 
-### Шаг 2: Настроить переменные окружения
+### Шаг 2: Настроить Rails credentials
 
 ```bash
-# Открой файл .env
-nano .env
+# Открой Rails credentials для редактирования
+EDITOR="nano" bin/rails credentials:edit
 
-# Добавь свои ключи:
-TELEGRAM_BOT_TOKEN=твой_telegram_токен
-OPENAI_API_KEY=твой_openai_ключ
+# Добавь свои ключи в файл:
+telegram:
+  bot_token: твой_telegram_токен
+openai:
+  api_key: твой_openai_ключ
 ```
 
 ### Шаг 3: Установить ngrok для локального тестирования
@@ -179,8 +181,11 @@ tail -f log/development.log
 ### Ошибка "OpenAI API Key not found"
 
 ```bash
-# Проверь .env файл
-cat .env | grep OPENAI
+# Проверь Rails credentials
+bin/rails credentials:show | grep openai
+
+# Если ключа нет, добавь его:
+EDITOR="nano" bin/rails credentials:edit
 
 # Перезапусти сервер
 bin/dev
@@ -286,7 +291,8 @@ Telegram::BotService.send_message
 
 ## 🔐 Безопасность
 
-- API ключи хранятся в `.env` (не коммить в git!)
+- API ключи хранятся в Rails credentials (`config/credentials.yml.enc`) - зашифрованы и безопасны
+- Файл `config/master.key` не должен коммититься в git (уже в .gitignore)
 - PostgreSQL работает локально
 - Webhook использует HTTPS через ngrok
 - Все данные только у тебя

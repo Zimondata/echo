@@ -2,18 +2,18 @@
 service: echo
 
 # Name of the container image.
-image: ghcr.io/zimondata/echo
+image: zimondata/echo
 
 # Deploy to these servers.
 servers:
   web:
     hosts:
       - 46.62.211.95
-    options:
-      health-interval: 15s
-      health-timeout: 10s
-      health-retries: 30
-      health-start-period: 180s
+    # options:
+    #   health-interval: 15s
+    #   health-timeout: 10s
+    #   health-retries: 30
+    #   health-start-period: 180s
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -39,12 +39,11 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
+# Note: All application secrets (telegram bot token, OpenAI API key, database URL) are stored
+# in Rails credentials (config/credentials.yml.enc) and accessed via RAILS_MASTER_KEY.
 env:
   secret:
     - RAILS_MASTER_KEY
-    - TELEGRAM_BOT_TOKEN
-    - OPENAI_API_KEY
-    - DATABASE_URL
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
@@ -68,10 +67,12 @@ aliases:
   dbc: app exec --interactive --reuse "bin/rails dbconsole"
 
 
-# Use a persistent storage volume for sqlite database files and local Active Storage files.
+# Use a persistent storage volume for SQLite3 database files and local Active Storage files.
+# SQLite3 databases: echo_production.sqlite3, echo_production_cache.sqlite3, etc.
 # Recommended to change this to a mounted volume path that is backed up off server.
 volumes:
   - "echo_storage:/rails/storage"
+  - "echo_db:/rails/db"
 
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
@@ -98,19 +99,8 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-accessories:
-  db:
-    image: pgvector/pgvector:pg17
-    host: 46.62.211.95
-    port: 5432
-    env:
-      secret:
-        - POSTGRES_PASSWORD
-      clear:
-        POSTGRES_USER: echo
-        POSTGRES_DB: echo_production
-    directories:
-      - data:/var/lib/postgresql/data
+# PostgreSQL accessory removed - using SQLite3 instead
+# SQLite3 database files are stored in the persistent volume (echo_storage)
 #   db:
 #     image: mysql:8.0
 #     host: 192.168.0.2

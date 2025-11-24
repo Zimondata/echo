@@ -3,7 +3,7 @@ module Telegram
     class << self
       def client
         @client ||= ::Telegram::Bot::Client.new(
-          ENV.fetch("TELEGRAM_BOT_TOKEN")
+          Rails.application.credentials.dig(:telegram, :bot_token)
         )
       end
 
@@ -55,7 +55,7 @@ module Telegram
 
         return nil unless file_path
 
-        url = "https://api.telegram.org/file/bot#{ENV.fetch('TELEGRAM_BOT_TOKEN')}/#{file_path}"
+        url = "https://api.telegram.org/file/bot#{Rails.application.credentials.dig(:telegram, :bot_token)}/#{file_path}"
 
         # Download file
         response = HTTParty.get(url)

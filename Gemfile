@@ -4,8 +4,8 @@ source "https://rubygems.org"
 gem "rails", "~> 8.0.3"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
-# Use postgresql as the database for Active Record
-gem "pg", "~> 1.5"
+# Use sqlite3 as the database for Active Record
+gem "sqlite3", ">= 2.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -54,8 +54,9 @@ gem "googleauth"                    # Google OAuth
 gem "httparty", "~> 0.22"          # HTTP requests
 gem "sidekiq", "~> 7.2"            # Background jobs (alternative to Solid Queue)
 
-# Vector embeddings for AI features
-gem "neighbor", "~> 0.4"           # pgvector for similarity search
+# Note: pg and neighbor gems removed - using SQLite3 instead
+# If you need to migrate data from PostgreSQL, temporarily add:
+# gem "pg", "~> 1.5"
 
 # Additional gems for dashboard
 # gem "groupdate"                     # Group queries by date/time periods (commented out - manual implementation used)

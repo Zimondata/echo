@@ -3,70 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo — дневник, который думает вместе с тобой</title>
-    <meta name="description" content="Планируй, записывай, рефлексируй. Echo всё запомнит, проанализирует и подскажет, что важно сегодня.">
+    <title>Echo — Voice-first AI компаньон для предпринимателей</title>
+    <meta name="description" content="Перестаньте терять 1.5 часа в день на переключение между приложениями. Echo заменяет 5 инструментов одним решением.">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="Echo — дневник, который думает вместе с тобой">
-    <meta property="og:description" content="AI-ассистент для предпринимателей и руководителей. Превращает хаос дня в осмысленные паттерны.">
+    <meta property="og:title" content="Echo — Voice-first AI компаньон для предпринимателей">
+    <meta property="og:description" content="Voice-first AI компаньон, который знает ваш контекст, находит ваш flow state и заменяет 5 приложений одним решением.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="http://localhost:4000">
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#f5f3ff',
-                            500: '#706DFE',
-                            600: '#5b59d4',
-                            700: '#4c46a6',
-                        },
-                        secondary: {
-                            500: '#9B59B6',
-                            600: '#8e44ad',
-                        }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.8s ease-out forwards',
-                        'slide-up': 'slideUp 0.6s ease-out forwards',
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-glow': 'pulseGlow 4s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(30px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-                            '50%': { transform: 'translateY(-20px) rotate(5deg)' },
-                        },
-                        pulseGlow: {
-                            '0%, 100%': { transform: 'scale(1)', opacity: '0.3' },
-                            '50%': { transform: 'scale(1.1)', opacity: '0.5' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <% if @variation == 'brutalist' %>
+      <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <% elsif @variation == 'terminal' %>
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <% elsif @variation == 'retro' %>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <% elsif @variation == 'organic' %>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <% else %>
+      <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <% end %>
     
     <!-- Styles -->
-    <link rel="stylesheet" href="/styles.css">
+    <% if @variation == 'brutalist' %>
+      <link rel="stylesheet" href="/styles-brutalist.css">
+    <% elsif @variation == 'terminal' %>
+      <link rel="stylesheet" href="/styles-terminal.css">
+    <% elsif @variation == 'retro' %>
+      <link rel="stylesheet" href="/styles-retro.css">
+    <% elsif @variation == 'organic' %>
+      <link rel="stylesheet" href="/styles-organic.css">
+    <% else %>
+      <link rel="stylesheet" href="/styles.css">
+    <% end %>
     
     <!-- Telegram Login Widget -->
     <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
@@ -75,5 +45,80 @@
     <%= yield %>
     
     <script src="/script.js"></script>
+    <script>
+      // Minimal scroll reveal - Rails-friendly vanilla JS
+      document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.scroll-reveal');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        
+        elements.forEach(el => observer.observe(el));
+        
+        // Initialize Telegram Login Widgets (only in production or non-localhost)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isLocalhost) {
+          function initTelegramWidgets() {
+            const initWidget = (containerId) => {
+              const container = document.getElementById(containerId);
+              if (!container || container.querySelector('iframe')) return; // Already initialized
+              
+              // Create script element for Telegram widget instance
+              const script = document.createElement('script');
+              script.async = true;
+              script.src = 'https://telegram.org/js/telegram-widget.js?22';
+              script.setAttribute('data-telegram-login', 'auriAI_bot');
+              script.setAttribute('data-size', 'large');
+              script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+              script.setAttribute('data-request-access', 'write');
+              
+              container.appendChild(script);
+            };
+            
+            // Initialize both widgets
+            initWidget('telegram-login-hero');
+            initWidget('telegram-login-offer');
+          }
+          
+          // Try to initialize immediately
+          initTelegramWidgets();
+          
+          // Also try after a short delay to ensure script is loaded
+          setTimeout(initTelegramWidgets, 500);
+        }
+      });
+      
+      // Telegram auth callback function - must be global
+      window.onTelegramAuth = function(user) {
+        console.log('Telegram auth callback received:', user);
+        
+        if (!user || !user.id) {
+          console.error('Invalid Telegram auth data:', user);
+          alert('Ошибка авторизации. Пожалуйста, попробуйте еще раз.');
+          return;
+        }
+        
+        // Build query string from user data
+        const params = new URLSearchParams({
+          id: user.id,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          username: user.username || '',
+          photo_url: user.photo_url || '',
+          auth_date: user.auth_date,
+          hash: user.hash
+        });
+        
+        console.log('Redirecting to callback with params:', params.toString());
+        
+        // Redirect to callback URL
+        window.location.href = '/auth/telegram/callback?' + params.toString();
+      };
+    </script>
 </body>
 </html>

@@ -5,7 +5,7 @@ class CreateInsights < ActiveRecord::Migration[8.0]
       t.string :insight_type, null: false
       t.string :title, null: false
       t.text :content
-      t.jsonb :data, default: {}
+      t.json :data, default: {}
       t.datetime :generated_at
       t.datetime :expires_at
 

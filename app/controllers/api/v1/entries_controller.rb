@@ -12,7 +12,7 @@ class Api::V1::EntriesController < Api::BaseController
     # Поиск
     if params[:search].present?
       search_term = "%#{params[:search]}%"
-      entries = entries.where("content ILIKE ? OR transcript ILIKE ?", search_term, search_term)
+      entries = entries.where("content LIKE ? COLLATE NOCASE OR transcript LIKE ? COLLATE NOCASE", search_term, search_term)
     end
 
     # Сортировка
@@ -101,16 +101,20 @@ class Api::V1::EntriesController < Api::BaseController
   def similar
     @entry = current_user.entries.find(params[:id])
     
-    if @entry.embedding.nil?
-      return error_response("Entry has no embedding for similarity search")
-    end
-
-    similar_entries = @entry.nearest_neighbors(:embedding, distance: "cosine")
-                           .where.not(id: @entry.id)
-                           .limit(10)
+    # Vector similarity search is no longer available with SQLite3
+    # Return entries with similar content using text matching instead
+    search_terms = @entry.content.split.first(5).map { |word| "%#{word}%" }
+    similar_entries = current_user.entries.active
+                                  .where.not(id: @entry.id)
+                                  .where(
+                                    search_terms.map { |term| "content LIKE ? COLLATE NOCASE" }.join(" OR "),
+                                    *search_terms
+                                  )
+                                  .limit(10)
 
     success_response({
-      similar_entries: similar_entries.map { |entry| serialize_entry(entry) }
+      similar_entries: similar_entries.map { |entry| serialize_entry(entry) },
+      note: "Using text-based similarity search (vector search unavailable)"
     })
   end
 

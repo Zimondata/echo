@@ -71,15 +71,34 @@ module Ai
       - Стакан сока: 200-250мл
       - Чашка кофе: 150-200мл
 
+      КОЛИЧЕСТВЕННЫЕ УКАЗАНИЯ:
+      - "кусочек" = 1/8-1/6 от целого (примерно 15-20% порции)
+      - "ломтик" = стандартный кусок (для хлеба ~30г, для торта ~80г)
+      - "половина" = 50% от стандартной порции
+      - "треть" = 33% от стандартной порции
+      - "четверть" = 25% от стандартной порции
+      - "маленький кусочек" = 10-15% от стандартной порции
+
       ЕСЛИ ЭТО НЕ ЕДА: верни confidence_score: 0 и description: "Не удалось распознать еду на фото"
     PROMPT
 
     class << self
-      def analyze_food_photo(image_data)
+      def analyze_food_photo(image_data, caption_text = nil)
         return nil if image_data.blank?
 
         # Encode image to base64
         base64_image = Base64.strict_encode64(image_data)
+
+        # Prepare the analysis prompt with caption context
+        analysis_prompt = FOOD_ANALYSIS_PROMPT
+        if caption_text.present?
+          analysis_prompt += "\n\n🎯 ВАЖНЫЙ КОНТЕКСТ: Пользователь добавил подпись к фото: \"#{caption_text}\"\n"
+          analysis_prompt += "ОБЯЗАТЕЛЬНО учти эту подпись при анализе:\n"
+          analysis_prompt += "- Если упоминается количество (кусочек, ломтик, половина) - скорректируй порцию\n"
+          analysis_prompt += "- Если указан конкретный продукт - приоритизируй его в анализе\n"
+          analysis_prompt += "- Если описан способ приготовления - учти его в расчётах\n"
+          analysis_prompt += "- Подпись пользователя ПРИОРИТЕТНЕЕ визуального анализа!\n"
+        end
 
         response = client.chat(
           parameters: {
@@ -90,7 +109,7 @@ module Ai
                 content: [
                   {
                     type: "text",
-                    text: FOOD_ANALYSIS_PROMPT
+                    text: analysis_prompt
                   },
                   {
                     type: "image_url",
@@ -174,7 +193,7 @@ module Ai
 
       def client
         @client ||= OpenAI::Client.new(
-          access_token: ENV.fetch("OPENAI_API_KEY"),
+          access_token: Rails.application.credentials.dig(:openai, :api_key),
           log_errors: Rails.env.development?
         )
       end

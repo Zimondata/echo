@@ -34,17 +34,27 @@
 2. Отправь `/newbot`
 3. Следуй инструкциям (имя бота, username)
 4. Получи токен (формат: `110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw`)
-5. Добавь токен в `.env`:
+5. Добавь токен в Rails credentials:
+   ```bash
+   EDITOR="nano" bin/rails credentials:edit
    ```
-   TELEGRAM_BOT_TOKEN=твой_токен_здесь
+   Добавь в файл:
+   ```yaml
+   telegram:
+     bot_token: твой_токен_здесь
    ```
 
 #### 1.2 Получить OpenAI API ключ
 1. Зайди на https://platform.openai.com/api-keys
 2. Создай новый API key
-3. Добавь в `.env`:
+3. Добавь в Rails credentials:
+   ```bash
+   EDITOR="nano" bin/rails credentials:edit
    ```
-   OPENAI_API_KEY=sk-...твой_ключ
+   Добавь в файл:
+   ```yaml
+   openai:
+     api_key: sk-...твой_ключ
    ```
 
 #### 1.3 Настроить Google Calendar API

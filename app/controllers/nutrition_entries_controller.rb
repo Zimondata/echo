@@ -3,6 +3,10 @@ class NutritionEntriesController < ApplicationController
   before_action :ensure_current_user
 
   def index
+    # Disable Turbo caching for this page to ensure fresh data after deletions
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    expires_now
+
     @user = current_user
     @today = Date.current
     @selected_date = params[:date] ? Date.parse(params[:date]) : @today
@@ -45,8 +49,12 @@ class NutritionEntriesController < ApplicationController
     }
     
     # AI analysis of the day (only if we have data)
+    # Cache for 1 hour to avoid slow API calls on every page load
     if @nutrition_entries.any? || @activity_entries.any?
-      @daily_analysis = Ai::DailyHealthAnalyzer.analyze_day(@user, @selected_date)
+      cache_key = "daily_health_analysis/#{@user.id}/#{@selected_date}"
+      @daily_analysis = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+        Ai::DailyHealthAnalyzer.analyze_day(@user, @selected_date)
+      end
     else
       @daily_analysis = nil
     end
@@ -67,8 +75,10 @@ class NutritionEntriesController < ApplicationController
 
   def create
     @nutrition_entry = current_user.nutrition_entries.build(nutrition_entry_params)
-    
+
     if @nutrition_entry.save
+      # Invalidate cache for this date
+      invalidate_daily_analysis_cache(current_user.id, @nutrition_entry.recorded_at.to_date)
       redirect_to nutrition_entries_path, notice: 'Запись о питании успешно добавлена!'
     else
       @selected_meal_type = @nutrition_entry.meal_type
@@ -81,6 +91,8 @@ class NutritionEntriesController < ApplicationController
 
   def update
     if @nutrition_entry.update(nutrition_entry_params)
+      # Invalidate cache for this date
+      invalidate_daily_analysis_cache(current_user.id, @nutrition_entry.recorded_at.to_date)
       redirect_to nutrition_entries_path, notice: 'Запись о питании обновлена!'
     else
       render :edit
@@ -89,11 +101,29 @@ class NutritionEntriesController < ApplicationController
 
   def destroy
     return unless @nutrition_entry # Guard clause in case entry not found
-    
-    if @nutrition_entry.update(status: 'deleted')
+
+    # Store the date before deletion for redirect
+    entry_date = @nutrition_entry.recorded_at.to_date
+
+    # ФИЗИЧЕСКОЕ УДАЛЕНИЕ из базы данных (не soft delete)
+    if @nutrition_entry.destroy
+      # Invalidate cache for this date
+      invalidate_daily_analysis_cache(current_user.id, entry_date)
+
       respond_to do |format|
-        format.html { redirect_to nutrition_entries_path, notice: 'Запись о питании удалена!' }
-        format.json { render json: { success: true, message: 'Запись о питании удалена' } }
+        format.html do
+          # Force reload bypassing cache with timestamp
+          redirect_to nutrition_entries_path(date: entry_date, _: Time.current.to_i), notice: 'Запись о питании удалена!'
+        end
+        format.json do
+          # Recalculate totals for JSON response
+          updated_totals = NutritionEntry.daily_totals(current_user, entry_date)
+          render json: {
+            success: true,
+            message: 'Запись о питании удалена',
+            updated_totals: updated_totals
+          }
+        end
       end
     else
       respond_to do |format|
@@ -128,7 +158,7 @@ class NutritionEntriesController < ApplicationController
   def generate_calendar_dates(selected_date)
     start_date = selected_date.beginning_of_month.beginning_of_week
     end_date = selected_date.end_of_month.end_of_week
-    
+
     nutrition_counts = current_user.nutrition_entries.active
                                   .where(recorded_at: start_date..end_date)
                                   .group("DATE(recorded_at)")
@@ -143,5 +173,10 @@ class NutritionEntriesController < ApplicationController
         is_current_month: date.month == selected_date.month
       }
     end
+  end
+
+  def invalidate_daily_analysis_cache(user_id, date)
+    cache_key = "daily_health_analysis/#{user_id}/#{date}"
+    Rails.cache.delete(cache_key)
   end
 end

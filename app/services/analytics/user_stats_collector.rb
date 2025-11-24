@@ -236,7 +236,7 @@ class Analytics::UserStatsCollector
   end
 
   def analyze_goal_progress(entries)
-    goals = entries.where(entry_type: 'plan').where("content ILIKE ?", "%цель%")
+    goals = entries.where(entry_type: 'plan').where("content LIKE ? COLLATE NOCASE", "%цель%")
     completed_goals = goals.joins(:calendar_events).where(calendar_events: { done: true })
     
     {

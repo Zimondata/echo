@@ -214,7 +214,7 @@ module Ai
 
       def client
         @client ||= OpenAI::Client.new(
-          access_token: ENV.fetch("OPENAI_API_KEY"),
+          access_token: Rails.application.credentials.dig(:openai, :api_key),
           log_errors: Rails.env.development?
         )
       end

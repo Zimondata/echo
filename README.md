@@ -71,9 +71,13 @@ bundle install
 # Настроить базу данных
 bin/rails db:create db:migrate
 
-# Настроить переменные окружения
-cp .env.example .env
-nano .env  # Добавь свои API ключи
+# Настроить Rails credentials (API ключи)
+EDITOR="nano" bin/rails credentials:edit
+# Добавь свои API ключи:
+# telegram:
+#   bot_token: YOUR_TELEGRAM_BOT_TOKEN
+# openai:
+#   api_key: YOUR_OPENAI_API_KEY
 
 # Запустить сервер
 bin/dev

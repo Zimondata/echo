@@ -12,7 +12,7 @@ class CreateNutritionEntries < ActiveRecord::Migration[8.0]
       t.datetime :recorded_at, null: false
       t.text :meal_description
       t.string :photo_url
-      t.jsonb :analysis_data, default: {}
+      t.json :analysis_data, default: {}
       t.string :status, default: 'active'
 
       t.timestamps

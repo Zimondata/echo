@@ -10,13 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_catalog.plpgsql"
-  enable_extension "vector"
-
+ActiveRecord::Schema[8.0].define(version: 2025_11_02_111505) do
   create_table "activity_entries", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.string "activity_type", null: false
     t.integer "duration_minutes"
     t.decimal "distance_km", precision: 8, scale: 3
@@ -26,7 +22,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.string "average_pace"
     t.datetime "activity_date", null: false
     t.text "notes"
-    t.jsonb "garmin_data", default: {}
+    t.json "garmin_data", default: {}
     t.string "screenshot_url"
     t.string "status", default: "active"
     t.integer "effort_level"
@@ -41,41 +37,48 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   end
 
   create_table "calendar_events", force: :cascade do |t|
-    t.bigint "entry_id"
-    t.bigint "user_id", null: false
+    t.integer "entry_id"
+    t.integer "user_id", null: false
     t.string "title", null: false
     t.text "description"
     t.datetime "start_time", null: false
     t.datetime "end_time"
     t.string "event_type", default: "plan"
-    t.jsonb "metadata", default: {}
+    t.json "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "all_day", default: false
     t.boolean "done", default: false
     t.string "priority", default: "medium"
     t.string "color"
-    t.jsonb "tags", default: []
+    t.json "tags", default: []
     t.integer "reminder_minutes"
     t.boolean "reminder_sent", default: false
     t.datetime "deleted_at"
+    t.string "life_category", default: "work"
+    t.boolean "is_habit", default: false
+    t.integer "habit_streak", default: 0
+    t.datetime "last_completed_at"
+    t.string "recurrence_pattern"
     t.index ["all_day"], name: "index_calendar_events_on_all_day"
     t.index ["deleted_at"], name: "index_calendar_events_on_deleted_at"
     t.index ["done"], name: "index_calendar_events_on_done"
     t.index ["entry_id"], name: "index_calendar_events_on_entry_id"
+    t.index ["is_habit"], name: "index_calendar_events_on_is_habit"
+    t.index ["life_category"], name: "index_calendar_events_on_life_category"
+    t.index ["recurrence_pattern"], name: "index_calendar_events_on_recurrence_pattern"
     t.index ["start_time"], name: "index_calendar_events_on_start_time"
     t.index ["user_id"], name: "index_calendar_events_on_user_id"
   end
 
   create_table "entries", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.string "entry_type", null: false
     t.text "content", null: false
     t.text "transcript"
     t.string "audio_url"
     t.string "audio_file_id"
-    t.jsonb "metadata", default: {}
-    t.vector "embedding", limit: 1536
+    t.json "metadata", default: {}
     t.string "status", default: "active"
     t.integer "priority", default: 0
     t.datetime "occurred_at"
@@ -84,7 +87,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.string "category", default: "inbox"
     t.string "dashboard_status", default: "new"
     t.text "tags"
-    t.jsonb "insights", default: {}
+    t.json "insights", default: {}
     t.datetime "processed_at"
     t.string "group_id"
     t.integer "parent_entry_id"
@@ -95,7 +98,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.boolean "quest_generated", default: false
     t.index ["category"], name: "index_entries_on_category"
     t.index ["dashboard_status"], name: "index_entries_on_dashboard_status"
-    t.index ["embedding"], name: "index_entries_on_embedding", opclass: :vector_cosine_ops, using: :ivfflat
     t.index ["entry_type"], name: "index_entries_on_entry_type"
     t.index ["group_id"], name: "index_entries_on_group_id"
     t.index ["idea_category"], name: "index_entries_on_idea_category"
@@ -109,11 +111,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   end
 
   create_table "insights", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.string "insight_type", null: false
     t.string "title", null: false
     t.text "content"
-    t.jsonb "data", default: {}
+    t.json "data", default: {}
     t.datetime "generated_at"
     t.datetime "expires_at"
     t.datetime "created_at", null: false
@@ -125,8 +127,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   end
 
   create_table "nutrition_entries", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "entry_id"
+    t.integer "user_id", null: false
+    t.integer "entry_id"
     t.decimal "calories", precision: 8, scale: 2
     t.decimal "protein", precision: 6, scale: 2
     t.decimal "fat", precision: 6, scale: 2
@@ -136,7 +138,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.datetime "recorded_at", null: false
     t.text "meal_description"
     t.string "photo_url"
-    t.jsonb "analysis_data", default: {}
+    t.json "analysis_data", default: {}
     t.string "status", default: "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -149,7 +151,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   end
 
   create_table "quests", force: :cascade do |t|
-    t.bigint "entry_id", null: false
+    t.integer "entry_id", null: false
     t.string "title", null: false
     t.text "description"
     t.string "status", default: "active"
@@ -157,7 +159,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.datetime "due_date"
     t.json "steps", default: []
     t.integer "completion_rate", default: 0
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["due_date"], name: "index_quests_on_due_date"
@@ -169,22 +171,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   end
 
   create_table "reminders", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "entry_id"
+    t.integer "user_id", null: false
+    t.integer "entry_id"
     t.string "reminder_type", null: false
     t.datetime "remind_at", null: false
     t.string "status", default: "pending"
     t.text "message"
     t.datetime "sent_at"
-    t.jsonb "metadata", default: {}
+    t.json "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "smart_type"
     t.string "smart_trigger"
     t.json "related_entry_ids", default: []
     t.integer "confidence_score"
-    t.jsonb "ai_context", default: {}
-    t.jsonb "action_buttons", default: []
+    t.json "ai_context", default: {}
+    t.json "action_buttons", default: []
     t.string "priority", default: "medium"
     t.string "recurrence_rule"
     t.string "user_feedback"
@@ -197,127 +199,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.index ["user_id"], name: "index_reminders_on_user_id"
   end
 
-  create_table "solid_queue_blocked_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.string "queue_name", null: false
-    t.integer "priority", default: 0, null: false
-    t.string "concurrency_key", null: false
-    t.datetime "expires_at", null: false
-    t.datetime "created_at", null: false
-    t.index ["concurrency_key", "priority", "job_id"], name: "index_solid_queue_blocked_executions_for_release"
-    t.index ["expires_at", "concurrency_key"], name: "index_solid_queue_blocked_executions_for_maintenance"
-    t.index ["job_id"], name: "index_solid_queue_blocked_executions_on_job_id", unique: true
-  end
-
-  create_table "solid_queue_claimed_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.bigint "process_id"
-    t.datetime "created_at", null: false
-    t.index ["job_id"], name: "index_solid_queue_claimed_executions_on_job_id", unique: true
-    t.index ["process_id", "job_id"], name: "index_solid_queue_claimed_executions_on_process_id_and_job_id"
-  end
-
-  create_table "solid_queue_failed_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.text "error"
-    t.datetime "created_at", null: false
-    t.index ["job_id"], name: "index_solid_queue_failed_executions_on_job_id", unique: true
-  end
-
-  create_table "solid_queue_jobs", force: :cascade do |t|
-    t.string "queue_name", null: false
-    t.string "class_name", null: false
-    t.text "arguments"
-    t.integer "priority", default: 0, null: false
-    t.string "active_job_id"
-    t.datetime "scheduled_at"
-    t.datetime "finished_at"
-    t.string "concurrency_key"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["active_job_id"], name: "index_solid_queue_jobs_on_active_job_id"
-    t.index ["class_name"], name: "index_solid_queue_jobs_on_class_name"
-    t.index ["finished_at"], name: "index_solid_queue_jobs_on_finished_at"
-    t.index ["queue_name", "finished_at"], name: "index_solid_queue_jobs_for_filtering"
-    t.index ["scheduled_at", "finished_at"], name: "index_solid_queue_jobs_for_alerting"
-  end
-
-  create_table "solid_queue_pauses", force: :cascade do |t|
-    t.string "queue_name", null: false
-    t.datetime "created_at", null: false
-    t.index ["queue_name"], name: "index_solid_queue_pauses_on_queue_name", unique: true
-  end
-
-  create_table "solid_queue_processes", force: :cascade do |t|
-    t.string "kind", null: false
-    t.datetime "last_heartbeat_at", null: false
-    t.bigint "supervisor_id"
-    t.integer "pid", null: false
-    t.string "hostname"
-    t.text "metadata"
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.index ["last_heartbeat_at"], name: "index_solid_queue_processes_on_last_heartbeat_at"
-    t.index ["name", "supervisor_id"], name: "index_solid_queue_processes_on_name_and_supervisor_id", unique: true
-    t.index ["supervisor_id"], name: "index_solid_queue_processes_on_supervisor_id"
-  end
-
-  create_table "solid_queue_ready_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.string "queue_name", null: false
-    t.integer "priority", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.index ["job_id"], name: "index_solid_queue_ready_executions_on_job_id", unique: true
-    t.index ["priority", "job_id"], name: "index_solid_queue_poll_all"
-    t.index ["queue_name", "priority", "job_id"], name: "index_solid_queue_poll_by_queue"
-  end
-
-  create_table "solid_queue_recurring_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.string "task_key", null: false
-    t.datetime "run_at", null: false
-    t.datetime "created_at", null: false
-    t.index ["job_id"], name: "index_solid_queue_recurring_executions_on_job_id", unique: true
-    t.index ["task_key", "run_at"], name: "index_solid_queue_recurring_executions_on_task_key_and_run_at", unique: true
-  end
-
-  create_table "solid_queue_recurring_tasks", force: :cascade do |t|
-    t.string "key", null: false
-    t.string "schedule", null: false
-    t.string "command", limit: 2048
-    t.string "class_name"
-    t.text "arguments"
-    t.string "queue_name"
-    t.integer "priority", default: 0
-    t.boolean "static", default: true, null: false
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
-    t.index ["static"], name: "index_solid_queue_recurring_tasks_on_static"
-  end
-
-  create_table "solid_queue_scheduled_executions", force: :cascade do |t|
-    t.bigint "job_id", null: false
-    t.string "queue_name", null: false
-    t.integer "priority", default: 0, null: false
-    t.datetime "scheduled_at", null: false
-    t.datetime "created_at", null: false
-    t.index ["job_id"], name: "index_solid_queue_scheduled_executions_on_job_id", unique: true
-    t.index ["scheduled_at", "priority", "job_id"], name: "index_solid_queue_dispatch_all"
-  end
-
-  create_table "solid_queue_semaphores", force: :cascade do |t|
-    t.string "key", null: false
-    t.integer "value", default: 1, null: false
-    t.datetime "expires_at", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
-    t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
-    t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
-  end
-
   create_table "users", force: :cascade do |t|
     t.bigint "telegram_id", null: false
     t.string "username"
@@ -325,7 +206,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
     t.string "last_name"
     t.string "timezone", default: "UTC"
     t.string "language", default: "ru"
-    t.jsonb "settings", default: {}
+    t.json "settings", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "last_entry_ids"
@@ -344,10 +225,4 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_28_104823) do
   add_foreign_key "quests", "users"
   add_foreign_key "reminders", "entries"
   add_foreign_key "reminders", "users"
-  add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
-  add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
-  add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
-  add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
-  add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
-  add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
 end

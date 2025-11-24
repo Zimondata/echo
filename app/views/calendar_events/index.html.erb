@@ -1,226 +1,227 @@
-<div class="flex h-screen bg-gray-50">
+<%
+  # Russian month names
+  russian_months = {
+    1 => 'Январь', 2 => 'Февраль', 3 => 'Март', 4 => 'Апрель',
+    5 => 'Май', 6 => 'Июнь', 7 => 'Июль', 8 => 'Август',
+    9 => 'Сентябрь', 10 => 'Октябрь', 11 => 'Ноябрь', 12 => 'Декабрь'
+  }
+
+  russian_day_names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+  # Генерируем дни для календарной сетки
+  calendar_days = (@start_of_calendar..@end_of_calendar).to_a
+%>
+
+<%= render 'shared/header', active: 'calendar' %>
+
+<div class="flex h-[calc(100vh-73px)] bg-[#f8f9fa]">
   <!-- Левая боковая панель -->
-  <div class="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col">
-    <!-- Заголовок -->
-    <div class="p-6 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-900">Календарь</h2>
-      <p class="text-sm text-gray-500 mt-1">Ваши события и напоминания</p>
+  <div class="w-64 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+    <!-- Кнопка создать -->
+    <div class="p-4 shrink-0">
+      <button class="group flex items-center space-x-4 px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-all duration-200 w-full">
+        <svg class="w-5 h-5 text-[#1a73e8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span class="text-sm font-medium text-gray-700">Создать</span>
+      </button>
     </div>
 
     <!-- Мини календарь -->
-    <div class="p-4 border-b border-gray-200">
-      <h3 class="text-sm font-medium text-gray-900 mb-3">Октябрь 2024</h3>
-      <div class="grid grid-cols-7 gap-1 text-center text-xs">
-        <div class="font-medium text-gray-500 py-2">Пн</div>
-        <div class="font-medium text-gray-500 py-2">Вт</div>
-        <div class="font-medium text-gray-500 py-2">Ср</div>
-        <div class="font-medium text-gray-500 py-2">Чт</div>
-        <div class="font-medium text-gray-500 py-2">Пт</div>
-        <div class="font-medium text-gray-500 py-2">Сб</div>
-        <div class="font-medium text-gray-500 py-2">Вс</div>
-        
-        <% 
-          # Получаем текущую дату
-          current_date = Date.current
-          start_of_month = current_date.beginning_of_month
-          start_of_calendar = start_of_month.beginning_of_week(:monday)
-          
-          # Генерируем 42 дня (6 недель)
-          (0..41).each do |i|
-            date = start_of_calendar + i.days
-            is_current_month = date.month == current_date.month
-            is_today = date == current_date
-            
-            day_events = @calendar_events.select { |event| 
-              event.start_time.in_time_zone(@user.timezone).to_date == date 
-            } if @calendar_events
-        %>
-          <div class="py-2 <%= is_today ? 'bg-blue-500 text-white rounded' : is_current_month ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-300' %> cursor-pointer relative">
-            <%= date.day %>
-            <% if day_events&.any? %>
-              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full"></div>
+    <div class="px-4 py-2 shrink-0">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-medium text-gray-900">
+          <%= russian_months[@current_date.month] %> <%= @current_date.year %>
+        </h3>
+        <div class="flex space-x-1">
+          <%= link_to calendar_events_path(year: @prev_month.year, month: @prev_month.month), class: "p-1 hover:bg-gray-100 rounded" do %>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          <% end %>
+          <%= link_to calendar_events_path(year: @next_month.year, month: @next_month.month), class: "p-1 hover:bg-gray-100 rounded" do %>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Мини календарная сетка -->
+      <div class="grid grid-cols-7 gap-1 text-center text-xs mb-4">
+        <% russian_day_names.each do |day| %>
+          <div class="font-medium text-gray-500 py-1"><%= day %></div>
+        <% end %>
+
+        <% calendar_days.each do |date| %>
+          <%
+            is_current_month = date.month == @current_date.month
+            is_today = date == Date.current
+            has_events = @calendar_events.any? { |e| e.start_time.in_time_zone(@user.timezone).to_date == date }
+          %>
+          <div class="relative py-1">
+            <div class="<%= is_today ? 'bg-[#1a73e8] text-white rounded-full w-6 h-6 mx-auto flex items-center justify-center' : is_current_month ? 'text-gray-700' : 'text-gray-300' %> text-xs font-normal hover:bg-gray-100 <%= 'hover:bg-opacity-50' if is_today %> rounded-full w-6 h-6 mx-auto flex items-center justify-center cursor-pointer">
+              <%= date.day %>
+            </div>
+            <% if has_events %>
+              <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#1a73e8] rounded-full"></div>
             <% end %>
           </div>
         <% end %>
       </div>
     </div>
 
-    <!-- События сегодня -->
-    <div class="p-4 border-b border-gray-200">
-      <h3 class="text-sm font-medium text-gray-900 mb-3">Сегодня</h3>
-      <% 
-        today_events = @calendar_events.select { |event| 
-          event.start_time.in_time_zone(@user.timezone).to_date == Date.current 
-        } if @calendar_events
-      %>
-      <% if today_events&.any? %>
-        <% today_events.first(3).each do |event| %>
-          <div class="flex items-center mb-3">
-            <%
-              if event.event_type == 'reminder'
-                icon = '🔔'
-                color = 'text-red-600'
-              elsif event.entry&.entry_type == 'plan'
-                icon = '📋'
-                color = 'text-green-600'
-              elsif event.entry&.entry_type == 'idea'
-                icon = '💡'
-                color = 'text-yellow-600'
-              else
-                icon = '📅'
-                color = 'text-blue-600'
-              end
-            %>
-            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-              <span class="text-sm"><%= icon %></span>
-            </div>
-            <div class="flex-1">
-              <p class="text-sm font-medium text-gray-900"><%= event.title %></p>
-              <p class="text-xs text-gray-500">
-                <%= event.start_time.in_time_zone(@user.timezone).strftime("%H:%M") %>
-                <% if event.end_time %>
-                  - <%= event.end_time.in_time_zone(@user.timezone).strftime("%H:%M") %>
-                <% end %>
-              </p>
-            </div>
-          </div>
-        <% end %>
-      <% else %>
-        <p class="text-sm text-gray-500">Нет событий на сегодня</p>
-      <% end %>
+    <!-- Мои календари -->
+    <div class="px-4 py-2 border-t border-gray-200 shrink-0">
+      <h3 class="text-sm font-medium text-gray-900 mb-3">Мои календари</h3>
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2 text-sm">
+          <input type="checkbox" checked class="rounded border-gray-300 text-[#1a73e8] focus:ring-[#1a73e8]">
+          <div class="w-3 h-3 bg-[#1a73e8] rounded-full"></div>
+          <span class="text-gray-700">События</span>
+        </div>
+        <div class="flex items-center space-x-2 text-sm">
+          <input type="checkbox" checked class="rounded border-gray-300 text-green-600 focus:ring-green-600">
+          <div class="w-3 h-3 bg-green-600 rounded-full"></div>
+          <span class="text-gray-700">Задачи</span>
+        </div>
+        <div class="flex items-center space-x-2 text-sm">
+          <input type="checkbox" checked class="rounded border-gray-300 text-purple-600 focus:ring-purple-600">
+          <div class="w-3 h-3 bg-purple-600 rounded-full"></div>
+          <span class="text-gray-700">Напоминания</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Ближайшие события -->
-    <div class="p-4 flex-1 overflow-y-auto">
-      <h3 class="text-sm font-medium text-gray-900 mb-3">Ближайшие события</h3>
-      <% 
-        upcoming_events = @calendar_events.select { |event| 
-          event.start_time.in_time_zone(@user.timezone).to_date > Date.current 
-        }.first(5) if @calendar_events
-      %>
-      <% if upcoming_events&.any? %>
-        <% upcoming_events.each do |event| %>
-          <div class="flex items-center mb-4">
-            <%
-              if event.event_type == 'reminder'
-                icon = '🔔'
-                color = 'text-red-600'
-              elsif event.entry&.entry_type == 'plan'
-                icon = '📋'
-                color = 'text-green-600'
-              elsif event.entry&.entry_type == 'idea'
-                icon = '💡'
-                color = 'text-yellow-600'
-              else
-                icon = '📅'
-                color = 'text-blue-600'
-              end
-            %>
-            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-              <span class="text-sm"><%= icon %></span>
-            </div>
-            <div class="flex-1">
-              <p class="text-sm font-medium text-gray-900"><%= event.title %></p>
-              <p class="text-xs text-gray-500">
-                <%= event.start_time.in_time_zone(@user.timezone).strftime("%d.%m.%Y %H:%M") %>
-              </p>
-            </div>
-          </div>
-        <% end %>
-      <% else %>
-        <p class="text-sm text-gray-500">Нет предстоящих событий</p>
-      <% end %>
-    </div>
+    <!-- Заполнитель -->
+    <div class="flex-1"></div>
   </div>
 
   <!-- Основной календарь -->
-  <div class="flex-1 flex flex-col">
-    <!-- Заголовок календаря -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Заголовок -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4 shrink-0">
       <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-gray-900">
-            <%= Date.current.strftime("%B %Y") %>
-          </h1>
-          <p class="text-sm text-gray-500">
-            Сегодня: <%= Date.current.strftime("%d %B, %A") %>
-          </p>
-        </div>
         <div class="flex items-center space-x-4">
-          <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            ← Предыдущий
+          <button class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
           </button>
-          <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Следующий →
+
+          <div class="flex items-center space-x-2">
+            <%= link_to calendar_events_path, class: "text-gray-700 hover:bg-gray-100 px-3 py-2 rounded transition-colors" do %>
+              <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            <% end %>
+
+            <h1 class="text-2xl text-gray-900 font-normal">
+              <%= russian_months[@current_date.month] %> <%= @current_date.year %>
+            </h1>
+          </div>
+
+          <div class="flex items-center space-x-1">
+            <%= link_to calendar_events_path(year: @prev_month.year, month: @prev_month.month), class: "p-2 hover:bg-gray-100 rounded-full transition-colors" do %>
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            <% end %>
+            <%= link_to calendar_events_path(year: @next_month.year, month: @next_month.month), class: "p-2 hover:bg-gray-100 rounded-full transition-colors" do %>
+              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <button class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors">
+            День
           </button>
-          <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Добавить событие
+          <button class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors">
+            Неделя
+          </button>
+          <button class="px-4 py-2 text-sm font-medium text-white bg-[#1a73e8] rounded transition-colors">
+            Месяц
+          </button>
+          <button class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors">
+            Год
           </button>
         </div>
       </div>
     </div>
 
     <!-- Сетка календаря -->
-    <div class="flex-1 bg-white">
+    <div class="flex-1 bg-white overflow-auto">
       <!-- Заголовки дней недели -->
-      <div class="grid grid-cols-7 border-b border-gray-200">
+      <div class="grid grid-cols-7 border-b border-gray-200 sticky top-0 bg-white z-10">
         <% %w[Понедельник Вторник Среда Четверг Пятница Суббота Воскресенье].each do |day| %>
-          <div class="px-4 py-3 text-center text-sm font-medium text-gray-500 border-r border-gray-200 last:border-r-0">
-            <%= day %>
+          <div class="px-4 py-3 text-center text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0">
+            <%= day.upcase %>
           </div>
         <% end %>
       </div>
 
       <!-- Сетка дней -->
-      <div class="grid grid-cols-7 auto-rows-fr" style="height: calc(100vh - 200px);">
-        <% 
-          current_date = Date.current
-          start_of_month = current_date.beginning_of_month
-          start_of_calendar = start_of_month.beginning_of_week(:monday)
-          
-          (0..41).each do |i|
-            date = start_of_calendar + i.days
-            is_current_month = date.month == current_date.month
-            is_today = date == current_date
-            
-            day_events = @calendar_events.select { |event| 
-              event.start_time.in_time_zone(@user.timezone).to_date == date 
-            } if @calendar_events
+      <div class="grid grid-cols-7 auto-rows-fr">
+        <%
+          calendar_days.each do |date|
+            is_current_month = date.month == @current_date.month
+            is_today = date == Date.current
+            is_weekend = date.saturday? || date.sunday?
+
+            day_events = @calendar_events.select { |event|
+              event.start_time.in_time_zone(@user.timezone).to_date == date
+            }
         %>
-          <div class="border-r border-b border-gray-200 last:border-r-0 p-2 <%= is_current_month ? 'bg-white' : 'bg-gray-50' %> <%= is_today ? 'bg-blue-50' : '' %> hover:bg-gray-50 min-h-[120px] flex flex-col">
-            <div class="font-medium text-sm <%= is_today ? 'text-blue-600' : is_current_month ? 'text-gray-900' : 'text-gray-400' %> mb-1">
-              <%= date.day %>
+          <div class="border-r border-b border-gray-200 last:border-r-0 p-2 min-h-[120px] <%= is_current_month ? 'bg-white' : 'bg-gray-50' %> <%= 'bg-blue-50 bg-opacity-30' if is_today %> hover:bg-gray-50 transition-colors cursor-pointer group relative" style="min-height: 120px;">
+            <!-- Номер дня -->
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-xs font-medium px-2 py-1 rounded-full <%= is_today ? 'bg-[#1a73e8] text-white' : is_current_month ? 'text-gray-900' : 'text-gray-400' %> <%= 'group-hover:bg-gray-200' unless is_today %>">
+                <%= date.day %>
+              </span>
+              <button class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded-full transition-all">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </button>
             </div>
-            <div class="flex-1 space-y-1">
-              <% if day_events&.any? %>
-                <% day_events.first(3).each do |event| %>
+
+            <!-- События дня -->
+            <div class="space-y-1">
+              <% if day_events.any? %>
+                <% day_events.first(4).each do |event| %>
                   <%
-                    if event.event_type == 'reminder'
-                      icon = '🔔'
-                      bg_color = 'bg-red-100'
-                      text_color = 'text-red-800'
+                    # Определяем цвет события
+                    if event.life_category == 'health'
+                      event_color = 'bg-red-500'
+                    elsif event.life_category == 'work'
+                      event_color = 'bg-blue-500'
+                    elsif event.life_category == 'personal'
+                      event_color = 'bg-green-500'
+                    elsif event.life_category == 'learning'
+                      event_color = 'bg-purple-500'
                     elsif event.entry&.entry_type == 'plan'
-                      icon = '📋'
-                      bg_color = 'bg-green-100'
-                      text_color = 'text-green-800'
+                      event_color = 'bg-green-600'
                     elsif event.entry&.entry_type == 'idea'
-                      icon = '💡'
-                      bg_color = 'bg-yellow-100'
-                      text_color = 'text-yellow-800'
+                      event_color = 'bg-yellow-600'
+                    elsif event.event_type == 'reminder'
+                      event_color = 'bg-red-600'
                     else
-                      icon = '📅'
-                      bg_color = 'bg-blue-100'
-                      text_color = 'text-blue-800'
+                      event_color = 'bg-[#1a73e8]'
                     end
                   %>
-                  <div class="text-xs p-1 rounded <%= bg_color %> <%= text_color %> truncate flex items-center">
-                    <span class="mr-1"><%= icon %></span>
-                    <span class="flex-1 truncate"><%= event.title %></span>
+                  <div class="<%= event_color %> text-white text-xs px-2 py-1 rounded hover:opacity-90 transition-opacity cursor-pointer truncate" title="<%= event.title %>" onclick="showDayEvents('<%= date.strftime('%Y-%m-%d') %>', '<%= date.strftime('%d %B %Y') %>')">
+                    <% if event.start_time && event.end_time %>
+                      <span class="font-medium"><%= event.start_time.in_time_zone(@user.timezone).strftime("%H:%M") %></span>
+                    <% end %>
+                    <span class="ml-1"><%= event.title %></span>
                   </div>
                 <% end %>
-                <% if day_events.count > 3 %>
-                  <div class="text-xs text-gray-500 text-center">
-                    +<%= day_events.count - 3 %> еще
+                <% if day_events.count > 4 %>
+                  <div class="text-xs text-gray-600 px-2 py-1 hover:bg-gray-200 rounded cursor-pointer" onclick="showDayEvents('<%= date.strftime('%Y-%m-%d') %>', '<%= date.strftime('%d %B %Y') %>')">
+                    +<%= day_events.count - 4 %> еще
                   </div>
                 <% end %>
               <% end %>
@@ -231,3 +232,113 @@
     </div>
   </div>
 </div>
+
+<!-- Модальное окно для просмотра событий дня -->
+<div id="dayEventsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" onclick="closeDayEventsModal(event)">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+      <h3 class="text-lg font-medium text-gray-900" id="dayEventsTitle">События</h3>
+      <button onclick="closeDayEventsModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="px-6 py-4 overflow-y-auto flex-1" id="dayEventsContent">
+      <!-- События будут загружены динамически -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // Данные событий для быстрого доступа
+  const eventsData = {
+    <% calendar_days.each do |date| %>
+      '<%= date.strftime('%Y-%m-%d') %>': [
+        <% day_events = @calendar_events.select { |event| event.start_time.in_time_zone(@user.timezone).to_date == date } %>
+        <% day_events.each do |event| %>
+          <%
+            if event.life_category == 'health'
+              event_color = 'bg-red-500'
+            elsif event.life_category == 'work'
+              event_color = 'bg-blue-500'
+            elsif event.life_category == 'personal'
+              event_color = 'bg-green-500'
+            elsif event.life_category == 'learning'
+              event_color = 'bg-purple-500'
+            elsif event.entry&.entry_type == 'plan'
+              event_color = 'bg-green-600'
+            elsif event.entry&.entry_type == 'idea'
+              event_color = 'bg-yellow-600'
+            elsif event.event_type == 'reminder'
+              event_color = 'bg-red-600'
+            else
+              event_color = 'bg-[#1a73e8]'
+            end
+          %>
+          {
+            title: <%= event.title.to_json.html_safe %>,
+            time: '<%= event.start_time.in_time_zone(@user.timezone).strftime("%H:%M") %>',
+            endTime: '<%= event.end_time&.in_time_zone(@user.timezone)&.strftime("%H:%M") || "" %>',
+            description: <%= event.description.to_json.html_safe %>,
+            color: '<%= event_color %>',
+            done: <%= event.done || false %>
+          },
+        <% end %>
+      ],
+    <% end %>
+  };
+
+  function showDayEvents(dateStr, dateTitle) {
+    const events = eventsData[dateStr] || [];
+    const modal = document.getElementById('dayEventsModal');
+    const title = document.getElementById('dayEventsTitle');
+    const content = document.getElementById('dayEventsContent');
+
+    title.textContent = dateTitle;
+
+    if (events.length === 0) {
+      content.innerHTML = '<p class="text-gray-500 text-center py-8">Нет событий на этот день</p>';
+    } else {
+      content.innerHTML = events.map(event => `
+        <div class="mb-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center space-x-3 flex-1">
+              <div class="${event.color} w-1 h-12 rounded"></div>
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900 ${event.done ? 'line-through text-gray-500' : ''}">${event.title}</h4>
+                <p class="text-sm text-gray-600 mt-1">
+                  ${event.time}${event.endTime ? ' - ' + event.endTime : ''}
+                </p>
+              </div>
+            </div>
+            ${event.done ? '<span class="text-green-600 text-sm">✓ Выполнено</span>' : ''}
+          </div>
+          ${event.description ? `<p class="text-sm text-gray-600 mt-2 ml-4">${event.description}</p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeDayEventsModal(event) {
+    if (!event || event.target === event.currentTarget) {
+      document.getElementById('dayEventsModal').classList.add('hidden');
+    }
+  }
+
+  // Закрытие по ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDayEventsModal();
+    }
+  });
+</script>
+
+<style>
+  /* Дополнительные стили для плавности */
+  .auto-rows-fr {
+    grid-auto-rows: 1fr;
+  }
+</style>

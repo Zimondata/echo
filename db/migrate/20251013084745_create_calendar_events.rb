@@ -9,7 +9,7 @@ class CreateCalendarEvents < ActiveRecord::Migration[8.0]
       t.datetime :start_time, null: false
       t.datetime :end_time
       t.string :event_type, default: "plan" # plan, note, reminder
-      t.jsonb :metadata, default: {}
+      t.json :metadata, default: {}
 
       t.timestamps
     end
