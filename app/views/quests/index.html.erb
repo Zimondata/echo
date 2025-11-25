@@ -1,188 +1,403 @@
 <% content_for :title, "Мои квесты" %>
 
-<div class="container mx-auto px-4 py-8">
-  <!-- Заголовок -->
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">🎯 Мои квесты</h1>
-    <div class="flex space-x-4">
-      <%= link_to "Дашборд идей", ideas_dashboard_path, class: "bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition" %>
-      <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
-    </div>
-  </div>
+<style>
+  /* === AURI QUESTS PAGE - Linear + Amie Style === */
 
-  <!-- Статистика -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-blue-100 rounded-lg">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+  :root {
+    --bg-darkest: #0a0a0f;
+    --bg-card: #1a1a24;
+    --bg-card-hover: #22222e;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(139, 92, 246, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --violet-500: #8b5cf6;
+    --violet-glow: rgba(139, 92, 246, 0.15);
+    --amber-500: #f59e0b;
+    --blue-500: #3b82f6;
+    --green-500: #10b981;
+    --red-500: #ef4444;
+  }
+
+  .animated-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .animated-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    animation: gradientMove 20s ease-in-out infinite;
+  }
+
+  @keyframes gradientMove {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, 2%) rotate(1deg); }
+    50% { transform: translate(-1%, 3%) rotate(-1deg); }
+    75% { transform: translate(3%, -2%) rotate(2deg); }
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+  .nav-link.active { color: var(--text-primary); background: var(--violet-glow); box-shadow: 0 0 20px var(--violet-glow); }
+
+  .glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s ease;
+  }
+
+  .glass-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+  }
+
+  .stat-card {
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--violet-500));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before { opacity: 1; }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--border-glow); }
+
+  .filter-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .filter-btn:hover { background: rgba(255, 255, 255, 0.05); }
+  .filter-btn.active { background: var(--violet-glow); color: var(--text-primary); border-color: var(--border-glow); }
+
+  .quest-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+  }
+
+  .quest-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-badge.active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+  .status-badge.completed { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
+  .status-badge.paused { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+  .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn.primary {
+    background: linear-gradient(135deg, var(--violet-500), #7c3aed);
+    color: white;
+  }
+
+  .action-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4); }
+
+  .action-btn.secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .action-btn.secondary:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+</style>
+
+<!-- Animated Background -->
+<div class="animated-bg"></div>
+
+<div class="min-h-screen w-full relative">
+
+  <!-- === HEADER === -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
+    <div class="w-full px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+        <div class="flex items-center gap-8">
+          <a href="/" class="text-2xl font-bold gradient-text">Auri</a>
+          <nav class="hidden md:flex items-center gap-1">
+            <%= link_to dashboard_path, class: "nav-link" do %>Dashboard<% end %>
+            <%= link_to diary_entries_path, class: "nav-link" do %>Дневник<% end %>
+            <%= link_to ideas_entries_path, class: "nav-link" do %>Идеи<% end %>
+            <%= link_to plans_entries_path, class: "nav-link" do %>Планы<% end %>
+            <%= link_to nutrition_entries_path, class: "nav-link" do %>Здоровье<% end %>
+            <%= link_to calendar_events_path, class: "nav-link" do %>Календарь<% end %>
+            <%= link_to quests_path, class: "nav-link active" do %>Квесты<% end %>
+          </nav>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Всего квестов</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:total] %></p>
+        <div class="flex items-center gap-3">
+          <%= link_to ideas_dashboard_path, class: "action-btn secondary" do %>
+            💡 Идеи
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- === MAIN CONTENT === -->
+  <div class="w-full px-6 lg:px-8 py-8 max-w-6xl mx-auto">
+
+    <!-- Page Header -->
+    <div class="mb-8 animate-fade-in">
+      <h1 class="text-3xl font-bold text-white mb-2">🎯 Мои квесты</h1>
+      <p class="text-zinc-500">Структурированная работа над идеями</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--blue-500); animation-delay: 0.1s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-blue-500/20">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white"><%= @stats[:total] %></p>
+            <p class="text-sm text-zinc-500">Всего</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--green-500); animation-delay: 0.15s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-green-500/20">
+            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white"><%= @stats[:active] %></p>
+            <p class="text-sm text-zinc-500">Активных</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--violet-500); animation-delay: 0.2s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-violet-500/20">
+            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white"><%= @stats[:completed] %></p>
+            <p class="text-sm text-zinc-500">Завершено</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--amber-500); animation-delay: 0.25s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-amber-500/20">
+            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-white"><%= @stats[:avg_completion] %>%</p>
+            <p class="text-sm text-zinc-500">Прогресс</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-green-100 rounded-lg">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Активных</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:active] %></p>
-        </div>
-      </div>
+    <!-- Filters -->
+    <div class="mb-8 flex flex-wrap gap-2 animate-fade-in" style="animation-delay: 0.3s; opacity: 0;">
+      <%= link_to quests_path, class: "filter-btn #{params[:status].blank? ? 'active' : 'text-zinc-400'}" do %>
+        Все
+      <% end %>
+      <%= link_to quests_path(status: 'active'), class: "filter-btn #{params[:status] == 'active' ? 'active' : 'text-zinc-400'}" do %>
+        🚀 Активные
+      <% end %>
+      <%= link_to quests_path(status: 'completed'), class: "filter-btn #{params[:status] == 'completed' ? 'active' : 'text-zinc-400'}" do %>
+        ✅ Завершенные
+      <% end %>
+      <%= link_to quests_path(status: 'paused'), class: "filter-btn #{params[:status] == 'paused' ? 'active' : 'text-zinc-400'}" do %>
+        ⏸️ Приостановленные
+      <% end %>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-purple-100 rounded-lg">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Завершенных</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:completed] %></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-yellow-100 rounded-lg">
-          <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Средний прогресс</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:avg_completion] %>%</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Фильтры -->
-  <div class="mb-6">
-    <div class="flex space-x-2">
-      <%= link_to "Все", quests_path, 
-          class: "px-4 py-2 rounded-lg transition #{params[:status].blank? ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
-      <%= link_to "Активные", quests_path(status: 'active'), 
-          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
-      <%= link_to "Завершенные", quests_path(status: 'completed'), 
-          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'completed' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
-      <%= link_to "Приостановленные", quests_path(status: 'paused'), 
-          class: "px-4 py-2 rounded-lg transition #{params[:status] == 'paused' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" %>
-    </div>
-  </div>
-
-  <!-- Список квестов -->
-  <div class="space-y-6">
+    <!-- Quests List -->
     <% if @quests.any? %>
-      <% @quests.each do |quest| %>
-        <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition">
-          <div class="p-6">
-            <div class="flex justify-between items-start mb-4">
+      <div class="space-y-4">
+        <% @quests.each_with_index do |quest, index| %>
+          <div class="quest-card animate-fade-in" style="animation-delay: <%= 0.35 + (index * 0.05) %>s; opacity: 0;">
+            <div class="flex items-start justify-between gap-6">
               <div class="flex-1">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">
-                  <%= link_to quest.title, quest_path(quest), class: "hover:text-blue-600 transition" %>
-                </h3>
-                <p class="text-gray-600 mb-4"><%= quest.description %></p>
-                
-                <!-- Теги и статусы -->
-                <div class="flex items-center space-x-4 text-sm">
-                  <span class="px-3 py-1 bg-<%= quest.status == 'active' ? 'green' : quest.status == 'completed' ? 'purple' : quest.status == 'paused' ? 'yellow' : 'red' %>-100 text-<%= quest.status == 'active' ? 'green' : quest.status == 'completed' ? 'purple' : quest.status == 'paused' ? 'yellow' : 'red' %>-800 rounded-full">
+                <div class="flex items-center gap-3 mb-3">
+                  <h3 class="text-xl font-semibold text-white hover:text-violet-400 transition-colors">
+                    <%= link_to quest.title, quest_path(quest) %>
+                  </h3>
+                  <span class="status-badge <%= quest.status %>">
                     <%= quest.status_display %>
                   </span>
-                  <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full">
+                </div>
+
+                <p class="text-zinc-400 mb-4"><%= quest.description %></p>
+
+                <div class="flex flex-wrap items-center gap-3 text-sm">
+                  <span class="px-3 py-1 rounded-full bg-white/5 text-zinc-400">
                     Приоритет: <%= quest.priority %>
                   </span>
-                  <span class="text-gray-500">
+                  <span class="text-zinc-600">
                     Создан: <%= quest.created_at.strftime("%d.%m.%Y") %>
                   </span>
                 </div>
-              </div>
-              
-              <!-- Прогресс -->
-              <div class="text-right ml-6">
-                <div class="text-2xl font-bold text-gray-900 mb-2">
-                  <%= quest.completion_percentage %>%
-                </div>
-                <div class="w-24 bg-gray-200 rounded-full h-2">
-                  <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                       style="width: <%= quest.completion_percentage %>%"></div>
-                </div>
-                <div class="text-sm text-gray-500 mt-1">
-                  <%= quest.completed_steps_count %>/<%= quest.total_steps_count %> задач
-                </div>
-              </div>
-            </div>
 
-            <!-- Следующая задача -->
-            <% if quest.next_task.present? %>
-              <div class="bg-blue-50 rounded-lg p-4 mb-4">
-                <h4 class="font-medium text-blue-900 mb-1">Следующая задача:</h4>
-                <p class="text-blue-800"><%= quest.next_task['task'] %></p>
-                <% if quest.next_task['priority'] == 'high' %>
-                  <span class="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
-                    🔥 Высокий приоритет
-                  </span>
+                <% if quest.next_task.present? %>
+                  <div class="mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <h4 class="text-sm font-medium text-blue-400 mb-1">Следующая задача:</h4>
+                    <p class="text-white"><%= quest.next_task['task'] %></p>
+                    <% if quest.next_task['priority'] == 'high' %>
+                      <span class="inline-block mt-2 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-lg border border-red-500/30">
+                        🔥 Высокий приоритет
+                      </span>
+                    <% end %>
+                  </div>
                 <% end %>
-              </div>
-            <% end %>
 
-            <!-- Действия -->
-            <div class="flex justify-between items-center">
-              <div class="flex space-x-3">
-                <%= link_to "Посмотреть", quest_path(quest), 
-                    class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm" %>
-                
-                <% if quest.status == 'active' %>
-                  <%= link_to "Приостановить", quest_path(quest, new_status: 'paused'), 
-                      method: :patch, 
-                      action: :update_status,
-                      class: "bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition text-sm",
-                      data: { confirm: "Приостановить этот квест?" } %>
-                <% elsif quest.status == 'paused' %>
-                  <%= link_to "Возобновить", quest_path(quest, new_status: 'active'), 
-                      method: :patch, 
-                      action: :update_status,
-                      class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm",
-                      data: { confirm: "Возобновить этот квест?" } %>
-                <% end %>
+                <div class="mt-4 flex items-center gap-3">
+                  <%= link_to quest_path(quest), class: "action-btn primary" do %>
+                    Открыть
+                  <% end %>
+
+                  <% if quest.status == 'active' %>
+                    <%= link_to quest_path(quest, new_status: 'paused'),
+                        method: :patch,
+                        data: { confirm: "Приостановить этот квест?" },
+                        class: "action-btn secondary" do %>
+                      ⏸️ Пауза
+                    <% end %>
+                  <% elsif quest.status == 'paused' %>
+                    <%= link_to quest_path(quest, new_status: 'active'),
+                        method: :patch,
+                        data: { confirm: "Возобновить этот квест?" },
+                        class: "action-btn secondary" do %>
+                      ▶️ Возобновить
+                    <% end %>
+                  <% end %>
+                </div>
               </div>
-              
-              <div class="text-sm text-gray-500">
-                <% if quest.entry.present? %>
-                  Из идеи: <%= link_to truncate(quest.entry.content, length: 40), ideas_entries_path, class: "text-blue-600 hover:text-blue-800" %>
-                <% end %>
+
+              <!-- Progress -->
+              <div class="text-center flex-shrink-0">
+                <div class="relative w-20 h-20">
+                  <svg class="progress-ring w-20 h-20">
+                    <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none"/>
+                    <circle cx="40" cy="40" r="36" stroke="url(#progressGradient)" stroke-width="6" fill="none"
+                            stroke-dasharray="<%= 226.2 %>"
+                            stroke-dashoffset="<%= 226.2 - (226.2 * quest.completion_percentage / 100) %>"
+                            stroke-linecap="round"/>
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#8b5cf6"/>
+                        <stop offset="100%" stop-color="#ec4899"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-lg font-bold text-white"><%= quest.completion_percentage %>%</span>
+                  </div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-2"><%= quest.completed_steps_count %>/<%= quest.total_steps_count %> задач</p>
               </div>
             </div>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     <% else %>
-      <div class="text-center py-16">
-        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-          <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
+      <!-- Empty State -->
+      <div class="glass-card p-12 text-center animate-fade-in">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
+          <span class="text-4xl">🎯</span>
         </div>
-        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent mb-2">
+        <h3 class="text-xl font-semibold text-white mb-2">
           <%= params[:status].present? ? "Нет квестов с таким статусом" : "Пока нет квестов" %>
         </h3>
-        <p class="text-purple-600 font-medium max-w-md mx-auto mb-6">
+        <p class="text-zinc-500 max-w-md mx-auto mb-6">
           Создавайте квесты из своих идей для структурированной работы над ними
         </p>
-        <%= link_to "Перейти к идеям", ideas_entries_path, 
-            class: "bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all hover:scale-105" %>
+        <%= link_to ideas_entries_path, class: "action-btn primary" do %>
+          💡 Перейти к идеям
+        <% end %>
       </div>
     <% end %>
   </div>

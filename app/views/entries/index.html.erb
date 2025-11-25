@@ -1,132 +1,455 @@
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="md:flex md:items-center md:justify-between">
-    <div class="flex-1 min-w-0">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        <%= 
-          case params[:action]
-          when 'ideas' then '💡 Мои идеи'
-          when 'diary' then '📔 Дневниковые записи'
-          when 'plans' then '📋 Планы'
-          else 'Все записи'
-          end
-        %>
-      </h2>
-      <p class="mt-1 text-sm text-gray-500">
-        Всего найдено: <%= @entries.count %> записей
-      </p>
-    </div>
-    <div class="mt-4 flex md:mt-0 md:ml-4">
-      <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-        ← Назад к Dashboard
-      </a>
-    </div>
-  </div>
+<style>
+  /* === AURI ENTRIES PAGE - Linear + Amie Style === */
 
-  <!-- Navigation Tabs -->
-  <div class="border-b border-gray-200">
-    <nav class="-mb-px flex space-x-8">
-      <%= link_to entries_path, class: "#{params[:action] == 'index' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
-        📝 Все записи
-      <% end %>
-      <%= link_to ideas_entries_path, class: "#{params[:action] == 'ideas' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
-        💡 Идеи
-      <% end %>
-      <%= link_to diary_entries_path, class: "#{params[:action] == 'diary' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
-        📔 Дневник
-      <% end %>
-      <%= link_to plans_entries_path, class: "#{params[:action] == 'plans' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" do %>
-        📋 Планы
-      <% end %>
-    </nav>
-  </div>
+  :root {
+    --bg-darkest: #0a0a0f;
+    --bg-dark: #12121a;
+    --bg-card: #1a1a24;
+    --bg-card-hover: #22222e;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(139, 92, 246, 0.3);
 
-  <!-- Entries Grid -->
-  <% if @entries.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <% @entries.each do |entry| %>
-        <div class="entry-card bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 border-l-4 <%= entry.entry_type == 'idea' ? 'border-yellow-400' : entry.entry_type == 'diary' ? 'border-blue-400' : 'border-green-400' %>">
-          <!-- Entry Header -->
-          <div class="px-6 py-4 border-b border-gray-200 <%= entry.entry_type == 'idea' ? 'bg-yellow-50' : entry.entry_type == 'diary' ? 'bg-blue-50' : 'bg-green-50' %>">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= entry.entry_type == 'idea' ? 'bg-yellow-100 text-yellow-800' : entry.entry_type == 'diary' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' %>">
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+
+    --violet-500: #8b5cf6;
+    --violet-600: #7c3aed;
+    --violet-glow: rgba(139, 92, 246, 0.15);
+
+    --amber-500: #f59e0b;
+    --amber-glow: rgba(245, 158, 11, 0.15);
+
+    --blue-500: #3b82f6;
+    --blue-glow: rgba(59, 130, 246, 0.15);
+
+    --green-500: #10b981;
+    --green-glow: rgba(16, 185, 129, 0.15);
+  }
+
+  /* Animated Background */
+  .animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .animated-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    animation: gradientMove 20s ease-in-out infinite;
+  }
+
+  @keyframes gradientMove {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, 2%) rotate(1deg); }
+    50% { transform: translate(-1%, 3%) rotate(-1deg); }
+    75% { transform: translate(3%, -2%) rotate(2deg); }
+  }
+
+  /* Glass Card */
+  .glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s ease;
+  }
+
+  .glass-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Nav Link */
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-link.active {
+    color: var(--text-primary);
+    background: var(--violet-glow);
+    box-shadow: 0 0 20px var(--violet-glow);
+  }
+
+  /* Tab Styles */
+  .tab-link {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .tab-link.active {
+    color: var(--text-primary);
+    background: var(--violet-glow);
+    border: 1px solid var(--border-glow);
+  }
+
+  /* Entry Card */
+  .entry-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--accent-color, var(--violet-500));
+  }
+
+  .entry-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .entry-card.idea {
+    --accent-color: var(--amber-500);
+  }
+
+  .entry-card.diary {
+    --accent-color: var(--blue-500);
+  }
+
+  .entry-card.plan {
+    --accent-color: var(--green-500);
+  }
+
+  /* Type Badge */
+  .type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .type-badge.idea {
+    background: var(--amber-glow);
+    color: var(--amber-500);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .type-badge.diary {
+    background: var(--blue-glow);
+    color: var(--blue-500);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .type-badge.plan {
+    background: var(--green-glow);
+    color: var(--green-500);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  /* Priority Badge */
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* Tag Styles */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--violet-500);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+  .stagger-2 { animation-delay: 0.15s; opacity: 0; }
+  .stagger-3 { animation-delay: 0.2s; opacity: 0; }
+  .stagger-4 { animation-delay: 0.25s; opacity: 0; }
+  .stagger-5 { animation-delay: 0.3s; opacity: 0; }
+  .stagger-6 { animation-delay: 0.35s; opacity: 0; }
+</style>
+
+<!-- Animated Background -->
+<div class="animated-bg"></div>
+
+<div class="min-h-screen w-full relative">
+
+  <!-- === HEADER === -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
+    <div class="w-full px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+
+        <!-- Left: Logo & Nav -->
+        <div class="flex items-center gap-8">
+          <a href="/" class="text-2xl font-bold gradient-text">Auri</a>
+
+          <nav class="hidden md:flex items-center gap-1">
+            <%= link_to dashboard_path, class: "nav-link" do %>
+              Dashboard
+            <% end %>
+            <%= link_to diary_entries_path, class: "nav-link #{params[:action] == 'diary' ? 'active' : ''}" do %>
+              Дневник
+            <% end %>
+            <%= link_to ideas_entries_path, class: "nav-link #{params[:action] == 'ideas' ? 'active' : ''}" do %>
+              Идеи
+            <% end %>
+            <%= link_to plans_entries_path, class: "nav-link #{params[:action] == 'plans' ? 'active' : ''}" do %>
+              Планы
+            <% end %>
+            <%= link_to nutrition_entries_path, class: "nav-link" do %>
+              Здоровье
+            <% end %>
+            <%= link_to calendar_events_path, class: "nav-link" do %>
+              Календарь
+            <% end %>
+          </nav>
+        </div>
+
+        <!-- Right: Date -->
+        <div class="flex items-center gap-4">
+          <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-sm font-medium text-zinc-300">
+              <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- === MAIN CONTENT === -->
+  <div class="w-full px-6 lg:px-8 py-8">
+
+    <!-- Page Header -->
+    <div class="mb-8 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-white mb-2">
+            <%=
+              case params[:action]
+              when 'ideas' then '💡 Мои идеи'
+              when 'diary' then '📔 Дневник'
+              when 'plans' then '📋 Планы'
+              else '📝 Все записи'
+              end
+            %>
+          </h1>
+          <p class="text-zinc-500">
+            Найдено: <span class="text-violet-400 font-medium"><%= @entries.count %></span> записей
+          </p>
+        </div>
+
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Назад к Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="mb-8 animate-fade-in" style="animation-delay: 0.1s; opacity: 0;">
+      <div class="flex flex-wrap gap-2">
+        <%= link_to entries_path, class: "tab-link #{params[:action] == 'index' ? 'active' : ''}" do %>
+          <span>📝</span>
+          <span>Все записи</span>
+        <% end %>
+        <%= link_to ideas_entries_path, class: "tab-link #{params[:action] == 'ideas' ? 'active' : ''}" do %>
+          <span>💡</span>
+          <span>Идеи</span>
+        <% end %>
+        <%= link_to diary_entries_path, class: "tab-link #{params[:action] == 'diary' ? 'active' : ''}" do %>
+          <span>📔</span>
+          <span>Дневник</span>
+        <% end %>
+        <%= link_to plans_entries_path, class: "tab-link #{params[:action] == 'plans' ? 'active' : ''}" do %>
+          <span>📋</span>
+          <span>Планы</span>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Entries Grid -->
+    <% if @entries.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @entries.each_with_index do |entry, index| %>
+          <div class="entry-card <%= entry.entry_type %> animate-fade-in stagger-<%= (index % 6) + 1 %>">
+
+            <!-- Entry Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="type-badge <%= entry.entry_type %>">
                   <%= entry.entry_type == 'idea' ? '💡 Идея' : entry.entry_type == 'diary' ? '📔 Дневник' : '📋 План' %>
                 </span>
+
                 <% if entry.child_entries.any? %>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    +<%= entry.child_entries.count %> размышлений
+                  <span class="type-badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3);">
+                    +<%= entry.child_entries.count %>
                   </span>
                 <% end %>
               </div>
-              <span class="text-xs text-gray-500">
-                <%= entry.created_at.in_time_zone(@user.timezone).strftime('%d.%m.%Y %H:%M') %>
+
+              <span class="text-xs text-zinc-600">
+                <%= entry.created_at.in_time_zone(@user&.timezone || 'UTC').strftime('%d.%m.%Y') %>
               </span>
             </div>
-          </div>
-          
-          <!-- Entry Content -->
-          <div class="px-6 py-4">
-            <p class="text-sm text-gray-800 leading-relaxed">
-              <%= entry.content.length > 200 ? entry.content.truncate(200) : entry.content %>
-            </p>
-          </div>
-          
-          <!-- Entry Footer -->
-          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="text-xs text-gray-500">
-                  Приоритет: <%= entry.priority || 5 %>/10
+
+            <!-- Entry Content -->
+            <div class="mb-4">
+              <p class="text-zinc-200 text-sm leading-relaxed line-clamp-4">
+                <%= entry.content.length > 200 ? entry.content.truncate(200) : entry.content %>
+              </p>
+            </div>
+
+            <!-- Entry Footer -->
+            <div class="flex items-center justify-between pt-4 border-t border-white/5">
+              <div class="flex items-center gap-3">
+                <span class="priority-badge">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                  </svg>
+                  <%= entry.priority || 5 %>/10
                 </span>
+
                 <% if entry.calendar_event %>
-                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-indigo-100 text-indigo-800">
-                    📅 В календаре
+                  <span class="priority-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    В календаре
                   </span>
                 <% end %>
               </div>
-              <div class="flex items-center space-x-1">
+
+              <div class="flex items-center gap-1">
                 <% if entry.tags.present? %>
                   <% entry.tags.first(2).each do |tag| %>
-                    <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-                      #<%= tag %>
-                    </span>
+                    <span class="tag">#<%= tag %></span>
                   <% end %>
                 <% end %>
               </div>
             </div>
           </div>
+        <% end %>
+      </div>
+    <% else %>
+      <!-- Empty State -->
+      <div class="glass-card p-12 text-center animate-fade-in">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
+          <span class="text-4xl">
+            <%=
+              case params[:action]
+              when 'ideas' then '💡'
+              when 'diary' then '📔'
+              when 'plans' then '📋'
+              else '📝'
+              end
+            %>
+          </span>
         </div>
-      <% end %>
-    </div>
-  <% else %>
-    <!-- Empty State -->
-    <div class="text-center py-12">
-      <div class="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <span class="text-2xl">
-          <%= 
+        <h3 class="text-xl font-semibold text-white mb-2">
+          <%=
             case params[:action]
-            when 'ideas' then '💡'
-            when 'diary' then '📔'
-            when 'plans' then '📋'
-            else '📝'
+            when 'ideas' then 'Пока нет идей'
+            when 'diary' then 'Пока нет дневниковых записей'
+            when 'plans' then 'Пока нет планов'
+            else 'Пока нет записей'
             end
           %>
-        </span>
+        </h3>
+        <p class="text-zinc-500 max-w-md mx-auto mb-6">
+          Отправьте боту свои мысли в Telegram, и они появятся здесь автоматически
+        </p>
+        <a href="https://t.me/auriAI_bot" target="_blank"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-medium hover:from-violet-500 hover:to-violet-400 transition-all">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
+          </svg>
+          Открыть бота
+        </a>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">
-        <%= 
-          case params[:action]
-          when 'ideas' then 'Пока нет идей'
-          when 'diary' then 'Пока нет дневниковых записей'
-          when 'plans' then 'Пока нет планов'
-          else 'Пока нет записей'
-          end
-        %>
-      </h3>
-      <p class="text-sm text-gray-500 max-w-sm mx-auto">
-        Отправьте боту свои мысли, и они появятся здесь
-      </p>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </div>

@@ -1,313 +1,539 @@
-<% content_for :title, "Дашборд идей" %>
+<% content_for :title, "Smart Ideas Dashboard" %>
 
-<div class="container mx-auto px-4 py-8">
-  <!-- Заголовок -->
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">🧠 Smart Ideas Dashboard</h1>
-    <div class="flex space-x-3">
-      <%= link_to smart_priority_analyze_all_path, 
-          class: "bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all hover:scale-105 flex items-center space-x-2",
-          data: { 
-            "turbo-method": "post",
-            "turbo-confirm": "Запустить AI анализ всех идей? Это может занять несколько минут." 
-          } do %>
-        <span>🧠</span>
-        <span>AI Анализ</span>
-      <% end %>
-      <%= link_to "Все идеи", ideas_entries_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition" %>
-    </div>
-  </div>
+<style>
+  /* === AURI IDEAS DASHBOARD - Linear + Amie Style === */
 
-  <!-- Статистика -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-blue-100 rounded-lg">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-          </svg>
+  :root {
+    --bg-darkest: #0a0a0f;
+    --bg-card: #1a1a24;
+    --bg-card-hover: #22222e;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(139, 92, 246, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --violet-500: #8b5cf6;
+    --violet-glow: rgba(139, 92, 246, 0.15);
+    --amber-500: #f59e0b;
+    --amber-glow: rgba(245, 158, 11, 0.15);
+    --blue-500: #3b82f6;
+    --blue-glow: rgba(59, 130, 246, 0.15);
+    --green-500: #10b981;
+    --green-glow: rgba(16, 185, 129, 0.15);
+    --red-500: #ef4444;
+    --red-glow: rgba(239, 68, 68, 0.15);
+  }
+
+  .animated-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .animated-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    animation: gradientMove 20s ease-in-out infinite;
+  }
+
+  @keyframes gradientMove {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, 2%) rotate(1deg); }
+    50% { transform: translate(-1%, 3%) rotate(-1deg); }
+    75% { transform: translate(3%, -2%) rotate(2deg); }
+  }
+
+  .glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s ease;
+  }
+
+  .glass-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-link.active {
+    color: var(--text-primary);
+    background: var(--violet-glow);
+    box-shadow: 0 0 20px var(--violet-glow);
+  }
+
+  .stat-card {
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--violet-500));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before { opacity: 1; }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-glow);
+  }
+
+  .idea-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .idea-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-glow);
+    transform: translateX(4px);
+  }
+
+  .idea-card.critical {
+    border-left: 3px solid var(--red-500);
+    background: rgba(239, 68, 68, 0.05);
+  }
+
+  .idea-card.high {
+    border-left: 3px solid var(--amber-500);
+    background: rgba(245, 158, 11, 0.05);
+  }
+
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .priority-badge.critical {
+    background: var(--red-glow);
+    color: var(--red-500);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .priority-badge.high {
+    background: var(--amber-glow);
+    color: var(--amber-500);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .action-btn {
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  .action-btn.primary {
+    background: linear-gradient(135deg, var(--violet-500), var(--violet-600));
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .action-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .animate-pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+</style>
+
+<!-- Animated Background -->
+<div class="animated-bg"></div>
+
+<div class="min-h-screen w-full relative">
+
+  <!-- === HEADER === -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
+    <div class="w-full px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+        <div class="flex items-center gap-8">
+          <a href="/" class="text-2xl font-bold gradient-text">Auri</a>
+          <nav class="hidden md:flex items-center gap-1">
+            <%= link_to dashboard_path, class: "nav-link" do %>Dashboard<% end %>
+            <%= link_to diary_entries_path, class: "nav-link" do %>Дневник<% end %>
+            <%= link_to ideas_entries_path, class: "nav-link active" do %>Идеи<% end %>
+            <%= link_to plans_entries_path, class: "nav-link" do %>Планы<% end %>
+            <%= link_to nutrition_entries_path, class: "nav-link" do %>Здоровье<% end %>
+            <%= link_to calendar_events_path, class: "nav-link" do %>Календарь<% end %>
+          </nav>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Всего идей</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:total_ideas] %></p>
+        <div class="flex items-center gap-3">
+          <%= link_to smart_priority_analyze_all_path,
+              class: "action-btn primary",
+              data: {
+                "turbo-method": "post",
+                "turbo-confirm": "Запустить AI анализ всех идей? Это может занять несколько минут."
+              } do %>
+            <span>🧠</span>
+            <span>AI Анализ</span>
+          <% end %>
+          <%= link_to ideas_entries_path, class: "nav-link" do %>
+            Все идеи →
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- === MAIN CONTENT === -->
+  <div class="w-full px-6 lg:px-8 py-8">
+
+    <!-- Page Header -->
+    <div class="mb-8 animate-fade-in">
+      <h1 class="text-3xl font-bold text-white mb-2">🧠 Smart Ideas Dashboard</h1>
+      <p class="text-zinc-500">AI-управление идеями, исследованиями и квестами</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--blue-500); animation-delay: 0.1s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-blue-500/20">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-zinc-500">Всего идей</p>
+            <p class="text-2xl font-bold text-white"><%= @stats[:total_ideas] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--green-500); animation-delay: 0.15s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-green-500/20">
+            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-zinc-500">С исследованием</p>
+            <p class="text-2xl font-bold text-white"><%= @stats[:with_research] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--violet-500); animation-delay: 0.2s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-violet-500/20">
+            <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-zinc-500">С квестами</p>
+            <p class="text-2xl font-bold text-white"><%= @stats[:with_quests] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card animate-fade-in" style="--accent-color: var(--red-500); animation-delay: 0.25s; opacity: 0;">
+        <div class="flex items-center gap-4">
+          <div class="p-3 rounded-xl bg-red-500/20">
+            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-zinc-500">Высокий приоритет</p>
+            <p class="text-2xl font-bold text-white"><%= @stats[:high_priority] %></p>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-green-100 rounded-lg">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">С исследованием</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:with_research] %></p>
-        </div>
-      </div>
-    </div>
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-purple-100 rounded-lg">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
+      <!-- Priority Ideas -->
+      <div class="glass-card overflow-hidden animate-fade-in" style="animation-delay: 0.3s; opacity: 0;">
+        <div class="p-5 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-red-500/20">
+              <span class="text-lg">🔥</span>
+            </div>
+            <h2 class="text-lg font-semibold text-white">Приоритетные идеи</h2>
+          </div>
         </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">С квестами</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:with_quests] %></p>
-        </div>
-      </div>
-    </div>
+        <div class="p-4 max-h-[400px] overflow-y-auto">
+          <% if @priority_ideas.any? %>
+            <div class="space-y-3">
+              <% @priority_ideas.each do |idea| %>
+                <% ai_analysis = idea.metadata&.dig('ai_analysis') %>
+                <% priority_score = ai_analysis&.dig('priority_score') %>
+                <% priority_level = ai_analysis&.dig('priority_level') %>
 
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <div class="flex items-center">
-        <div class="p-2 bg-red-100 rounded-lg">
-          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
-          </svg>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-600">Высокий приоритет</p>
-          <p class="text-2xl font-bold text-gray-900"><%= @stats[:high_priority] %></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Приоритетные идеи -->
-    <div class="bg-white rounded-xl shadow-sm border">
-      <div class="p-6 border-b">
-        <h2 class="text-lg font-semibold text-gray-900">🔥 Приоритетные идеи</h2>
-      </div>
-      <div class="p-6">
-        <% if @priority_ideas.any? %>
-          <div class="space-y-4">
-            <% @priority_ideas.each do |idea| %>
-              <% ai_analysis = idea.metadata&.dig('ai_analysis') %>
-              <% priority_score = ai_analysis&.dig('priority_score') %>
-              <% priority_level = ai_analysis&.dig('priority_level') %>
-              
-              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer <%= priority_level == 'critical' ? 'border-red-300 bg-red-50' : priority_level == 'high' ? 'border-amber-300 bg-amber-50' : '' %>" onclick="toggleIdeaContent('<%= idea.id %>')">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <!-- Заголовок с AI индикатором -->
-                    <div class="flex items-center space-x-2 mb-2">
-                      <h3 class="font-medium text-gray-900 flex-1">
+                <div class="idea-card <%= priority_level %>" onclick="toggleIdeaContent('<%= idea.id %>')">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-2">
+                        <% if priority_level == 'critical' %>
+                          <span class="priority-badge critical animate-pulse">🔥 КРИТИЧНО</span>
+                        <% elsif priority_level == 'high' %>
+                          <span class="priority-badge high">⭐ ВАЖНО</span>
+                        <% end %>
+                        <% if priority_score %>
+                          <span class="text-xs font-bold px-2 py-1 rounded-full bg-violet-500/20 text-violet-400">
+                            🧠 <%= priority_score.round(1) %>
+                          </span>
+                        <% end %>
+                      </div>
+                      <p class="text-zinc-200 text-sm leading-relaxed">
                         <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
                         <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
                         <% if idea.content.length > 80 %>
-                          <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
+                          <span class="text-violet-400 text-xs ml-1 idea-toggle-<%= idea.id %>">далее...</span>
                         <% end %>
-                      </h3>
-                      <% if priority_score %>
-                        <div class="flex items-center space-x-1">
-                          <span class="text-xs font-bold px-2 py-1 rounded-full <%= priority_level == 'critical' ? 'bg-red-600 text-white' : priority_level == 'high' ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white' %>">
-                            🧠 <%= priority_score.round(1) %>
-                          </span>
-                        </div>
-                      <% end %>
-                    </div>
-                    
-                    <!-- Метаданные и индикаторы -->
-                    <div class="flex items-center space-x-3 text-sm text-gray-500 mb-2">
-                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                        <%= idea.idea_priority_display || 'Не указан' %>
-                      </span>
-                      <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
-                      
-                      <% if priority_level == 'critical' %>
-                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs animate-pulse">
-                          🔥 КРИТИЧНО
-                        </span>
-                      <% elsif priority_level == 'high' %>
-                        <span class="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">
-                          ⭐ ВАЖНО
-                        </span>
-                      <% end %>
-                    </div>
-                    
-                    <!-- AI рекомендации -->
-                    <% if ai_analysis&.dig('recommendations')&.any? %>
-                      <% top_recommendation = ai_analysis['recommendations'].first %>
-                      <div class="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                        🤖 <%= top_recommendation['message'] %>
+                      </p>
+                      <div class="flex items-center gap-3 mt-2 text-xs text-zinc-500">
+                        <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                        <% if ai_analysis&.dig('recommendations')&.any? %>
+                          <span class="text-blue-400">🤖 <%= ai_analysis['recommendations'].first['message'].truncate(40) %></span>
+                        <% end %>
                       </div>
-                    <% end %>
-                  </div>
-                  
-                  <div class="flex flex-col space-y-1 ml-4">
-                    <!-- AI анализ приоритета -->
-                    <% unless priority_score %>
-                      <%= link_to smart_priority_analyze_idea_path(idea), 
-                          class: "text-purple-600 hover:text-purple-800 p-1", 
-                          title: "AI анализ приоритета",
-                          data: { 
-                            "turbo-method": "post",
-                            "turbo-confirm": "Проанализировать приоритет идеи с помощью AI?" 
-                          } do %>
-                        🧠
+                    </div>
+                    <div class="flex flex-col gap-1">
+                      <% unless priority_score %>
+                        <%= link_to smart_priority_analyze_idea_path(idea),
+                            class: "action-btn text-violet-400", title: "AI анализ",
+                            data: { "turbo-method": "post", "turbo-confirm": "Проанализировать?" } do %>
+                          🧠
+                        <% end %>
+                      <% else %>
+                        <%= link_to smart_priority_show_analysis_path(idea), class: "action-btn text-violet-400", title: "Подробный анализ" do %>
+                          📊
+                        <% end %>
                       <% end %>
-                    <% else %>
-                      <%= link_to smart_priority_show_analysis_path(idea), 
-                          class: "text-purple-600 hover:text-purple-800 p-1", 
-                          title: "Подробный AI анализ" do %>
-                        📊
+                      <% unless idea.research_data.present? %>
+                        <%= link_to research_idea_path(idea),
+                            class: "action-btn text-blue-400", title: "Research",
+                            data: { "turbo-method": "post", "turbo-confirm": "Провести исследование?" } do %>
+                          🔬
+                        <% end %>
+                      <% else %>
+                        <%= link_to show_research_path(idea), class: "action-btn text-green-400", title: "Посмотреть анализ" do %>
+                          📋
+                        <% end %>
                       <% end %>
-                    <% end %>
-                    
-                    <!-- Research -->
-                    <% unless idea.research_data.present? %>
-                      <%= link_to research_idea_path(idea), 
-                          class: "text-blue-600 hover:text-blue-800 p-1", 
-                          title: "Сделать research",
-                          data: { 
-                            "turbo-method": "post",
-                            "turbo-confirm": "Провести AI-исследование идеи?" 
-                          } do %>
-                        🔬
+                      <% unless idea.quest_generated? %>
+                        <%= link_to generate_quest_path(idea),
+                            class: "action-btn text-amber-400", title: "Создать квест",
+                            data: { "turbo-method": "post", "turbo-confirm": "Создать квест?" } do %>
+                          ⚡
+                        <% end %>
+                      <% else %>
+                        <span class="action-btn text-green-400" title="Квест создан">✅</span>
                       <% end %>
-                    <% else %>
-                      <%= link_to show_research_path(idea), 
-                          class: "text-green-600 hover:text-green-800 p-1", 
-                          title: "Посмотреть анализ" do %>
-                        📋
-                      <% end %>
-                    <% end %>
-                    
-                    <!-- Quest -->
-                    <% unless idea.quest_generated? %>
-                      <%= link_to generate_quest_path(idea), 
-                          class: "text-amber-600 hover:text-amber-800 p-1", 
-                          title: "Создать квест",
-                          data: { 
-                            "turbo-method": "post",
-                            "turbo-confirm": "Создать квест из идеи?" 
-                          } do %>
-                        ⚡
-                      <% end %>
-                    <% else %>
-                      <span class="text-green-600 p-1" title="Квест создан">✅</span>
-                    <% end %>
+                    </div>
                   </div>
                 </div>
-              </div>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="text-gray-500 text-center py-8">Нет приоритетных идей</p>
-        <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12">
+              <div class="text-4xl mb-3">🎯</div>
+              <p class="text-zinc-500">Нет приоритетных идей</p>
+            </div>
+          <% end %>
+        </div>
       </div>
-    </div>
 
-    <!-- Готовые к исследованию -->
-    <div class="bg-white rounded-xl shadow-sm border">
-      <div class="p-6 border-b">
-        <h2 class="text-lg font-semibold text-gray-900">🔬 Готовые к исследованию</h2>
-      </div>
-      <div class="p-6">
-        <% if @research_ready.any? %>
-          <div class="space-y-4">
-            <% @research_ready.each do |idea| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="toggleIdeaContent('<%= idea.id %>')">
-                <h3 class="font-medium text-gray-900 mb-2">
-                  <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
-                  <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
-                  <% if idea.content.length > 80 %>
-                    <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
-                  <% end %>
-                </h3>
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-500"><%= idea.created_at.strftime("%d.%m.%Y") %></span>
-                  <%= link_to research_idea_path(idea), 
-                      class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition",
-                      data: { 
-                        "turbo-method": "post",
-                        "turbo-confirm": "Провести AI-исследование идеи?" 
-                      } do %>
-                    🔬 Исследовать
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
+      <!-- Ready for Research -->
+      <div class="glass-card overflow-hidden animate-fade-in" style="animation-delay: 0.35s; opacity: 0;">
+        <div class="p-5 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-blue-500/20">
+              <span class="text-lg">🔬</span>
+            </div>
+            <h2 class="text-lg font-semibold text-white">Готовые к исследованию</h2>
           </div>
-        <% else %>
-          <p class="text-gray-500 text-center py-8">Все идеи исследованы</p>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- Кандидаты в квесты -->
-    <div class="bg-white rounded-xl shadow-sm border">
-      <div class="p-6 border-b">
-        <h2 class="text-lg font-semibold text-gray-900">⚡ Кандидаты в квесты</h2>
-      </div>
-      <div class="p-6">
-        <% if @quest_candidates.any? %>
-          <div class="space-y-4">
-            <% @quest_candidates.each do |idea| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="toggleIdeaContent('<%= idea.id %>')">
-                <h3 class="font-medium text-gray-900 mb-2">
-                  <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
-                  <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
-                  <% if idea.content.length > 80 %>
-                    <span class="text-blue-600 text-sm ml-2 idea-toggle-<%= idea.id %>">читать далее...</span>
-                  <% end %>
-                </h3>
-                <div class="flex justify-between items-center">
-                  <div class="text-sm text-gray-500">
-                    <span><%= idea.created_at.strftime("%d.%m.%Y") %></span>
-                    <% if idea.research_data.present? %>
-                      <span class="text-green-600 ml-2">📊 Исследована</span>
+        </div>
+        <div class="p-4 max-h-[400px] overflow-y-auto">
+          <% if @research_ready.any? %>
+            <div class="space-y-3">
+              <% @research_ready.each do |idea| %>
+                <div class="idea-card" onclick="toggleIdeaContent('<%= idea.id %>')">
+                  <p class="text-zinc-200 text-sm leading-relaxed mb-2">
+                    <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
+                    <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
+                  </p>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs text-zinc-500"><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                    <%= link_to research_idea_path(idea),
+                        class: "action-btn primary text-sm",
+                        data: { "turbo-method": "post", "turbo-confirm": "Провести AI-исследование?" } do %>
+                      🔬 Исследовать
                     <% end %>
                   </div>
-                  <%= link_to generate_quest_path(idea), 
-                      class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition",
-                      data: { 
-                        "turbo-method": "post",
-                        "turbo-confirm": "Создать квест из идеи?" 
-                      } do %>
-                    ⚡ Создать квест
-                  <% end %>
                 </div>
-              </div>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="text-gray-500 text-center py-8">Все квесты созданы</p>
-        <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12">
+              <div class="text-4xl mb-3">✨</div>
+              <p class="text-zinc-500">Все идеи исследованы</p>
+            </div>
+          <% end %>
+        </div>
       </div>
-    </div>
 
-    <!-- Последние квесты -->
-    <div class="bg-white rounded-xl shadow-sm border">
-      <div class="p-6 border-b">
-        <h2 class="text-lg font-semibold text-gray-900">🎯 Последние квесты</h2>
-      </div>
-      <div class="p-6">
-        <% if @recent_quests.any? %>
-          <div class="space-y-4">
-            <% @recent_quests.each do |quest| %>
-              <div class="border rounded-lg p-4 hover:shadow-md transition">
-                <h3 class="font-medium text-gray-900 mb-2"><%= quest.title %></h3>
-                <div class="flex justify-between items-center">
-                  <div class="text-sm text-gray-500">
-                    <span>Прогресс: <%= quest.steps.dig('progress', 'completion_percentage') || 0 %>%</span>
-                  </div>
-                  <%= link_to quest_path(quest), 
-                      class: "bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition" do %>
-                    Открыть
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
+      <!-- Quest Candidates -->
+      <div class="glass-card overflow-hidden animate-fade-in" style="animation-delay: 0.4s; opacity: 0;">
+        <div class="p-5 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-amber-500/20">
+              <span class="text-lg">⚡</span>
+            </div>
+            <h2 class="text-lg font-semibold text-white">Кандидаты в квесты</h2>
           </div>
-        <% else %>
-          <p class="text-gray-500 text-center py-8">Нет квестов</p>
-        <% end %>
+        </div>
+        <div class="p-4 max-h-[400px] overflow-y-auto">
+          <% if @quest_candidates.any? %>
+            <div class="space-y-3">
+              <% @quest_candidates.each do |idea| %>
+                <div class="idea-card" onclick="toggleIdeaContent('<%= idea.id %>')">
+                  <p class="text-zinc-200 text-sm leading-relaxed mb-2">
+                    <span class="idea-preview-<%= idea.id %>"><%= truncate(idea.content, length: 80) %></span>
+                    <span class="idea-full-<%= idea.id %> hidden"><%= idea.content %></span>
+                  </p>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs text-zinc-500"><%= idea.created_at.strftime("%d.%m.%Y") %></span>
+                      <% if idea.research_data.present? %>
+                        <span class="text-xs text-green-400">📊 Исследована</span>
+                      <% end %>
+                    </div>
+                    <%= link_to generate_quest_path(idea),
+                        class: "action-btn primary text-sm",
+                        data: { "turbo-method": "post", "turbo-confirm": "Создать квест?" } do %>
+                      ⚡ Создать квест
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12">
+              <div class="text-4xl mb-3">🎮</div>
+              <p class="text-zinc-500">Все квесты созданы</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Recent Quests -->
+      <div class="glass-card overflow-hidden animate-fade-in" style="animation-delay: 0.45s; opacity: 0;">
+        <div class="p-5 border-b border-white/5">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-violet-500/20">
+              <span class="text-lg">🎯</span>
+            </div>
+            <h2 class="text-lg font-semibold text-white">Последние квесты</h2>
+          </div>
+        </div>
+        <div class="p-4 max-h-[400px] overflow-y-auto">
+          <% if @recent_quests.any? %>
+            <div class="space-y-3">
+              <% @recent_quests.each do |quest| %>
+                <div class="idea-card">
+                  <h4 class="text-white font-medium mb-2"><%= quest.title %></h4>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1 h-2 bg-white/10 rounded-full w-24 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-violet-500 to-violet-400 rounded-full"
+                             style="width: <%= quest.steps.dig('progress', 'completion_percentage') || 0 %>%"></div>
+                      </div>
+                      <span class="text-xs text-zinc-400"><%= quest.steps.dig('progress', 'completion_percentage') || 0 %>%</span>
+                    </div>
+                    <%= link_to quest_path(quest), class: "action-btn text-sm px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-zinc-300" do %>
+                      Открыть
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12">
+              <div class="text-4xl mb-3">🚀</div>
+              <p class="text-zinc-500">Нет квестов</p>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
   </div>
@@ -318,15 +544,13 @@ function toggleIdeaContent(ideaId) {
   const preview = document.querySelector(`.idea-preview-${ideaId}`);
   const full = document.querySelector(`.idea-full-${ideaId}`);
   const toggle = document.querySelector(`.idea-toggle-${ideaId}`);
-  
+
   if (preview && full) {
     if (preview.classList.contains('hidden')) {
-      // Показать краткое содержание
       preview.classList.remove('hidden');
       full.classList.add('hidden');
-      if (toggle) toggle.textContent = 'читать далее...';
+      if (toggle) toggle.textContent = 'далее...';
     } else {
-      // Показать полное содержание
       preview.classList.add('hidden');
       full.classList.remove('hidden');
       if (toggle) toggle.textContent = 'свернуть';
@@ -334,7 +558,6 @@ function toggleIdeaContent(ideaId) {
   }
 }
 
-// Предотвратить срабатывание клика на карточке при клике на кнопки действий
 document.addEventListener('click', function(event) {
   if (event.target.closest('a') || event.target.closest('button')) {
     event.stopPropagation();
