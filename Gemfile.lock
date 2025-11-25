@@ -243,6 +243,8 @@ GEM
     nokogiri (1.18.10)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
+    nokogiri (1.18.10-aarch64-linux-gnu)
+      racc (~> 1.4)
     nokogiri (1.18.10-arm64-darwin)
       racc (~> 1.4)
     os (1.1.4)
@@ -375,6 +377,7 @@ GEM
       multi_json (~> 1.10)
     sqlite3 (2.8.0)
       mini_portile2 (~> 2.8.0)
+    sqlite3 (2.8.0-aarch64-linux-gnu)
     sqlite3 (2.8.0-arm64-darwin)
     sshkit (1.24.0)
       base64
@@ -393,6 +396,7 @@ GEM
       zeitwerk (~> 2.6)
     thor (1.4.0)
     thruster (0.1.16)
+    thruster (0.1.16-aarch64-linux)
     thruster (0.1.16-arm64-darwin)
     timeout (0.4.4)
     trailblazer-option (0.1.2)
@@ -423,6 +427,7 @@ GEM
     zeitwerk (2.7.3)
 
 PLATFORMS
+  aarch64-linux
   arm64-darwin-24
   ruby
 

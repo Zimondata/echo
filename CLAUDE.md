@@ -2,290 +2,174 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Обзор проекта
 
-Echo is a Telegram-based AI personal assistant that helps users manage their diary entries, ideas, and plans through voice and text input. It uses OpenAI's GPT-4 for content analysis and Whisper for speech-to-text transcription.
+Echo — Telegram AI-ассистент для управления дневником, идеями, планами, активностью и питанием через голосовой и текстовый ввод. Использует OpenAI GPT-4 для анализа контента и Whisper для транскрипции речи.
 
-**Tech Stack:**
+**Технологии:**
 - Ruby 3.4.5
 - Rails 8.0.3
-- PostgreSQL 17 with pgvector extension
-- Solid Queue (background jobs, with Sidekiq available as alternative)
+- SQLite3
+- Sidekiq (фоновые задачи)
+- Hotwire (Turbo + Stimulus)
+- Tailwind CSS
 - Telegram Bot API
 - OpenAI API (GPT-4, Whisper)
 
-## Common Development Commands
+## Рекомендации по разработке
 
-### Running the Application
+### Rails 8 стек
+- Избегать лишнего JavaScript — использовать Turbo Streams
+- Использовать SolidQueue для очередей (когда включён)
+- SolidCable для WebSockets
+- SolidCache для кэширования views
+
+### Стиль кода
+- Идиоматичный Ruby по конвенциям Rails
+- snake_case для файлов/методов/переменных, CamelCase для классов
+- Service objects в `app/services/` для сложной логики
+- Одинарные кавычки, если нет интерполяции
+
+### Frontend
+- Tailwind CSS с кастомными палитрами
+- Для русского текста — кириллические шрифты
+- Анимации через Turbo и Stimulus
+
+## Команды разработки
 
 ```bash
-# Start the server
+# Запуск сервера
 bin/dev
-# or
-bin/rails server
 
-# Rails console
+# Rails консоль
 bin/rails console
 
-# Run tests
+# Тесты
 bin/rails test
+bin/rails test test/models/user_test.rb      # конкретный файл
+bin/rails test test/models/user_test.rb:10   # конкретная строка
 
-# Run specific test file
-bin/rails test test/models/user_test.rb
-
-# Run specific test case
-bin/rails test test/models/user_test.rb:10
-
-# Code quality check
+# Качество кода
 bin/rubocop
+bin/rubocop -a      # авто-исправление
+bin/brakeman        # безопасность
 
-# Auto-fix rubocop issues
-bin/rubocop -a
-
-# Security scan
-bin/brakeman
-```
-
-### Database Commands
-
-```bash
-# Create database
-bin/rails db:create
-
-# Run migrations
+# База данных
 bin/rails db:migrate
-
-# Rollback last migration
 bin/rails db:rollback
-
-# Reset database (drop, create, migrate, seed)
-bin/rails db:reset
-
-# View database schema
-cat db/schema.rb
+bin/rails db:reset  # drop, create, migrate, seed
 ```
 
-### Background Jobs
+### Kamal деплой
 
 ```bash
-# Monitor background jobs
-bin/jobs
-
-# View job queue status in console
-bin/rails console
-> SolidQueue::Job.count
-> SolidQueue::Job.pending.count
+kamal deploy        # деплой на продакшн
+kamal console       # продакшн консоль
+kamal shell         # продакшн shell
+kamal logs          # логи
 ```
 
-### Telegram Webhook Commands
+### Telegram Webhook
 
 ```bash
-# Set webhook (replace with your bot token and ngrok URL)
-curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
+# Установить webhook (заменить TOKEN и NGROK_URL)
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
   -d "url=<NGROK_URL>/telegram/webhook"
 
-# Check webhook status
-curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
-
-# Delete webhook
-curl "https://api.telegram.org/bot<BOT_TOKEN>/deleteWebhook"
+# Проверить статус
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ```
 
-### Useful Rails Console Commands
+## Архитектура
 
-```ruby
-# Get first user and their entries
-User.first.entries.recent
+### Поток обработки
 
-# Create test reminder
-Reminder.create!(
-  user: User.first,
-  reminder_type: "one_time",
-  remind_at: 5.minutes.from_now,
-  message: "Test reminder"
-)
+1. **Telegram → Webhook** (`/telegram/webhook`)
+   - `TelegramController#webhook` получает update
+   - Ставит в очередь `TelegramWebhookJob`, сразу возвращает 200 OK
 
-# Check pending reminders
-Reminder.pending.where("remind_at <= ?", Time.current)
+2. **Асинхронная обработка**
+   - `TelegramWebhookJob` обрабатывает через Sidekiq
+   - Создаёт/находит `User` по `telegram_id`
+   - Делегирует в `Telegram::MessageHandler`
 
-# Test vector similarity search
-entry = Entry.first
-entry.nearest_neighbors(:embedding, distance: "cosine").first(5)
+3. **Обработка сообщений**
+   - Команды (`/start`, `/help`, `/calendar`, `/insights`, `/stats`) → обработчики команд
+   - Голос → `Ai::WhisperService` → обработка контента
+   - Текст → обработка контента напрямую
+
+4. **Обработка контента**
+   - `Ai::ContentAnalyzer` классифицирует: `diary`, `idea`, `plan`, `plan_update`
+   - Создаёт `Entry` с метаданными
+   - Опционально создаёт `CalendarEvent`, `Reminder`, `Quest`
+
+### Ключевые сервисы
+
+| Сервис | Назначение |
+|--------|------------|
+| `Telegram::BotService` | Telegram API (send_message, download_file) |
+| `Telegram::MessageHandler` | Роутинг и обработка сообщений |
+| `Ai::WhisperService` | Speech-to-text (русский по умолчанию) |
+| `Ai::ContentAnalyzer` | GPT-4 классификация контента |
+
+### Модели данных
+
+**Основные:**
+- `User` — пользователь Telegram (telegram_id, timezone, language, settings)
+- `Entry` — весь контент (diary/idea/plan/plan_update), category, status, insights
+- `CalendarEvent` — события с приоритетом, тегами, привычками, повторениями
+- `Reminder` — умные напоминания с AI-контекстом и кнопками действий
+
+**Расширенные:**
+- `Insight` — AI-инсайты и аналитика
+- `Quest` — геймифицированные задачи из идей (steps, completion_rate)
+- `ActivityEntry` — фитнес-трекинг (интеграция Garmin)
+- `NutritionEntry` — трекинг питания с анализом макросов
+
+## Важные паттерны
+
+### Обработка ошибок
+- Всегда возвращать 200 OK на Telegram webhook (предотвращает повторы)
+- Graceful fallbacks в AI-сервисах (дефолт если API упал)
+
+### Асинхронность
+- Вся обработка webhook через background jobs
+- Никогда не блокировать ответ webhook
+
+### Переменные окружения
+- Обязательные: `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`
+- Хранятся в Rails credentials (`bin/rails credentials:edit`)
+- Доступ: `Rails.application.credentials.telegram[:bot_token]`
+
+## Команды бота
+
+```
+/start      - Начать работу
+/help       - Справка
+/settings   - Настройки
+/status     - Статистика
+/calendar   - Календарь на неделю
+/today      - События на сегодня
+/week       - События на неделю
+/add_event  - Создание события
+/insights   - Последние инсайты
+/digest     - Недельный дайджест
+/daily      - Резюме за сегодня
+/stats      - Подробная статистика
 ```
 
-## Architecture Overview
+## Продакшн
 
-### Request Flow
+- Kamal (Docker) деплой
+- Сервер: 46.62.211.95
+- Домен: echo.datapine.space
+- Registry: ghcr.io/zimondata/echo
+- SQLite3 базы в persistent volume (`echo_db:/rails/db`)
+- Storage в persistent volume (`echo_storage:/rails/storage`)
 
-1. **Telegram Message → Webhook**
-   - Telegram sends message to `/telegram/webhook` endpoint
-   - `TelegramController#webhook` receives the update
-   - Immediately queues `TelegramWebhookJob` and returns 200 OK
+## Локализация
 
-2. **Async Processing**
-   - `TelegramWebhookJob` processes the message in background
-   - Creates or finds `User` based on `telegram_id`
-   - Delegates to `Telegram::MessageHandler`
-
-3. **Message Handling**
-   - `Telegram::MessageHandler` routes based on message type:
-     - Commands (`/start`, `/help`, etc.) → command handlers
-     - Voice messages → `Ai::WhisperService` (transcription) → content processing
-     - Text messages → content processing directly
-
-4. **Content Processing**
-   - `Ai::ContentAnalyzer` analyzes text with GPT-4
-   - Determines entry type: `diary`, `idea`, `plan`, or `plan_update`
-   - Extracts metadata: dates, priorities, tags
-   - Creates `Entry` record
-   - Optionally creates `CalendarEvent` and/or `Reminder`
-
-5. **Reminders**
-   - `SendRemindersJob` runs every minute (cron-scheduled)
-   - Finds pending reminders where `remind_at <= Time.current`
-   - Sends Telegram message via `Telegram::BotService`
-   - Marks reminder as `sent`
-
-### Key Service Objects
-
-**`Telegram::BotService`**
-- Singleton service for Telegram API interactions
-- Methods: `send_message`, `send_typing`, `download_file`
-- Handles API errors gracefully
-
-**`Telegram::MessageHandler`**
-- Orchestrates message processing
-- Handles commands and content processing
-- Creates entries, events, and reminders
-
-**`Ai::WhisperService`**
-- Transcribes audio files using OpenAI Whisper API
-- Creates temporary files for audio processing
-- Default language: Russian (`ru`)
-
-**`Ai::ContentAnalyzer`**
-- Analyzes text content using GPT-4 mini
-- Returns structured JSON with entry type, summary, dates, etc.
-- System prompt defines four entry types and expected response format
-
-### Data Models
-
-**`User`**
-- Represents Telegram user
-- Key fields: `telegram_id` (unique), `timezone`, `language`
-- Google OAuth fields: `google_refresh_token`, `google_access_token`
-- Has many: `entries`, `calendar_events`, `reminders`
-
-**`Entry`**
-- Core model for all user content
-- Types: `diary`, `idea`, `plan`, `plan_update`
-- Has `embedding` vector column (1536 dimensions) for similarity search
-- Includes: `content`, `transcript`, `audio_file_id`, `metadata` (jsonb)
-- Uses `neighbor` gem for vector search with `has_neighbors :embedding`
-
-**`CalendarEvent`**
-- Linked to `Entry` and `User`
-- Fields: `title`, `description`, `start_time`, `end_time`
-- `google_event_id` for future Google Calendar sync
-
-**`Reminder`**
-- Linked to `Entry` and `User`
-- Types: `one_time`, `recurring`
-- Status: `pending`, `sent`, `cancelled`
-- `remind_at` determines when to send
-
-## Important Patterns
-
-### Error Handling
-- Always return 200 OK to Telegram webhook (prevents retries)
-- Log errors but don't expose them to Telegram
-- Graceful fallbacks in AI services (return default analysis if API fails)
-
-### Async Processing
-- All webhook processing is asynchronous via Solid Queue
-- Never block webhook response
-- Use `perform_later` for background jobs
-
-### Environment Variables
-- Required: `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`
-- Optional: Google OAuth credentials (for future feature)
-- Managed via `dotenv-rails` gem
-
-### Vector Embeddings
-- Entry model has `embedding` field (vector, limit: 1536)
-- Uses pgvector extension with IVFFlat index
-- Cosine distance for similarity search
-- Access via `entry.nearest_neighbors(:embedding, distance: "cosine")`
-
-## Testing Strategy
-
-- Minitest framework (Rails default)
-- Test files mirror app structure: `test/models/`, `test/controllers/`, `test/jobs/`
-- Run individual test: `bin/rails test path/to/test_file.rb:line_number`
-
-## Development Workflow
-
-### Adding New Features
-
-1. Create migration if database changes needed
-2. Update models with validations and associations
-3. Add service logic in `app/services/`
-4. Update message handler if new commands/behaviors
-5. Add tests
-6. Run `bin/rubocop` to check code style
-
-### Debugging
-
-1. Check logs: `tail -f log/development.log`
-2. Use Rails console: `bin/rails console`
-3. Verify webhook status with curl command
-4. Test AI services in isolation via console
-
-### Local Development with ngrok
-
-- ngrok required for webhook testing (Telegram requires HTTPS)
-- Start ngrok: `ngrok http 3000`
-- Update webhook URL when ngrok restarts (URL changes)
-- Can use `localhost` testing via Telegram Bot API long polling (not recommended)
-
-## Future Integration Notes
-
-### Google Calendar (Planned)
-- OAuth flow to be implemented
-- Store tokens in User model (fields already exist)
-- Sync CalendarEvent records with Google Calendar
-- Handle token refresh
-
-### Vector Search (Infrastructure Ready)
-- pgvector extension enabled
-- Embedding column exists on Entry model
-- Need to generate embeddings when creating entries
-- Use OpenAI embeddings API or similar
-
-## Critical Configuration Files
-
-- `config/initializers/telegram_bot.rb` - Telegram bot configuration
-- `config/initializers/openai.rb` - OpenAI client configuration
-- `.env` - Environment variables (not in git)
-- `config/routes.rb` - Single webhook route: `POST /telegram/webhook`
-
-## Language and Localization
-
-- Primary language: Russian (ru)
-- All user-facing messages in Russian
-- AI prompts in Russian
-- Timezone support via User model (`timezone` field, default: "UTC")
-
-## Job Scheduling
-
-- `SendRemindersJob` runs every minute (configured via Solid Queue)
-- Processes reminders where `remind_at <= Time.current` and `status = 'pending'`
-- Updates reminder status to `sent` after sending
-
-## Security Considerations
-
-- CSRF protection skipped on webhook endpoint (`skip_before_action :verify_authenticity_token`)
-- API keys stored in environment variables
-- Never commit `.env` file
-- PostgreSQL accessible only locally in development
-- Production deployment via Kamal (Docker-based)
+- Основной язык: русский (ru)
+- Все сообщения пользователю на русском
+- AI-промпты на русском
+- Поддержка таймзон через User model (дефолт: UTC)

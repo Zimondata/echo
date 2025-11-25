@@ -53,3 +53,5 @@
 *.wav
 *.mp4
 setup_deployment.sh
+
+/config/credentials/production.key

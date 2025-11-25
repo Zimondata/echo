@@ -1,254 +1,500 @@
-<%= render 'shared/header', active: 'dashboard' %>
-
 <style>
-  /* Professional Glassmorphism with modern effects */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow:
-      0 4px 16px 0 rgba(139, 92, 246, 0.08),
-      0 0 1px 0 rgba(139, 92, 246, 0.1);
+  /* === AURI DASHBOARD - Linear + Amie Style === */
+
+  :root {
+    --bg-darkest: #0a0a0f;
+    --bg-dark: #12121a;
+    --bg-card: #1a1a24;
+    --bg-card-hover: #22222e;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(139, 92, 246, 0.3);
+
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+
+    --violet-500: #8b5cf6;
+    --violet-600: #7c3aed;
+    --violet-glow: rgba(139, 92, 246, 0.15);
+
+    --amber-500: #f59e0b;
+    --amber-glow: rgba(245, 158, 11, 0.15);
+
+    --blue-500: #3b82f6;
+    --blue-glow: rgba(59, 130, 246, 0.15);
+
+    --green-500: #10b981;
+    --green-glow: rgba(16, 185, 129, 0.15);
+
+    --red-500: #ef4444;
   }
 
-  .dark .glass-card {
-    background: rgba(17, 24, 39, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+  body {
+    background: var(--bg-darkest);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  /* Enhanced gradient backgrounds */
-  .gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* === ANIMATED GRADIENT BACKGROUND === */
+  .animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    overflow: hidden;
   }
 
-  .gradient-violet-purple {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
-  }
-
-  .gradient-amber {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.12) 100%);
-  }
-
-  .gradient-blue {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
-  }
-
-  .gradient-green {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.12) 100%);
-  }
-
-  .gradient-orange {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(234, 88, 12, 0.12) 100%);
-  }
-
-  /* Stat card gradient overlays */
-  .stat-card-overlay {
+  .animated-bg::before {
+    content: '';
     position: absolute;
-    inset: 0;
-    opacity: 0.08;
-    border-radius: inherit;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    animation: gradientMove 20s ease-in-out infinite;
   }
 
-  /* Professional Scrollbar Styling */
-  #todayTasks::-webkit-scrollbar,
-  #tomorrowTasks::-webkit-scrollbar {
-    width: 6px;
+  @keyframes gradientMove {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2%, 2%) rotate(1deg); }
+    50% { transform: translate(-1%, 3%) rotate(-1deg); }
+    75% { transform: translate(3%, -2%) rotate(2deg); }
   }
 
-  #todayTasks::-webkit-scrollbar-track,
-  #tomorrowTasks::-webkit-scrollbar-track {
-    background: transparent;
+  /* Glass Card Base */
+  .glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s ease;
   }
 
-  #todayTasks::-webkit-scrollbar-thumb {
-    background: rgba(251, 191, 36, 0.3);
-    border-radius: 10px;
+  .glass-card:hover {
+    border-color: var(--border-glow);
+    background: var(--bg-card-hover);
   }
 
-  #tomorrowTasks::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.3);
-    border-radius: 10px;
+  /* Glow Effects */
+  .glow-violet { box-shadow: 0 0 30px var(--violet-glow); }
+  .glow-amber { box-shadow: 0 0 30px var(--amber-glow); }
+  .glow-blue { box-shadow: 0 0 30px var(--blue-glow); }
+  .glow-green { box-shadow: 0 0 30px var(--green-glow); }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  #todayTasks::-webkit-scrollbar-thumb:hover {
-    background: rgba(251, 191, 36, 0.5);
+  /* === PROGRESS RING === */
+  .progress-ring {
+    transform: rotate(-90deg);
   }
 
-  #tomorrowTasks::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.5);
+  .progress-ring__circle {
+    transition: stroke-dashoffset 0.5s ease;
+    transform-origin: 50% 50%;
   }
 
+  /* Task Item Styles */
   .task-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-left: 3px solid var(--category-color, transparent);
-    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+    border-left: 3px solid var(--category-color, var(--violet-500));
   }
 
   .task-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    border-left-width: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-glow);
+    transform: translateX(4px);
   }
 
-  .task-item:hover .category-badge {
-    animation: wiggle 0.5s ease-in-out;
+  .task-item.completed {
+    opacity: 0.5;
   }
 
-  @keyframes wiggle {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-10deg); }
-    75% { transform: rotate(10deg); }
-  }
-
-  .completed-task {
-    opacity: 0.6;
-  }
-
-  .completed-task .task-text {
+  .task-item.completed .task-text {
     text-decoration: line-through;
-    color: #9ca3af;
+    color: var(--text-muted);
   }
 
-  /* Category badge inline */
-  .category-badge {
-    display: inline-flex;
+  /* Custom Checkbox */
+  .custom-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--text-muted);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
     align-items: center;
-    font-size: 1rem;
-    margin-right: 6px;
+    justify-content: center;
   }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+
+  .custom-checkbox:hover {
+    border-color: var(--violet-500);
+    background: var(--violet-glow);
   }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease;
+
+  .custom-checkbox.checked {
+    background: var(--green-500);
+    border-color: var(--green-500);
   }
-  
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+
+  .custom-checkbox.checked svg {
+    opacity: 1;
   }
-  
-  .stagger-animation > * {
-    animation: slideUp 0.5s ease both;
-  }
-  
-  .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
-  .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
-  .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
-  .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
-  
-  .badge-pulse {
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-  
-  .hover-scale {
-    transition: transform 0.2s ease;
-  }
-  
-  .hover-scale:hover {
-    transform: scale(1.05);
-  }
-  
+
+  /* Calendar Day */
   .calendar-day {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .calendar-day:hover {
+    background: var(--violet-glow);
+    color: var(--text-primary);
+  }
+
+  .calendar-day.today {
+    background: linear-gradient(135deg, var(--violet-500), var(--violet-600));
+    color: white;
+    font-weight: 600;
+  }
+
+  .calendar-day.has-events::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--amber-500);
+  }
+
+  /* Quick Action Button */
+  .quick-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .quick-action:hover {
+    background: var(--violet-glow);
+    border-color: var(--border-glow);
+    color: var(--text-primary);
+  }
+
+  .quick-action:hover .action-icon {
+    color: var(--violet-500);
+  }
+
+  /* Stat Card */
+  .stat-card {
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-color, var(--violet-500));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-glow);
+  }
+
+  /* Entry Card */
+  .entry-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
     transition: all 0.2s ease;
     cursor: pointer;
   }
-  
-  .calendar-day:hover {
-    background: rgba(139, 92, 246, 0.1);
-    transform: scale(1.1);
-  }
-  
-  .calendar-day.selected {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-  }
-  
-  .quick-action-btn {
-    transition: all 0.3s ease;
-  }
-  
-  .quick-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
-  }
-  
-  .entry-card {
-    transition: all 0.3s ease;
-  }
-  
+
   .entry-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
   }
-  
+
+  /* Delete Button */
   .delete-btn {
     opacity: 0;
     transition: opacity 0.2s ease;
   }
-  
+
   .task-item:hover .delete-btn {
     opacity: 1;
   }
+
+  /* Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Nav Link */
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-link.active {
+    color: var(--text-primary);
+    background: var(--violet-glow);
+    box-shadow: 0 0 20px var(--violet-glow);
+  }
+
+  /* === FLOATING ACTION BUTTON === */
+  .fab {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--violet-500), var(--violet-600));
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+
+  .fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
+  }
+
+  .fab:active {
+    transform: scale(0.95);
+  }
+
+  .fab-menu {
+    position: fixed;
+    bottom: 100px;
+    right: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    z-index: 99;
+  }
+
+  .fab-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .fab-menu-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-glow);
+    transform: translateX(-8px);
+  }
+
+  .fab-menu-item span {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* === KEYBOARD HINT === */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: monospace;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px var(--violet-glow); }
+    50% { box-shadow: 0 0 30px var(--violet-glow); }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.3s ease forwards;
+  }
+
+  .animate-bounce {
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  /* Empty state animations */
+  .empty-state-icon {
+    animation: bounce 3s ease-in-out infinite;
+  }
 </style>
 
-<div class="min-h-screen w-full bg-gradient-to-br from-violet-50/30 via-purple-50/30 to-pink-50/30">
-  <!-- Sticky Professional Header -->
-  <header class="sticky top-0 z-50 border-b border-gray-200/50 bg-white/80 backdrop-blur-xl shadow-sm">
+<!-- Animated Background -->
+<div class="animated-bg"></div>
+
+<div class="min-h-screen w-full relative">
+
+  <!-- === HEADER === -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
     <div class="w-full px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
-        <!-- Left: Logo & Navigation -->
-        <div class="flex items-center gap-8">
-          <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Auri
-          </h1>
 
-          <!-- Navigation Menu -->
+        <!-- Left: Logo & Nav -->
+        <div class="flex items-center gap-8">
+          <h1 class="text-2xl font-bold gradient-text">Auri</h1>
+
           <nav class="hidden md:flex items-center gap-1">
-            <%= link_to "Dashboard", dashboard_path, class: "px-3 py-2 rounded-lg text-sm font-medium transition-all #{current_page?(dashboard_path) ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}" %>
-            <%= link_to "Дневник", diary_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
-            <%= link_to "Идеи", ideas_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
-            <%= link_to "Планы", plans_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
-            <%= link_to "Здоровье", nutrition_entries_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all #{current_page?(nutrition_entries_path) ? 'bg-violet-100 text-violet-700' : ''}" %>
-            <%= link_to "Календарь", calendar_events_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
-            <%= link_to "Напоминания", reminders_path, class: "px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all" %>
+            <%= link_to dashboard_path, class: "nav-link #{current_page?(dashboard_path) ? 'active' : ''}" do %>
+              Dashboard
+            <% end %>
+            <%= link_to diary_entries_path, class: "nav-link" do %>
+              Дневник
+            <% end %>
+            <%= link_to ideas_entries_path, class: "nav-link" do %>
+              Идеи
+            <% end %>
+            <%= link_to plans_entries_path, class: "nav-link" do %>
+              Планы
+            <% end %>
+            <%= link_to nutrition_entries_path, class: "nav-link" do %>
+              Здоровье
+            <% end %>
+            <%= link_to calendar_events_path, class: "nav-link" do %>
+              Календарь
+            <% end %>
+            <%= link_to reminders_path, class: "nav-link" do %>
+              Напоминания
+            <% end %>
           </nav>
         </div>
 
         <!-- Right: Date & Actions -->
-        <div class="flex items-center gap-3">
-          <div class="hidden lg:flex items-center gap-2 glass-card px-4 py-2 rounded-full">
-            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div class="flex items-center gap-4">
+          <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <span class="text-sm font-medium text-gray-700">
+            <span class="text-sm font-medium text-zinc-300">
               <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
             </span>
           </div>
+
           <% if logged_in? %>
-            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "glass-card p-2 rounded-lg hover:bg-red-50 transition-all duration-200 group" do %>
-              <svg class="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "p-2 rounded-lg hover:bg-white/5 transition-colors group" do %>
+              <svg class="w-5 h-5 text-zinc-500 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
               </svg>
             <% end %>
@@ -258,176 +504,186 @@
     </div>
   </header>
 
-  <!-- Main Content Container - Full Width -->
-  <div class="w-full px-6 lg:px-8 py-6">
+  <!-- === MAIN CONTENT === -->
+  <div class="w-full px-6 lg:px-8 py-8">
 
-    <!-- Professional Stats Grid -->
-    <div class="mb-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <!-- Stat Card 1: Total Tasks -->
-        <div class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer">
-          <div class="stat-card-overlay gradient-violet-purple"></div>
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-3">
-              <div class="p-2.5 rounded-xl bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
-                <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-              </div>
+    <!-- Stats Row -->
+    <%
+      total_tasks = @today_tasks_count || 0
+      completed_tasks = @completed_today_count || 0
+      progress_percent = total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round : 0
+      calories_goal = 2000
+      calories_current = @nutrition_totals&.dig(:calories)&.to_i || 0
+      calories_percent = [(calories_current.to_f / calories_goal * 100).round, 100].min
+    %>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
+
+      <!-- Stat 1: Tasks Today with Progress Ring -->
+      <div class="stat-card" style="--accent-color: var(--violet-500);">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-zinc-500 mb-1">Планов на сегодня</p>
+            <p id="totalEntriesCount" class="text-3xl font-bold text-white"><%= total_tasks %></p>
+          </div>
+          <div class="relative">
+            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
+              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
+              <circle class="progress-ring__circle text-violet-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
+                      stroke-dasharray="150.8"
+                      stroke-dashoffset="<%= 150.8 - (150.8 * progress_percent / 100) %>"
+                      stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-bold text-violet-400"><%= progress_percent %>%</span>
             </div>
-            <p class="text-sm font-medium text-gray-600 mb-1">Планов на сегодня</p>
-            <h3 id="totalEntriesCount" class="text-3xl font-bold text-gray-900">0</h3>
           </div>
         </div>
-
-        <!-- Stat Card 2: Completed -->
-        <div class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer">
-          <div class="stat-card-overlay gradient-green"></div>
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-3">
-              <div class="p-2.5 rounded-xl bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-            <p class="text-sm font-medium text-gray-600 mb-1">Выполнено</p>
-            <h3 id="completedTodayCount" class="text-3xl font-bold text-gray-900">0</h3>
-          </div>
-        </div>
-
-        <!-- Stat Card 3: Macros -->
-        <a href="/nutrition" class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer block">
-          <div class="stat-card-overlay gradient-blue"></div>
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-3">
-              <div class="p-2.5 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-            </div>
-            <p class="text-sm font-medium text-gray-600 mb-1">Б/Ж/У (г)</p>
-            <div class="flex items-baseline gap-2">
-              <span id="todayProtein" class="text-xl font-bold text-blue-600">0</span>
-              <span class="text-gray-400">/</span>
-              <span id="todayFat" class="text-xl font-bold text-orange-600">0</span>
-              <span class="text-gray-400">/</span>
-              <span id="todayCarbs" class="text-xl font-bold text-purple-600">0</span>
-            </div>
-          </div>
-        </a>
-
-        <!-- Stat Card 4: Calories -->
-        <a href="/nutrition" class="glass-card rounded-2xl p-6 hover-scale relative overflow-hidden group cursor-pointer block">
-          <div class="stat-card-overlay gradient-orange"></div>
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-3">
-              <div class="p-2.5 rounded-xl bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
-                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
-                </svg>
-              </div>
-            </div>
-            <p class="text-sm font-medium text-gray-600 mb-1">Калорий сегодня</p>
-            <h3 id="todayCaloriesCount" class="text-3xl font-bold text-gray-900">0</h3>
-          </div>
-        </a>
       </div>
+
+      <!-- Stat 2: Completed with Progress Ring -->
+      <div class="stat-card" style="--accent-color: var(--green-500);">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-zinc-500 mb-1">Выполнено</p>
+            <p id="completedTodayCount" class="text-3xl font-bold text-white"><%= completed_tasks %></p>
+            <p class="text-xs text-zinc-600 mt-1">из <%= total_tasks %> задач</p>
+          </div>
+          <div class="relative">
+            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
+              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
+              <circle class="progress-ring__circle text-green-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
+                      stroke-dasharray="150.8"
+                      stroke-dashoffset="<%= 150.8 - (150.8 * progress_percent / 100) %>"
+                      stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat 3: Macros with Mini Bars -->
+      <a href="/nutrition" class="stat-card block" style="--accent-color: var(--blue-500);">
+        <p class="text-sm text-zinc-500 mb-2">Б / Ж / У</p>
+        <div class="flex items-baseline gap-1 mb-3">
+          <span id="todayProtein" class="text-xl font-bold text-blue-400"><%= @nutrition_totals&.dig(:protein)&.round(0) || 0 %></span>
+          <span class="text-zinc-600">/</span>
+          <span id="todayFat" class="text-xl font-bold text-amber-400"><%= @nutrition_totals&.dig(:fat)&.round(0) || 0 %></span>
+          <span class="text-zinc-600">/</span>
+          <span id="todayCarbs" class="text-xl font-bold text-violet-400"><%= @nutrition_totals&.dig(:carbs)&.round(0) || 0 %></span>
+        </div>
+        <!-- Mini progress bars -->
+        <div class="flex gap-1">
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:protein)&.to_f || 0) / 150 * 100, 100].min %>%"></div>
+          </div>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-amber-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:fat)&.to_f || 0) / 65 * 100, 100].min %>%"></div>
+          </div>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full bg-violet-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:carbs)&.to_f || 0) / 250 * 100, 100].min %>%"></div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Stat 4: Calories with Progress Ring -->
+      <a href="/nutrition" class="stat-card block" style="--accent-color: var(--amber-500);">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-zinc-500 mb-1">Калорий</p>
+            <p id="todayCaloriesCount" class="text-3xl font-bold text-white"><%= calories_current %></p>
+            <p class="text-xs text-zinc-600 mt-1">цель: <%= calories_goal %></p>
+          </div>
+          <div class="relative">
+            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
+              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
+              <circle class="progress-ring__circle text-amber-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
+                      stroke-dasharray="150.8"
+                      stroke-dashoffset="<%= 150.8 - (150.8 * calories_percent / 100) %>"
+                      stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-xs font-bold text-amber-400"><%= calories_percent %>%</span>
+            </div>
+          </div>
+        </div>
+      </a>
     </div>
-    
-    <!-- Main Grid: Sidebar + Content -->
+
+    <!-- Main Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-      <!-- Left Sidebar: Calendar & Quick Actions -->
+      <!-- === LEFT SIDEBAR === -->
       <div class="lg:col-span-3 space-y-6">
-        <!-- Calendar Widget -->
-        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
+
+        <!-- Mini Calendar -->
+        <div class="glass-card p-5">
           <div class="flex items-center gap-3 mb-5">
-            <div class="p-2.5 rounded-xl gradient-bg">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="p-2 rounded-lg bg-violet-500/10">
+              <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
             </div>
-            <h2 class="text-lg font-semibold text-gray-900">Календарь</h2>
+            <h3 class="font-semibold text-white">Календарь</h3>
           </div>
 
-          <!-- Mini Calendar -->
-          <div class="space-y-3">
-            <div class="grid grid-cols-7 gap-1.5 text-center text-xs text-gray-500 font-medium">
-              <div>Пн</div>
-              <div>Вт</div>
-              <div>Ср</div>
-              <div>Чт</div>
-              <div>Пт</div>
-              <div>Сб</div>
-              <div>Вс</div>
-            </div>
-            <div class="grid grid-cols-7 gap-1.5" id="calendarDays">
-              <%
-                today = Date.current
-                start_date = today.beginning_of_week
-                (0..6).each do |i|
-                  date = start_date + i.days
-                  is_today = date == today
-                  events_count = @user&.calendar_events&.where('DATE(start_time) = ?', date)&.count || 0
-              %>
-                <div
-                  class="calendar-day relative p-2.5 rounded-xl text-center <%= 'selected' if is_today %>"
-                  onclick="loadDayEvents('<%= date.iso8601 %>')"
-                  data-date="<%= date.iso8601 %>"
-                >
-                  <div class="text-sm font-semibold <%= is_today ? 'text-white' : 'text-gray-700' %>">
-                    <%= date.day %>
-                  </div>
-                  <% if events_count > 0 %>
-                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                      <%= events_count %>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
+          <!-- Week Days -->
+          <div class="grid grid-cols-7 gap-1 mb-2">
+            <% %w[Пн Вт Ср Чт Пт Сб Вс].each do |day| %>
+              <div class="text-center text-xs text-zinc-600 font-medium py-1"><%= day %></div>
+            <% end %>
+          </div>
+
+          <!-- Calendar Days -->
+          <div class="grid grid-cols-7 gap-1">
+            <%
+              today = Date.current
+              start_date = today.beginning_of_week
+              (0..6).each do |i|
+                date = start_date + i.days
+                is_today = date == today
+                events_count = @user&.calendar_events&.where('DATE(start_time) = ?', date)&.count || 0
+            %>
+              <div class="calendar-day <%= 'today' if is_today %> <%= 'has-events' if events_count > 0 %>"
+                   onclick="loadDayEvents('<%= date.iso8601 %>')"
+                   data-date="<%= date.iso8601 %>">
+                <%= date.day %>
+              </div>
+            <% end %>
           </div>
         </div>
 
-        <!-- Add Task Form - Compact -->
-        <div class="glass-card rounded-2xl p-4 shadow-lg border border-gray-200/50 gradient-violet-purple">
-          <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Add Task -->
+        <div class="glass-card p-5">
+          <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
             Добавить задачу
+            <span class="kbd">N</span>
           </h3>
-          <div class="space-y-2">
+
+          <div class="space-y-3">
             <div class="flex gap-2">
-              <button
-                id="todayBtn"
-                onclick="setActiveSection('today')"
-                class="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all"
-              >
+              <button id="todayBtn" onclick="setActiveSection('today')"
+                      class="flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all">
                 Сегодня
               </button>
-              <button
-                id="tomorrowBtn"
-                onclick="setActiveSection('tomorrow')"
-                class="flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all"
-              >
+              <button id="tomorrowBtn" onclick="setActiveSection('tomorrow')"
+                      class="flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all">
                 Завтра
               </button>
             </div>
-            <input
-              type="text"
-              id="newTaskInput"
-              placeholder="Новая задача..."
-              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent glass-card transition-all text-sm"
-              onkeypress="if(event.key === 'Enter') addTask()"
-            >
-            <button
-              onclick="addTask()"
-              class="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
-            >
+
+            <input type="text" id="newTaskInput" placeholder="Новая задача..."
+                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/5 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-violet-500/50 focus:bg-white/10 transition-all"
+                   onkeypress="if(event.key === 'Enter') addTask()">
+
+            <button onclick="addTask()"
+                    class="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 text-white text-sm font-medium hover:from-violet-500 hover:to-violet-400 transition-all flex items-center justify-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
@@ -437,290 +693,251 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-            </svg>
-            Быстрые действия
-          </h3>
-          <div class="space-y-2.5">
-            <button onclick="quickAddReminder()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-amber-50/50 transition-all duration-200 group">
-              <div class="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass-card p-5">
+          <h3 class="font-semibold text-white mb-4">Быстрые действия</h3>
+
+          <div class="space-y-2">
+            <button onclick="quickAddReminder()" class="quick-action">
+              <div class="action-icon p-2 rounded-lg bg-amber-500/10">
+                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                 </svg>
               </div>
-              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Создать напоминание</span>
+              <span class="text-sm flex-1">Напоминание</span>
+              <span class="kbd">R</span>
             </button>
 
-            <button onclick="startVoiceNote()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-blue-50/50 transition-all duration-200 group">
-              <div class="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onclick="quickAddIdea()" class="quick-action">
+              <div class="action-icon p-2 rounded-lg bg-green-500/10">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+              </div>
+              <span class="text-sm flex-1">Новая идея</span>
+              <span class="kbd">I</span>
+            </button>
+
+            <button onclick="startVoiceNote()" class="quick-action">
+              <div class="action-icon p-2 rounded-lg bg-blue-500/10">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
                 </svg>
               </div>
-              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Голосовая заметка</span>
-            </button>
-
-            <button onclick="quickAddIdea()" class="quick-action-btn w-full glass-card px-4 py-3.5 rounded-xl flex items-center gap-3 hover:bg-green-50/50 transition-all duration-200 group">
-              <div class="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-              </div>
-              <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Новая заметка</span>
+              <span class="text-sm flex-1">Голосовая заметка</span>
+              <span class="kbd">V</span>
             </button>
           </div>
         </div>
       </div>
-      
-      <!-- Main Content: Task Cards -->
-      <div class="lg:col-span-9">
+
+      <!-- === MAIN CONTENT === -->
+      <div class="lg:col-span-9 space-y-6">
+
         <!-- Task Cards Grid -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-          <!-- Today Section -->
-          <div class="glass-card rounded-2xl shadow-lg border border-gray-200/50 gradient-amber">
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-5">
+          <!-- TODAY -->
+          <div class="glass-card overflow-hidden glow-amber" style="animation: fadeIn 0.5s ease 0.1s forwards; opacity: 0;">
+            <div class="p-5 border-b border-white/5">
+              <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="p-2.5 rounded-xl bg-amber-500 shadow-sm">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="p-2.5 rounded-xl bg-amber-500/20">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
                     </svg>
                   </div>
-                  <h2 class="text-xl font-semibold text-gray-900">Сегодня</h2>
+                  <h2 class="text-lg font-semibold text-white">Сегодня</h2>
                 </div>
-                <div class="flex items-center gap-2">
-                  <div class="badge-pulse px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-700 text-sm rounded-lg font-medium">
-                    <%= @today_events&.count || 0 %>
-                  </div>
-                </div>
+                <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-sm font-medium border border-amber-500/20">
+                  <%= @today_events&.count || 0 %>
+                </span>
               </div>
+            </div>
 
-              <div class="relative">
-                <!-- ScrollArea with professional styling -->
-                <div class="space-y-2.5 pr-2" id="todayTasks" style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(251, 191, 36, 0.3) transparent;">
+            <div class="p-4 max-h-[400px] overflow-y-auto custom-scrollbar" id="todayTasks">
+              <div class="space-y-2">
+                <% (@today_events || []).each do |event| %>
                   <%
-                    # Sort events by category but display without group headers
-                    sorted_today = @today_events.sort_by { |e|
-                      category_order = ['work', 'health', 'personal', 'ideas', 'projects']
-                      category_order.index(e.life_category || 'work') || 999
-                    }
+                    category_key = event.life_category.presence || 'work'
+                    category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
                   %>
-
-                  <% sorted_today.each do |event| %>
-                    <%
-                      category_key = event.life_category.presence || 'work'
-                      category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
-                    %>
-                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-amber-300/50 <%= 'completed-task' if event.done? %> group"
-                         data-event-id="<%= event.id %>"
-                         style="--category-color: <%= category_info[:color] %>">
-                      <div class="flex items-center gap-3">
-                        <!-- Checkbox -->
-                        <label class="flex items-center cursor-pointer flex-shrink-0">
-                          <input
-                            type="checkbox"
-                            class="w-5 h-5 text-violet-600 rounded-full border-2 focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110 active:scale-95"
-                            <%= 'checked' if event.done? %>
-                            onchange="toggleTask(<%= event.id %>)"
-                          >
-                        </label>
-
-                        <!-- Emoji Badge -->
-                        <% unless event.title.start_with?(category_info[:icon]) %>
-                          <div class="flex-shrink-0 w-8 h-8 rounded-lg glass-card border border-gray-200/50 flex items-center justify-center text-base category-badge">
-                            <%= category_info[:icon] %>
-                          </div>
-                        <% end %>
-
-                        <!-- Task Content -->
-                        <div class="flex-1 min-w-0">
-                          <p class="task-text text-sm font-medium text-gray-900">
-                            <%= event.title.gsub(category_info[:icon], '').strip %>
-                          </p>
-                        </div>
-
-                        <!-- Time & Delete -->
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                          <% if event.start_time && !event.all_day? %>
-                            <div class="flex items-center gap-1.5 text-gray-600">
-                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                              </svg>
-                              <span class="text-xs font-medium"><%= event.time_display(@user.timezone) %></span>
-                            </div>
-                          <% end %>
-
-                          <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
-                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  <% end %>
-
-                  <% if @today_events.nil? || @today_events.empty? %>
-                    <div class="text-center py-12">
-                      <div class="p-4 rounded-full bg-gray-100 inline-block mb-4">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <div class="task-item <%= 'completed' if event.done? %>"
+                       data-event-id="<%= event.id %>"
+                       style="--category-color: <%= category_info[:color] %>">
+                    <div class="flex items-center gap-3">
+                      <div class="custom-checkbox <%= 'checked' if event.done? %>" onclick="toggleTask(<%= event.id %>)">
+                        <svg class="w-3 h-3 text-white <%= event.done? ? 'opacity-100' : 'opacity-0' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                         </svg>
                       </div>
-                      <p class="text-gray-600 font-medium">Нет задач на сегодня</p>
-                      <p class="text-gray-500 text-sm mt-1">Добавьте новую задачу выше</p>
+
+                      <span class="text-lg"><%= category_info[:icon] %></span>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="task-text text-sm text-zinc-200 truncate">
+                          <%= event.title.gsub(category_info[:icon], '').strip %>
+                        </p>
+                      </div>
+
+                      <% if event.start_time && !event.all_day? %>
+                        <span class="text-xs text-zinc-500 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          <%= event.time_display(@user.timezone) %>
+                        </span>
+                      <% end %>
+
+                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
+                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
                     </div>
-                  <% end %>
-                </div>
+                  </div>
+                <% end %>
+
+                <% if @today_events.nil? || @today_events.empty? %>
+                  <div class="text-center py-12">
+                    <div class="empty-state-icon text-6xl mb-4">
+                      <% greetings = ["Свободный день!", "Чистый лист!", "Время творить!"] %>
+                      <%= %w[🎉 ✨ 🌟 🎯].sample %>
+                    </div>
+                    <p class="text-white font-medium mb-1"><%= greetings.sample %></p>
+                    <p class="text-zinc-500 text-sm">Нажми <span class="kbd">N</span> чтобы добавить задачу</p>
+                  </div>
+                <% end %>
               </div>
             </div>
           </div>
 
-          <!-- Tomorrow Section -->
-          <div class="glass-card rounded-2xl shadow-lg border border-gray-200/50 gradient-blue">
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-5">
+          <!-- TOMORROW -->
+          <div class="glass-card overflow-hidden glow-blue" style="animation: fadeIn 0.5s ease 0.2s forwards; opacity: 0;">
+            <div class="p-5 border-b border-white/5">
+              <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="p-2.5 rounded-xl bg-blue-500 shadow-sm">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="p-2.5 rounded-xl bg-blue-500/20">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                     </svg>
                   </div>
-                  <h2 class="text-xl font-semibold text-gray-900">Завтра</h2>
+                  <h2 class="text-lg font-semibold text-white">Завтра</h2>
                 </div>
-                <div class="flex items-center gap-2">
-                  <div class="badge-pulse px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-700 text-sm rounded-lg font-medium">
-                    <%= @tomorrow_events&.count || 0 %>
-                  </div>
-                </div>
+                <span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20">
+                  <%= @tomorrow_events&.count || 0 %>
+                </span>
               </div>
+            </div>
 
-              <div class="relative">
-                <!-- ScrollArea with professional styling -->
-                <div class="space-y-2.5 pr-2" id="tomorrowTasks" style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(59, 130, 246, 0.3) transparent;">
+            <div class="p-4 max-h-[400px] overflow-y-auto custom-scrollbar" id="tomorrowTasks">
+              <div class="space-y-2">
+                <% (@tomorrow_events || []).each do |event| %>
                   <%
-                    # Sort events by category but display without group headers
-                    sorted_tomorrow = @tomorrow_events.sort_by { |e|
-                      category_order = ['work', 'health', 'personal', 'ideas', 'projects']
-                      category_order.index(e.life_category || 'work') || 999
-                    }
+                    category_key = event.life_category.presence || 'work'
+                    category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
                   %>
-
-                  <% sorted_tomorrow.each do |event| %>
-                    <%
-                      category_key = event.life_category.presence || 'work'
-                      category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
-                    %>
-                    <div class="task-item glass-card p-4 rounded-xl border border-gray-200/50 hover:border-blue-300/50 <%= 'completed-task' if event.done? %> group"
-                         data-event-id="<%= event.id %>"
-                         style="--category-color: <%= category_info[:color] %>">
-                      <div class="flex items-center gap-3">
-                        <!-- Checkbox -->
-                        <label class="flex items-center cursor-pointer flex-shrink-0">
-                          <input
-                            type="checkbox"
-                            class="w-5 h-5 text-violet-600 rounded-full border-2 focus:ring-2 focus:ring-violet-500 focus:ring-offset-0 cursor-pointer transition-all hover:scale-110 active:scale-95"
-                            <%= 'checked' if event.done? %>
-                            onchange="toggleTask(<%= event.id %>)"
-                          >
-                        </label>
-
-                        <!-- Emoji Badge -->
-                        <% unless event.title.start_with?(category_info[:icon]) %>
-                          <div class="flex-shrink-0 w-8 h-8 rounded-lg glass-card border border-gray-200/50 flex items-center justify-center text-base category-badge">
-                            <%= category_info[:icon] %>
-                          </div>
-                        <% end %>
-
-                        <!-- Task Content -->
-                        <div class="flex-1 min-w-0">
-                          <p class="task-text text-sm font-medium text-gray-900">
-                            <%= event.title.gsub(category_info[:icon], '').strip %>
-                          </p>
-                        </div>
-
-                        <!-- Time & Delete -->
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                          <% if event.start_time && !event.all_day? %>
-                            <div class="flex items-center gap-1.5 text-gray-600">
-                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                              </svg>
-                              <span class="text-xs font-medium"><%= event.time_display(@user.timezone) %></span>
-                            </div>
-                          <% end %>
-
-                          <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
-                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  <% end %>
-
-                  <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
-                    <div class="text-center py-12">
-                      <div class="p-4 rounded-full bg-gray-100 inline-block mb-4">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  <div class="task-item <%= 'completed' if event.done? %>"
+                       data-event-id="<%= event.id %>"
+                       style="--category-color: <%= category_info[:color] %>">
+                    <div class="flex items-center gap-3">
+                      <div class="custom-checkbox <%= 'checked' if event.done? %>" onclick="toggleTask(<%= event.id %>)">
+                        <svg class="w-3 h-3 text-white <%= event.done? ? 'opacity-100' : 'opacity-0' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                         </svg>
                       </div>
-                      <p class="text-gray-600 font-medium">Нет задач на завтра</p>
-                      <p class="text-gray-500 text-sm mt-1">Добавьте новую задачу выше</p>
+
+                      <span class="text-lg"><%= category_info[:icon] %></span>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="task-text text-sm text-zinc-200 truncate">
+                          <%= event.title.gsub(category_info[:icon], '').strip %>
+                        </p>
+                      </div>
+
+                      <% if event.start_time && !event.all_day? %>
+                        <span class="text-xs text-zinc-500 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          <%= event.time_display(@user.timezone) %>
+                        </span>
+                      <% end %>
+
+                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
+                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
                     </div>
-                  <% end %>
-                </div>
+                  </div>
+                <% end %>
+
+                <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
+                  <div class="text-center py-12">
+                    <div class="empty-state-icon text-6xl mb-4">
+                      <%= %w[🌙 🔮 🚀 💫].sample %>
+                    </div>
+                    <p class="text-white font-medium mb-1">Завтра пока свободно</p>
+                    <p class="text-zinc-500 text-sm">Спланируй завтрашний день заранее</p>
+                  </div>
+                <% end %>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Recent Entries -->
-        <div class="glass-card rounded-2xl p-6 shadow-lg border border-gray-200/50">
-          <h3 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass-card p-5" style="animation: fadeIn 0.5s ease 0.3s forwards; opacity: 0;">
+          <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             Последние записи
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <% (@recent_entries || []).first(4).each do |entry| %>
               <%
                 type_colors = {
-                  'diary' => { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
-                  'idea' => { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
-                  'plan' => { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-500/20' }
+                  'diary' => { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
+                  'idea' => { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
+                  'plan' => { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20' }
                 }
-                colors = type_colors[entry.entry_type] || { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20' }
+                colors = type_colors[entry.entry_type] || { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' }
               %>
-              <div class="entry-card glass-card p-4 rounded-xl border <%= colors[:border] %> hover:border-violet-300/50 hover:shadow-md cursor-pointer transition-all duration-200 group">
+              <div class="entry-card">
                 <div class="flex items-start gap-3">
-                  <div class="p-2.5 rounded-xl <%= colors[:bg] %> <%= colors[:text] %> group-hover:scale-110 transition-transform">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <% if entry.entry_type == 'idea' %>
+                  <div class="p-2 rounded-lg <%= colors[:bg] %>">
+                    <% if entry.entry_type == 'idea' %>
+                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                      <% elsif entry.entry_type == 'diary' %>
+                      </svg>
+                    <% elsif entry.entry_type == 'diary' %>
+                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                      <% else %>
+                      </svg>
+                    <% else %>
+                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                      <% end %>
-                    </svg>
+                      </svg>
+                    <% end %>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+                    <p class="text-sm text-zinc-200 line-clamp-2 mb-1">
                       <%= entry.content.truncate(60) %>
                     </p>
-                    <p class="text-xs text-gray-600">
+                    <p class="text-xs text-zinc-600">
                       <%= time_ago_in_words(entry.created_at) %> назад
                     </p>
                   </div>
                 </div>
+              </div>
+            <% end %>
+
+            <% if @recent_entries.nil? || @recent_entries.empty? %>
+              <div class="col-span-2 text-center py-8">
+                <div class="text-4xl mb-3">📝</div>
+                <p class="text-zinc-400 text-sm">Отправь сообщение в Telegram бот</p>
               </div>
             <% end %>
           </div>
@@ -730,38 +947,103 @@
   </div>
 </div>
 
+<!-- === FLOATING ACTION BUTTON === -->
+<button class="fab" id="fabBtn" onclick="toggleFabMenu()">
+  <svg class="w-7 h-7 text-white transition-transform" id="fabIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+  </svg>
+</button>
+
+<div class="fab-menu" id="fabMenu">
+  <div class="fab-menu-item" onclick="quickAddTask()">
+    <div class="p-2 rounded-lg bg-violet-500/20">
+      <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+      </svg>
+    </div>
+    <span>Новая задача</span>
+    <span class="kbd">N</span>
+  </div>
+  <div class="fab-menu-item" onclick="quickAddIdea()">
+    <div class="p-2 rounded-lg bg-green-500/20">
+      <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+      </svg>
+    </div>
+    <span>Идея</span>
+    <span class="kbd">I</span>
+  </div>
+  <div class="fab-menu-item" onclick="quickAddReminder()">
+    <div class="p-2 rounded-lg bg-amber-500/20">
+      <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+      </svg>
+    </div>
+    <span>Напоминание</span>
+    <span class="kbd">R</span>
+  </div>
+</div>
+
 <script>
 let activeSection = 'today';
-let expandedSections = {
-  today: false,
-  tomorrow: false
-};
+let fabOpen = false;
 
-function toggleExpand(section) {
-  const container = section === 'today' ? document.getElementById('todayTasks') : document.getElementById('tomorrowTasks');
-  const button = section === 'today' ? document.getElementById('expandTodayBtn') : document.getElementById('expandTomorrowBtn');
-  
-  expandedSections[section] = !expandedSections[section];
-  
-  if (expandedSections[section]) {
-    // Expand
-    container.style.maxHeight = '600px';
-    button.innerHTML = `
-      <svg class="w-5 h-5 text-${section === 'today' ? 'amber' : 'blue'}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-      </svg>
-    `;
-    button.title = 'Свернуть';
-  } else {
-    // Collapse
-    container.style.maxHeight = '320px';
-    button.innerHTML = `
-      <svg class="w-5 h-5 text-${section === 'today' ? 'amber' : 'blue'}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-      </svg>
-    `;
-    button.title = 'Развернуть';
+// === KEYBOARD SHORTCUTS ===
+document.addEventListener('keydown', (e) => {
+  // Ignore if typing in input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch(e.key.toLowerCase()) {
+    case 'n':
+      e.preventDefault();
+      quickAddTask();
+      break;
+    case 'i':
+      e.preventDefault();
+      quickAddIdea();
+      break;
+    case 'r':
+      e.preventDefault();
+      quickAddReminder();
+      break;
+    case 'v':
+      e.preventDefault();
+      startVoiceNote();
+      break;
+    case '/':
+      e.preventDefault();
+      document.getElementById('newTaskInput').focus();
+      break;
+    case 'escape':
+      closeFabMenu();
+      break;
   }
+});
+
+// === FAB MENU ===
+function toggleFabMenu() {
+  fabOpen = !fabOpen;
+  const menu = document.getElementById('fabMenu');
+  const icon = document.getElementById('fabIcon');
+
+  if (fabOpen) {
+    menu.classList.add('open');
+    icon.style.transform = 'rotate(45deg)';
+  } else {
+    menu.classList.remove('open');
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
+
+function closeFabMenu() {
+  fabOpen = false;
+  document.getElementById('fabMenu').classList.remove('open');
+  document.getElementById('fabIcon').style.transform = 'rotate(0deg)';
+}
+
+function quickAddTask() {
+  closeFabMenu();
+  document.getElementById('newTaskInput').focus();
 }
 
 function setActiveSection(section) {
@@ -770,28 +1052,18 @@ function setActiveSection(section) {
   const tomorrowBtn = document.getElementById('tomorrowBtn');
 
   if (section === 'today') {
-    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all';
-    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all';
+    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all';
+    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all';
   } else {
-    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-medium shadow-sm hover:shadow-md transition-all';
-    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg glass-card text-gray-700 text-xs font-medium hover:bg-gray-50 transition-all';
-  }
-}
-
-function toggleCategoryCompact(categoryId) {
-  const tasksContainer = document.getElementById(categoryId);
-  const arrow = document.getElementById('arrow-' + categoryId);
-
-  if (tasksContainer.classList.contains('collapsed')) {
-    tasksContainer.classList.remove('collapsed');
-    arrow.classList.remove('collapsed');
-  } else {
-    tasksContainer.classList.add('collapsed');
-    arrow.classList.add('collapsed');
+    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all';
+    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all';
   }
 }
 
 function toggleTask(eventId) {
+  const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
+  const checkbox = taskElement.querySelector('.custom-checkbox');
+
   fetch(`/api/v1/calendar_events/${eventId}/toggle`, {
     method: 'PATCH',
     headers: {
@@ -801,39 +1073,24 @@ function toggleTask(eventId) {
   })
   .then(response => response.json())
   .then(data => {
-    const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
     if (data.data.completed) {
-      taskElement.classList.add('completed-task');
+      taskElement.classList.add('completed');
+      checkbox.classList.add('checked');
+      checkbox.querySelector('svg').classList.remove('opacity-0');
+      checkbox.querySelector('svg').classList.add('opacity-100');
     } else {
-      taskElement.classList.remove('completed-task');
+      taskElement.classList.remove('completed');
+      checkbox.classList.remove('checked');
+      checkbox.querySelector('svg').classList.add('opacity-0');
+      checkbox.querySelector('svg').classList.remove('opacity-100');
     }
-    
-    // Update completed tasks counter
-    updateCompletedTasksCounter();
+    updateCounters();
   });
-}
-
-function updateCompletedTasksCounter() {
-  // Count completed tasks in today's section
-  const todayTasks = document.querySelectorAll('#todayTasks input[type="checkbox"]:checked');
-  const completedCount = todayTasks.length;
-  
-  // Update the counter display
-  document.getElementById('completedTodayCount').textContent = completedCount;
-}
-
-function updateTasksCounter() {
-  // Count total tasks in today's section
-  const todayTasks = document.querySelectorAll('#todayTasks input[type="checkbox"]');
-  const totalCount = todayTasks.length;
-  
-  // Update the counter display
-  document.getElementById('totalEntriesCount').textContent = totalCount;
 }
 
 function deleteTask(eventId) {
   if (!confirm('Удалить задачу?')) return;
-  
+
   fetch(`/api/v1/calendar_events/${eventId}`, {
     method: 'DELETE',
     headers: {
@@ -841,38 +1098,29 @@ function deleteTask(eventId) {
       'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
     }
   })
-  .then(response => response.json())
-  .then(data => {
+  .then(() => {
     const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
-    taskElement.style.animation = 'fadeOut 0.3s ease';
+    taskElement.style.transform = 'translateX(-100%)';
+    taskElement.style.opacity = '0';
     setTimeout(() => {
       taskElement.remove();
-      // Update counters after task is removed
-      updateCompletedTasksCounter();
-      updateTasksCounter();
-    }, 300);
+      updateCounters();
+    }, 200);
   });
 }
 
 function addTask() {
   const input = document.getElementById('newTaskInput');
   const taskText = input.value.trim();
-  
+
   if (!taskText) return;
-  
-  // Get user's local date
-  const now = new Date();
+
   let targetDate = new Date();
-  
-  if (activeSection === 'today') {
-    // Today - set to start of today in user's timezone
-    targetDate.setHours(9, 0, 0, 0);
-  } else {
-    // Tomorrow - add one day and set to 9 AM
+  if (activeSection === 'tomorrow') {
     targetDate.setDate(targetDate.getDate() + 1);
-    targetDate.setHours(9, 0, 0, 0);
   }
-  
+  targetDate.setHours(9, 0, 0, 0);
+
   fetch('/api/v1/calendar_events', {
     method: 'POST',
     headers: {
@@ -885,199 +1133,34 @@ function addTask() {
       all_day: true
     })
   })
-  .then(response => response.json())
-  .then(data => {
-    location.reload();
-  });
-  
+  .then(() => location.reload());
+
   input.value = '';
 }
 
 function loadDayEvents(date) {
-  // Update selected day visual
   document.querySelectorAll('.calendar-day').forEach(day => {
-    day.classList.remove('selected');
+    day.classList.remove('today');
   });
-  event.currentTarget.classList.add('selected');
-  
-  // Update stats date label
-  const selectedDate = new Date(date);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  selectedDate.setHours(0, 0, 0, 0);
-  
-  let dateLabel = '';
-  if (selectedDate.getTime() === today.getTime()) {
-    dateLabel = 'сегодня';
-  } else if (selectedDate.getTime() === today.getTime() + 86400000) {
-    dateLabel = 'завтра';
-  } else {
-    const options = { day: 'numeric', month: 'long' };
-    dateLabel = selectedDate.toLocaleDateString('ru-RU', options);
-  }
-  document.getElementById('statsDateLabel').textContent = dateLabel;
-  
-  // Load stats for selected day
-  updateDayStats(date);
-  
-  // Load nutrition stats for selected day
-  loadNutritionStats(date);
-  
-  // Load events for selected day
-  fetch(`/api/v1/calendar_events?start_date=${date}&end_date=${date}`, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    updateTasksDisplay(data.data || []);
-  });
+  event.currentTarget.classList.add('today');
 }
 
-function updateDayStats(date) {
-  const selectedDate = new Date(date);
-  const startOfDay = new Date(selectedDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(selectedDate);
-  endOfDay.setHours(23, 59, 59, 999);
-  
-  // Get stats for the selected day
-  Promise.all([
-    fetch(`/api/v1/entries?created_after=${startOfDay.toISOString()}&created_before=${endOfDay.toISOString()}`),
-    fetch(`/api/v1/calendar_events?start_date=${date}&end_date=${date}`)
-  ])
-  .then(responses => Promise.all(responses.map(r => r.json())))
-  .then(([entriesData, eventsData]) => {
-    // Update stats
-    console.log('Entries data:', entriesData);
-    console.log('Events data:', eventsData);
-    const entries = entriesData.data || [];
-    const events = eventsData.data || [];
-    
-    console.log('Events count:', events.length);
-    document.getElementById('totalEntriesCount').textContent = events.length;
-    document.getElementById('completedTodayCount').textContent = events.filter(e => e.done).length;
-    
-    // Load nutrition data for today
-    loadNutritionStats(selectedDate || new Date().toISOString().split('T')[0]);
-  })
-  .catch(error => {
-    console.error('Error fetching stats:', error);
-    // Set default values if API fails
-    document.getElementById('totalEntriesCount').textContent = '0';
-    document.getElementById('completedTodayCount').textContent = '0';
-  });
-}
+function updateCounters() {
+  const todayCompleted = document.querySelectorAll('#todayTasks .task-item.completed').length;
+  const todayTotal = document.querySelectorAll('#todayTasks .task-item').length;
 
-function updateTasksDisplay(events) {
-  const todayContainer = document.getElementById('todayTasks');
-  const tomorrowContainer = document.getElementById('tomorrowTasks');
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const todayEvents = events.filter(e => {
-    const eventDate = new Date(e.start_time);
-    eventDate.setHours(0, 0, 0, 0);
-    return eventDate.getTime() === today.getTime();
-  });
-  
-  const tomorrowEvents = events.filter(e => {
-    const eventDate = new Date(e.start_time);
-    eventDate.setHours(0, 0, 0, 0);
-    return eventDate.getTime() === today.getTime() + 86400000;
-  });
-  
-  // Update today section
-  if (todayContainer) {
-    renderEvents(todayContainer, todayEvents);
-  }
-  
-  // Update tomorrow section
-  if (tomorrowContainer) {
-    renderEvents(tomorrowContainer, tomorrowEvents);
-  }
-}
-
-function renderEvents(container, events) {
-  if (events.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-8 text-gray-500">
-        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <p>Нет задач</p>
-      </div>
-    `;
-  } else {
-    container.innerHTML = events.map(event => `
-      <div class="task-item glass-card p-3 rounded-lg ${event.done ? 'completed-task' : ''}" data-event-id="${event.id}">
-        <div class="flex items-start gap-3">
-          <label class="flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              class="w-4 h-4 text-violet-600 rounded focus:ring-violet-500"
-              ${event.done ? 'checked' : ''}
-              onchange="toggleTask(${event.id})"
-            >
-          </label>
-          <div class="flex-1">
-            <p class="task-text text-gray-800 font-medium">
-              ${event.title}
-            </p>
-            ${event.start_time && !event.all_day ? `
-              <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                ${new Date(event.start_time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-              </p>
-            ` : ''}
-          </div>
-          <button onclick="deleteTask(${event.id})" class="delete-btn p-1 hover:bg-red-50 rounded">
-            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `).join('');
-  }
+  document.getElementById('completedTodayCount').textContent = todayCompleted;
+  document.getElementById('totalEntriesCount').textContent = todayTotal;
 }
 
 function quickAddReminder() {
-  const reminder = prompt('О чём напомнить? (например: "вечером почитать книгу")');
+  closeFabMenu();
+  const reminder = prompt('О чём напомнить?');
   if (!reminder) return;
-  
-  // Parse natural language time
+
   let remindTime = new Date();
-  const lowerText = reminder.toLowerCase();
-  const now = new Date();
-  
-  if (lowerText.includes('утром')) {
-    remindTime.setHours(9, 0, 0, 0);
-    // If morning time already passed today, set for tomorrow
-    if (remindTime <= now) {
-      remindTime.setDate(remindTime.getDate() + 1);
-    }
-  } else if (lowerText.includes('вечером')) {
-    remindTime.setHours(20, 0, 0, 0);
-    // If evening time already passed today, set for tomorrow
-    if (remindTime <= now) {
-      remindTime.setDate(remindTime.getDate() + 1);
-    }
-  } else if (lowerText.includes('днем')) {
-    remindTime.setHours(14, 0, 0, 0);
-    // If afternoon time already passed today, set for tomorrow
-    if (remindTime <= now) {
-      remindTime.setDate(remindTime.getDate() + 1);
-    }
-  } else {
-    // Default: 1 hour from now
-    remindTime.setTime(now.getTime() + 60 * 60 * 1000);
-  }
-  
+  remindTime.setTime(remindTime.getTime() + 60 * 60 * 1000);
+
   fetch('/api/v1/reminders', {
     method: 'POST',
     headers: {
@@ -1095,14 +1178,11 @@ function quickAddReminder() {
   });
 }
 
-function startVoiceNote() {
-  alert('Функция голосовых заметок будет доступна в следующей версии');
-}
-
 function quickAddIdea() {
-  const idea = prompt('Опишите вашу идею:');
+  closeFabMenu();
+  const idea = prompt('Опишите идею:');
   if (!idea) return;
-  
+
   fetch('/api/v1/entries', {
     method: 'POST',
     headers: {
@@ -1120,64 +1200,15 @@ function quickAddIdea() {
   });
 }
 
-// Add fade out animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes fadeOut {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(-20px); }
-  }
-`;
-document.head.appendChild(style);
-
-function loadNutritionStats(date) {
-  fetch(`/dashboard/nutrition_stats?date=${date}`, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    const calories = Math.round(data.calories || 0);
-    const protein = Math.round(data.protein || 0);
-    const fat = Math.round(data.fat || 0); 
-    const carbs = Math.round(data.carbs || 0);
-    
-    document.getElementById('todayCaloriesCount').textContent = calories;
-    document.getElementById('todayProtein').textContent = protein;
-    document.getElementById('todayFat').textContent = fat;
-    document.getElementById('todayCarbs').textContent = carbs;
-  })
-  .catch(error => {
-    console.log('Nutrition stats not available:', error);
-    document.getElementById('todayCaloriesCount').textContent = '0';
-    document.getElementById('todayProtein').textContent = '0';
-    document.getElementById('todayFat').textContent = '0';
-    document.getElementById('todayCarbs').textContent = '0';
-  });
+function startVoiceNote() {
+  closeFabMenu();
+  alert('Функция будет доступна в следующей версии');
 }
 
-// Initialize stats on page load
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date().toISOString().split('T')[0];
-  // Don't override server data on initial load - only update when user selects different date
-  // updateDayStats(today);
-  
-  // Set initial nutrition stats from server data
-  <% if @nutrition_totals %>
-    document.getElementById('todayCaloriesCount').textContent = '<%= @nutrition_totals[:calories].to_i %>';
-    document.getElementById('todayProtein').textContent = '<%= @nutrition_totals[:protein].to_f.round(0) %>';
-    document.getElementById('todayFat').textContent = '<%= @nutrition_totals[:fat].to_f.round(0) %>';
-    document.getElementById('todayCarbs').textContent = '<%= @nutrition_totals[:carbs].to_f.round(0) %>';
-  <% else %>
-    document.getElementById('todayCaloriesCount').textContent = '0';
-    document.getElementById('todayProtein').textContent = '0';
-    document.getElementById('todayFat').textContent = '0';
-    document.getElementById('todayCarbs').textContent = '0';
-  <% end %>
-  
-  // Set initial tasks stats from server data
-  document.getElementById('totalEntriesCount').textContent = '<%= @today_tasks_count || 0 %>';
-  document.getElementById('completedTodayCount').textContent = '<%= @completed_today_count || 0 %>';
+// Close FAB menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (fabOpen && !e.target.closest('.fab') && !e.target.closest('.fab-menu')) {
+    closeFabMenu();
+  }
 });
 </script>

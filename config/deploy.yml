@@ -9,11 +9,11 @@ servers:
   web:
     hosts:
       - 46.62.211.95
-    # options:
-    #   health-interval: 15s
-    #   health-timeout: 10s
-    #   health-retries: 30
-    #   health-start-period: 180s
+    options:
+      health-interval: 10s
+      health-timeout: 5s
+      health-retries: 60
+      health-start-period: 300s  # 5 минут на запуск
   # job:
   #   hosts:
   #     - 192.168.0.1
