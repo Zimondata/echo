@@ -96,26 +96,28 @@
       // Telegram auth callback function - must be global
       window.onTelegramAuth = function(user) {
         console.log('Telegram auth callback received:', user);
-        
+
         if (!user || !user.id) {
           console.error('Invalid Telegram auth data:', user);
           alert('Ошибка авторизации. Пожалуйста, попробуйте еще раз.');
           return;
         }
-        
-        // Build query string from user data
-        const params = new URLSearchParams({
-          id: user.id,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          username: user.username || '',
-          photo_url: user.photo_url || '',
-          auth_date: user.auth_date,
-          hash: user.hash
-        });
-        
+
+        // Build query string from user data - only include non-empty fields
+        // IMPORTANT: Telegram hash is calculated only from present fields
+        const params = new URLSearchParams();
+        params.append('id', user.id);
+        params.append('auth_date', user.auth_date);
+        params.append('hash', user.hash);
+
+        // Only add optional fields if they have values
+        if (user.first_name) params.append('first_name', user.first_name);
+        if (user.last_name) params.append('last_name', user.last_name);
+        if (user.username) params.append('username', user.username);
+        if (user.photo_url) params.append('photo_url', user.photo_url);
+
         console.log('Redirecting to callback with params:', params.toString());
-        
+
         // Redirect to callback URL
         window.location.href = '/auth/telegram/callback?' + params.toString();
       };
