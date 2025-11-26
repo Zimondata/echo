@@ -10,7 +10,7 @@ Echo — Telegram AI-ассистент для управления дневни
 - Ruby 3.4.5
 - Rails 8.0.3
 - SQLite3
-- Sidekiq (фоновые задачи)
+- Solid Queue (фоновые задачи, Rails 8 native)
 - Hotwire (Turbo + Stimulus)
 - Tailwind CSS
 - Telegram Bot API
@@ -20,9 +20,9 @@ Echo — Telegram AI-ассистент для управления дневни
 
 ### Rails 8 стек
 - Избегать лишнего JavaScript — использовать Turbo Streams
-- Использовать SolidQueue для очередей (когда включён)
-- SolidCable для WebSockets
-- SolidCache для кэширования views
+- Solid Queue для фоновых задач (config/recurring.yml для периодических)
+- SolidCable для WebSockets (опционально)
+- SolidCache для кэширования views (опционально)
 
 ### Стиль кода
 - Идиоматичный Ruby по конвенциям Rails
@@ -89,7 +89,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
    - Ставит в очередь `TelegramWebhookJob`, сразу возвращает 200 OK
 
 2. **Асинхронная обработка**
-   - `TelegramWebhookJob` обрабатывает через Sidekiq
+   - `TelegramWebhookJob` обрабатывает через Solid Queue
    - Создаёт/находит `User` по `telegram_id`
    - Делегирует в `Telegram::MessageHandler`
 

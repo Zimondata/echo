@@ -1,0 +1,38 @@
+# Solid Queue recurring tasks configuration
+# These replace the Thread.new loop in config/initializers/recurring_jobs.rb
+
+# Development and Test environments (no recurring tasks needed)
+development: {}
+test: {}
+
+# Production recurring tasks
+production:
+  # Send reminders - check for due reminders every minute
+  send_reminders:
+    class: SendRemindersJob
+    schedule: every minute
+
+  # Schedule contextual notifications - hourly check
+  contextual_notifications:
+    class: ScheduleContextualNotificationsJob
+    schedule: every hour
+
+  # Generate smart reminders - every 6 hours
+  smart_reminders:
+    class: GenerateSmartRemindersJob
+    schedule: every 6 hours
+
+  # Weekly insights - every Sunday at 8pm
+  weekly_insights:
+    class: WeeklyInsightSchedulerJob
+    schedule: every sunday at 8pm
+
+  # Calendar sync - every 4 hours
+  calendar_sync:
+    class: ScheduleCalendarSyncJob
+    schedule: every 4 hours
+
+  # Clear finished Solid Queue jobs - every hour
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12

@@ -163,7 +163,7 @@ class ScheduleContextualNotificationsJob < ApplicationJob
     else
       # Отложенная отправка через несколько минут для сглаживания
       delay = rand(1..10).minutes
-      ContextualNotificationJob.perform_in(delay, user.id, type, options)
+      ContextualNotificationJob.set(wait: delay).perform_later(user.id, type, options)
     end
     
     Rails.logger.info "Scheduled #{type} notification for user #{user.id}"

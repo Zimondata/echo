@@ -24,9 +24,8 @@ gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
-# Commented out for simple async deployment
 # gem "solid_cache"
-# gem "solid_queue"
+gem "solid_queue"
 # gem "solid_cable"
 
 # Reduces boot times through caching; required in config/boot.rb
@@ -52,7 +51,7 @@ gem "ruby-openai", "7.0.1"         # OpenAI (Whisper, GPT-4) - specific version 
 gem "google-apis-calendar_v3"      # Google Calendar API
 gem "googleauth"                    # Google OAuth
 gem "httparty", "~> 0.22"          # HTTP requests
-gem "sidekiq", "~> 7.2"            # Background jobs (alternative to Solid Queue)
+# Sidekiq removed - using Solid Queue instead (Rails 8 native)
 
 # Note: pg and neighbor gems removed - using SQLite3 instead
 # If you need to migrate data from PostgreSQL, temporarily add:
