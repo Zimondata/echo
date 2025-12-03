@@ -9,11 +9,16 @@ module Telegram
     end
 
     def process
+      Rails.logger.info "=== MESSAGE HANDLER PROCESS ==="
+      Rails.logger.info "User: #{user.id} (@#{user.username})"
+      Rails.logger.info "Message: #{message.text.inspect}"
+
       # Send typing indicator
       BotService.send_typing(chat_id)
 
       # Handle different message types
       if message.text&.start_with?("/")
+        Rails.logger.info "Detected command, calling handle_command"
         handle_command
       elsif message.location
         handle_location_message
@@ -82,6 +87,20 @@ module Telegram
     end
 
     def handle_start_command
+      Rails.logger.info "=== HANDLE START COMMAND ==="
+      Rails.logger.info "Message text: #{message.text.inspect}"
+
+      # Check for auth deep link parameter
+      # Telegram sends: "/start auth_TOKEN" or "/start@botname auth_TOKEN"
+      if message.text =~ /^\/start(?:@\w+)?\s+auth_(.+)$/
+        session_token = $1.strip
+        Rails.logger.info "✅ Auth request detected! Token: #{session_token}"
+        handle_auth_request(session_token)
+        return
+      end
+
+      Rails.logger.info "No auth parameter found, showing welcome message"
+
       welcome_text = <<~TEXT
         Привет, #{user.full_name}! 👋
 
@@ -104,6 +123,41 @@ module Telegram
       TEXT
 
       send_reply(welcome_text)
+    end
+
+    def handle_auth_request(session_token)
+      Rails.logger.info "=== HANDLE AUTH REQUEST ==="
+      Rails.logger.info "Session token: #{session_token}"
+
+      # Verify session is valid
+      session = TelegramAuthSession.active.find_by(session_token: session_token)
+
+      unless session
+        Rails.logger.warn "❌ Auth session not found or expired: #{session_token}"
+        send_reply("❌ Ссылка для входа истекла или недействительна. Попробуйте снова.")
+        return
+      end
+
+      Rails.logger.info "✅ Auth session found! Sending confirmation button..."
+
+      # Send confirmation button
+      keyboard = [[
+        {
+          text: '✅ Подтвердить вход',
+          callback_data: "telegram_auth_confirm_#{session_token}"
+        }
+      ]]
+
+      BotService.send_message_with_keyboard(
+        chat_id: chat_id,
+        text: "🔐 *Подтверждение входа*\n\n" \
+              "Запрос на вход в веб-приложение Echo.\n\n" \
+              "Нажмите кнопку ниже, чтобы подтвердить, что это вы. " \
+              "После подтверждения вы автоматически войдёте в систему.",
+        keyboard: keyboard
+      )
+
+      Rails.logger.info "✅ Confirmation message sent!"
     end
 
     def handle_help_command

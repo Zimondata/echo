@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # ActionCable endpoint for WebSocket connections
+  mount ActionCable.server => '/cable'
+
   # Activity Entries
   resources :activity_entries, only: [:index, :show, :new, :create, :edit, :update, :destroy]
   # Root path - Landing page
@@ -11,9 +14,18 @@ Rails.application.routes.draw do
   get "landing/organic", to: "landing#organic"
   
   # Auth routes
-  get "/auth/telegram/callback", to: "sessions#telegram_callback"
+  namespace :telegram_auth do
+    post :initiate
+    get ':token/status', action: :status, as: :status
+  end
+
+  resources :sessions, only: [:new, :create, :destroy] do
+    collection do
+      post :complete_telegram_auth
+    end
+  end
+
   get "/login", to: "sessions#new"
-  post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy", as: :logout
 
   # Dashboard (protected)

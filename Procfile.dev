@@ -1,0 +1,3 @@
+web: bin/rails server
+jobs: bin/jobs
+ngrok: ngrok http --url=unbeset-tressier-roselyn.ngrok-free.dev 3000

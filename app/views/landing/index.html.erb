@@ -41,25 +41,15 @@
     <div class="hero-cta">
       <div class="telegram-cta-wrapper">
         <div class="telegram-cta-glow"></div>
-        <% if Rails.env.development? && request.host.include?('localhost') %>
-          <!-- Development: Use direct link to login page -->
-          <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: #54a9eb !important; color: white !important;">
-            <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; margin-right: 8px;">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
-            </svg>
-            Войти через Telegram
-          </a>
-        <% else %>
-          <!-- Production: Use Telegram Login Widget -->
-          <div id="telegram-login-hero"></div>
-        <% end %>
+        <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: #54a9eb !important; color: white !important;">
+          <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; margin-right: 8px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
+          </svg>
+          Войти через Telegram
+        </a>
       </div>
       <p style="margin-top: 16px; font-size: 14px; color: var(--color-text-light);">
-        <% if Rails.env.development? && request.host.include?('localhost') %>
-          Режим разработки: используйте страницу входа
-        <% else %>
-          Без регистрации, без карты — просто войдите через Telegram
-        <% end %>
+        Без регистрации, без карты — просто войдите через Telegram
       </p>
     </div>
   </div>
@@ -248,16 +238,12 @@
         
         <div class="telegram-cta-wrapper" style="width: 100%; margin-top: 32px;">
           <div class="telegram-cta-glow"></div>
-          <% if Rails.env.development? && request.host.include?('localhost') %>
-            <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; width: 100%; background: #54a9eb !important; color: white !important;">
-              <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
-              </svg>
-              Войти через Telegram
-            </a>
-          <% else %>
-            <div id="telegram-login-offer"></div>
-          <% end %>
+          <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; width: 100%; background: #54a9eb !important; color: white !important;">
+            <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
+            </svg>
+            Войти через Telegram
+          </a>
         </div>
         <p class="offer-guarantee">14 дней бесплатно • Отмена в любой момент</p>
       </div>

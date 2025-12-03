@@ -75,5 +75,6 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   # Allow ngrok hosts for webhook testing
-  config.hosts << /[a-z0-9-]+\.ngrok-free\.dev/
+  # 
+  config.hosts << "unbeset-tressier-roselyn.ngrok-free.dev"
 end

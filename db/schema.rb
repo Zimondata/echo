@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_02_111505) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_03_110646) do
   create_table "activity_entries", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "activity_type", null: false
@@ -126,6 +126,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_111505) do
     t.index ["user_id"], name: "index_insights_on_user_id"
   end
 
+  create_table "login_tokens", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.boolean "used", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_login_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_login_tokens_on_user_id"
+  end
+
   create_table "nutrition_entries", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "entry_id"
@@ -199,6 +210,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_111505) do
     t.index ["user_id"], name: "index_reminders_on_user_id"
   end
 
+  create_table "telegram_auth_sessions", force: :cascade do |t|
+    t.string "session_token", null: false
+    t.bigint "telegram_id"
+    t.integer "user_id"
+    t.string "status", default: "pending", null: false
+    t.string "initiated_from"
+    t.string "client_ip"
+    t.string "user_agent"
+    t.datetime "expires_at", null: false
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_telegram_auth_sessions_on_expires_at"
+    t.index ["session_token"], name: "index_telegram_auth_sessions_on_session_token", unique: true
+    t.index ["status", "expires_at"], name: "index_telegram_auth_sessions_on_status_and_expires_at"
+    t.index ["telegram_id"], name: "index_telegram_auth_sessions_on_telegram_id"
+    t.index ["user_id"], name: "index_telegram_auth_sessions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.bigint "telegram_id", null: false
     t.string "username"
@@ -219,10 +249,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_02_111505) do
   add_foreign_key "calendar_events", "users"
   add_foreign_key "entries", "users"
   add_foreign_key "insights", "users"
+  add_foreign_key "login_tokens", "users"
   add_foreign_key "nutrition_entries", "entries"
   add_foreign_key "nutrition_entries", "users"
   add_foreign_key "quests", "entries"
   add_foreign_key "quests", "users"
   add_foreign_key "reminders", "entries"
   add_foreign_key "reminders", "users"
+  add_foreign_key "telegram_auth_sessions", "users"
 end

@@ -1,11 +1,14 @@
-# Solid Queue recurring tasks configuration
-# These replace the Thread.new loop in config/initializers/recurring_jobs.rb
+# examples:
+#   periodic_cleanup:
+#     class: CleanSoftDeletedRecordsJob
+#     queue: background
+#     args: [ 1000, { batch_size: 500 } ]
+#     schedule: every hour
+#   periodic_cleanup_with_command:
+#     command: "SoftDeletedRecord.due.delete_all"
+#     priority: 2
+#     schedule: at 5am every day
 
-# Development and Test environments (no recurring tasks needed)
-development: {}
-test: {}
-
-# Production recurring tasks
 production:
   # Send reminders - check for due reminders every minute
   send_reminders:
@@ -31,6 +34,11 @@ production:
   calendar_sync:
     class: ScheduleCalendarSyncJob
     schedule: every 4 hours
+
+  # Cleanup expired auth sessions - every 5 minutes
+  cleanup_expired_auth_sessions:
+    class: CleanupExpiredAuthSessionsJob
+    schedule: every 5 minutes
 
   # Clear finished Solid Queue jobs - every hour
   clear_solid_queue_finished_jobs:

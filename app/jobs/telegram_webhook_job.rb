@@ -2,11 +2,17 @@ class TelegramWebhookJob < ApplicationJob
   queue_as :default
 
   def perform(update_data)
+    Rails.logger.info "=== TELEGRAM WEBHOOK RECEIVED ==="
+    Rails.logger.info "Update data: #{update_data.inspect}"
+
     update = Telegram::Bot::Types::Update.new(update_data)
 
     if update.message
       # Handle regular message
       message = update.message
+      Rails.logger.info "Message text: #{message.text.inspect}"
+      Rails.logger.info "From user: #{message.from.id} (@#{message.from.username})"
+
       user = find_or_create_user(message.from)
       Telegram::MessageHandler.new(user, message).process
     elsif update.callback_query
@@ -71,6 +77,11 @@ class TelegramWebhookJob < ApplicationJob
     elsif data.start_with?('reminder_')
       # Handle reminder button clicks
       handle_reminder_callback(user, data, chat_id)
+    elsif data.start_with?('telegram_auth_')
+      # Handle auth confirmation
+      # Format: "telegram_auth_confirm_<session_token>"
+      session_token = data.sub('telegram_auth_confirm_', '')
+      handle_auth_confirmation(callback_query, session_token)
     end
     
     # Answer callback query to remove loading state
@@ -269,6 +280,40 @@ class TelegramWebhookJob < ApplicationJob
       chat_id: chat_id,
       text: "❌ Ошибка обработки действия"
     )
+  end
+
+  def handle_auth_confirmation(callback_query, session_token)
+    result = TelegramAuthService.confirm_auth(
+      session_token: session_token,
+      telegram_user: callback_query.from
+    )
+
+    chat_id = callback_query.message.chat.id
+
+    if result[:success]
+      # Broadcast to WebSocket
+      auth_session = result[:session]
+      TelegramAuthChannel.broadcast_to(
+        auth_session,
+        {
+          type: 'auth_confirmed',
+          user_id: result[:user].id,
+          redirect_url: Rails.application.routes.url_helpers.dashboard_path
+        }
+      )
+
+      # Send success message with web link
+      app_url = Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "✅ Вход выполнен успешно!\n\n[Открыть Echo →](#{app_url}/dashboard)"
+      )
+    else
+      Telegram::BotService.send_message(
+        chat_id: chat_id,
+        text: "❌ Ошибка: #{result[:error]}"
+      )
+    end
   end
 
   def find_or_create_user(from)

@@ -1,10 +1,36 @@
 class SessionsController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:new, :create, :telegram_callback]
+  skip_before_action :authenticate_user!, only: [:new, :create, :complete_telegram_auth]
   layout false, only: [:new]
-  
+
   def new
     redirect_to dashboard_path if current_user
-    # For development: show login form
+
+    # Check if there's an active session in the last 10 minutes
+    # This prevents creating a new session on every page refresh
+    session_token = session[:pending_auth_token]
+    @auth_data = nil
+
+    if session_token
+      existing_session = TelegramAuthSession.active.find_by(session_token: session_token)
+      if existing_session
+        @auth_data = {
+          session_token: existing_session.session_token,
+          deep_link: TelegramAuthService.generate_deep_link(existing_session.session_token),
+          qr_data: TelegramAuthService.generate_qr_data(existing_session.session_token),
+          expires_at: existing_session.expires_at
+        }
+      end
+    end
+
+    # Only create new session if we don't have a valid one
+    unless @auth_data
+      @auth_data = TelegramAuthService.initiate_auth(
+        ip: request.remote_ip,
+        user_agent: request.user_agent
+      )
+      # Store token in session to reuse on refresh
+      session[:pending_auth_token] = @auth_data[:session_token]
+    end
   end
   
   def create
@@ -28,33 +54,17 @@ class SessionsController < ApplicationController
     end
   end
   
-  def telegram_callback
-    # Verify Telegram data
-    auth_data = params.permit(:id, :first_name, :last_name, :username, :photo_url, :auth_date, :hash)
-    
-    if verify_telegram_auth(auth_data)
-      # Find or create user
-      user = User.find_or_create_by(telegram_id: auth_data[:id]) do |u|
-        u.username = auth_data[:username]
-        u.first_name = auth_data[:first_name]
-        u.last_name = auth_data[:last_name]
-        u.timezone = 'Europe/Madrid' # Default timezone
-        u.language = 'ru'
-      end
-      
-      # Update user info if changed
-      user.update(
-        username: auth_data[:username],
-        first_name: auth_data[:first_name],
-        last_name: auth_data[:last_name]
-      )
-      
-      # Create session
-      session[:user_id] = user.id
-      
-      redirect_to dashboard_path, notice: 'Успешно вошли в систему!'
+  def complete_telegram_auth
+    token = params[:session_token]
+    auth_session = TelegramAuthSession.confirmed.find_by(session_token: token)
+
+    if auth_session&.user
+      session[:user_id] = auth_session.user.id
+      # Clear pending auth token since we successfully logged in
+      session.delete(:pending_auth_token)
+      render json: { success: true, redirect_url: dashboard_path }
     else
-      redirect_to root_path, alert: 'Ошибка аутентификации'
+      render json: { error: 'Invalid or expired session' }, status: :unauthorized
     end
   end
   
@@ -63,40 +73,4 @@ class SessionsController < ApplicationController
     redirect_to root_path, notice: 'Вы вышли из системы'
   end
   
-  private
-  
-  def verify_telegram_auth(auth_data)
-    # Skip verification in development mode
-    return true if Rails.env.development? && auth_data[:hash] == 'dev_mode_hash'
-
-    bot_token = Rails.application.credentials.dig(:telegram, :bot_token)
-    return false unless bot_token
-
-    check_hash = auth_data[:hash]
-    return false if check_hash.blank?
-
-    # Create data check string - only include non-empty fields (as Telegram does)
-    data_check_string = auth_data
-      .to_h
-      .except('hash', :hash)
-      .reject { |_k, v| v.blank? }  # Filter out empty values
-      .sort
-      .map { |k, v| "#{k}=#{v}" }
-      .join("\n")
-
-    # Calculate hash using SHA256(bot_token) as secret key
-    secret_key = Digest::SHA256.digest(bot_token)
-    calculated_hash = OpenSSL::HMAC.hexdigest(
-      'SHA256',
-      secret_key,
-      data_check_string
-    )
-
-    Rails.logger.info "Telegram auth check: calculated=#{calculated_hash[0..10]}... received=#{check_hash[0..10]}..."
-
-    # Verify hash and check auth date (within 1 day)
-    calculated_hash == check_hash &&
-      auth_data[:auth_date].present? &&
-      Time.at(auth_data[:auth_date].to_i) > 1.day.ago
-  end
 end

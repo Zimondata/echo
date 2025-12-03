@@ -369,6 +369,11 @@ GEM
       faraday (>= 0.17.5, < 3.a)
       jwt (>= 1.5, < 4.0)
       multi_json (~> 1.10)
+    solid_cable (3.0.12)
+      actioncable (>= 7.2)
+      activejob (>= 7.2)
+      activerecord (>= 7.2)
+      railties (>= 7.2)
     solid_queue (1.2.4)
       activejob (>= 7.1)
       activerecord (>= 7.1)
@@ -449,6 +454,7 @@ DEPENDENCIES
   rubocop-rails-omakase
   ruby-openai (= 7.0.1)
   selenium-webdriver
+  solid_cable
   solid_queue
   sqlite3 (>= 2.1)
   stimulus-rails

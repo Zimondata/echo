@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вход - Auri</title>
+  <title>Вход - Echo</title>
+  <%= csrf_meta_tags %>
+  <%= action_cable_meta_tag %>
+  <%= javascript_importmap_tags %>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -60,15 +64,13 @@
       box-shadow: 0 10px 30px rgba(34, 158, 217, 0.3);
     }
 
-    .dev-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.2s ease;
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
-    .dev-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(139, 92, 246, 0.3);
+    .spinner {
+      animation: spin 1s linear infinite;
     }
 
     @keyframes fadeIn {
@@ -79,87 +81,68 @@
     .animate-fade-in {
       animation: fadeIn 0.6s ease forwards;
     }
+
+    #qr-code-container canvas {
+      margin: 0 auto;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
   <div class="animated-bg"></div>
 
-  <div class="w-full max-w-md animate-fade-in">
+  <div class="w-full max-w-2xl animate-fade-in">
     <div class="glass-card p-8 shadow-2xl">
 
       <!-- Logo & Header -->
       <div class="text-center mb-8">
         <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center border border-violet-500/30">
-          <span class="text-4xl gradient-text font-bold">A</span>
+          <span class="text-4xl gradient-text font-bold">E</span>
         </div>
-        <h1 class="text-3xl font-bold text-white mb-2">Добро пожаловать</h1>
-        <p class="text-zinc-500">Войдите в <span class="gradient-text font-semibold">Auri</span></p>
+        <h1 class="text-3xl font-bold text-white mb-2">Вход в Echo</h1>
+        <p class="text-zinc-500">Подтвердите вход через <span class="gradient-text font-semibold">Telegram</span></p>
       </div>
 
-      <% if Rails.env.development? %>
-        <!-- Development Mode -->
-        <div class="space-y-4">
-          <button onclick="simulateTelegramAuth()" class="telegram-btn w-full py-4 px-6 text-white font-semibold rounded-xl flex items-center justify-center gap-3">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
-            </svg>
-            Войти через Telegram
-          </button>
+      <!-- Auth Methods -->
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
 
-          <p class="text-center text-zinc-600 text-xs">Эмуляция для разработки</p>
+        <!-- QR Code Section -->
+        <div class="text-center p-6 rounded-xl bg-white/5 border border-white/10">
+          <h2 class="text-lg font-semibold text-white mb-4">Сканируйте QR-код</h2>
+          <div id="qr-code-container" class="mb-4 flex justify-center"></div>
+          <p class="text-xs text-zinc-500">Откройте камеру на телефоне</p>
         </div>
 
-        <!-- Hidden Form -->
-        <%= form_with url: "/auth/telegram/callback", method: :get, local: true, id: "telegram-auth-form", class: "hidden" do |f| %>
-          <%= f.hidden_field :id, value: "" %>
-          <%= f.hidden_field :first_name, value: "" %>
-          <%= f.hidden_field :last_name, value: "" %>
-          <%= f.hidden_field :username, value: "" %>
-          <%= f.hidden_field :auth_date, value: "" %>
-          <%= f.hidden_field :hash, value: "dev_mode_hash" %>
-        <% end %>
-
-        <script>
-          function simulateTelegramAuth() {
-            const users = [
-              { id: '263349181', first_name: 'Bitcoin', last_name: 'User', username: 'btchitcoin' },
-              { id: '123456789', first_name: 'Александр', last_name: 'Иванов', username: 'alex_ivanov' },
-              { id: '987654321', first_name: 'Мария', last_name: 'Петрова', username: 'maria_p' }
-            ];
-
-            const user = users[0];
-            const form = document.getElementById('telegram-auth-form');
-            form.querySelector('[name="id"]').value = user.id;
-            form.querySelector('[name="first_name"]').value = user.first_name;
-            form.querySelector('[name="last_name"]').value = user.last_name;
-            form.querySelector('[name="username"]').value = user.username;
-            form.querySelector('[name="auth_date"]').value = Math.floor(Date.now() / 1000);
-            form.submit();
-          }
-        </script>
-
-        <div class="mt-6 pt-6 border-t border-white/5">
-          <p class="text-center text-zinc-500 text-sm mb-4">Быстрый вход для тестирования</p>
-          <%= form_with url: login_path, method: :post, local: true do |f| %>
-            <button type="submit" class="dev-btn w-full py-3 px-4 text-zinc-300 font-medium rounded-xl text-sm">
-              Войти как тестовый пользователь
-            </button>
-          <% end %>
-        </div>
-
-      <% else %>
-        <!-- Production Mode -->
-        <div class="text-center">
-          <p class="text-zinc-400 mb-6">Используйте Telegram для входа</p>
-          <a href="https://t.me/auriAI_bot?start=login"
-             class="telegram-btn inline-flex items-center gap-3 px-8 py-4 text-white font-semibold rounded-xl">
+        <!-- Deep Link Section -->
+        <div class="text-center p-6 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-center">
+          <h2 class="text-lg font-semibold text-white mb-4">Или нажмите кнопку</h2>
+          <a href="<%= @auth_data[:deep_link] %>" target="_blank" class="telegram-btn py-4 px-6 text-white font-semibold rounded-xl flex items-center justify-center gap-3 mb-4">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
             </svg>
             Войти через Telegram
           </a>
+          <p class="text-xs text-zinc-500">Откроется Telegram бот</p>
         </div>
-      <% end %>
+
+      </div>
+
+      <!-- Status Indicator -->
+      <div id="auth-status" class="text-center p-4 rounded-xl bg-white/5 border border-white/10 mb-4">
+        <div class="flex items-center justify-center gap-3">
+          <svg class="w-5 h-5 text-violet-400 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <p class="text-zinc-300">Ожидание подтверждения...</p>
+        </div>
+      </div>
+
+      <!-- Expiry Timer -->
+      <div class="text-center">
+        <p class="text-sm text-zinc-500">
+          Ссылка истекает через <span id="timer" class="text-violet-400 font-semibold">15:00</span>
+        </p>
+      </div>
 
       <!-- Back Link -->
       <div class="mt-8 text-center">
@@ -174,8 +157,101 @@
 
     <!-- Footer -->
     <p class="text-center text-zinc-600 text-xs mt-6">
-      AI-ассистент для продуктивности и личного развития
+      AI-ассистент для управления дневником и идеями
     </p>
   </div>
+
+  <script type="module">
+    // Initialize WebSocket connection
+    const sessionToken = '<%= @auth_data[:session_token] %>';
+    const expiresAt = new Date('<%= @auth_data[:expires_at].iso8601 %>');
+    const qrData = '<%= @auth_data[:qr_data] %>';
+
+    // Wait for DOM and modules to load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Generate QR code
+      new QRCode(document.getElementById('qr-code-container'), {
+        text: qrData,
+        width: 200,
+        height: 200,
+        colorDark: '#ffffff',
+        colorLight: '#1a1a24',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // Wait for TelegramAuthChannel to be available
+      const checkAndSubscribe = () => {
+        if (window.TelegramAuthChannel) {
+          console.log('✅ TelegramAuthChannel loaded, subscribing...');
+          window.TelegramAuthChannel.subscribe(sessionToken);
+        } else {
+          console.log('⏳ Waiting for TelegramAuthChannel...');
+          setTimeout(checkAndSubscribe, 100);
+        }
+      };
+
+      checkAndSubscribe();
+    });
+
+    // Countdown timer
+    function updateTimer() {
+      const now = new Date();
+      const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      document.getElementById('timer').textContent =
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+      if (remaining === 0) {
+        document.getElementById('auth-status').innerHTML = `
+          <p class="text-orange-400">⏱️ Время истекло. <a href="/login" class="text-violet-400 underline">Обновить</a></p>
+        `;
+        authChannel.unsubscribe();
+      } else {
+        setTimeout(updateTimer, 1000);
+      }
+    }
+    updateTimer();
+
+    // Polling fallback
+    let pollingInterval;
+    function startPolling() {
+      if (pollingInterval) return; // Already polling
+
+      pollingInterval = setInterval(() => {
+        fetch(`/telegram_auth/${sessionToken}/status`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'confirmed') {
+              clearInterval(pollingInterval);
+
+              // Complete auth
+              fetch('/sessions/complete_telegram_auth', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ session_token: sessionToken })
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  window.location.href = data.redirect_url;
+                }
+              });
+            } else if (data.status === 'expired') {
+              clearInterval(pollingInterval);
+              document.getElementById('auth-status').innerHTML = `
+                <p class="text-orange-400">⏱️ Время истекло. <a href="/login" class="text-violet-400 underline">Обновить</a></p>
+              `;
+            }
+          })
+          .catch(error => {
+            console.error('Polling error:', error);
+          });
+      }, 2000);
+    }
+  </script>
 </body>
 </html>
