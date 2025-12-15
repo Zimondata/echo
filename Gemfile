@@ -44,7 +44,7 @@ gem "thruster", require: false
 # gem "image_processing", "~> 1.2"
 
 # AI and integrations
-gem "telegram-bot-ruby", "~> 2.0"  # Telegram Bot API
+gem "telegram-bot-ruby", "~> 2.5"  # Telegram Bot API
 gem "faraday", "~> 2.7"            # HTTP client
 gem "faraday-multipart", "~> 1.0"  # Multipart support for Faraday
 gem "ruby-openai", "7.0.1"         # OpenAI (Whisper, GPT-4) - specific version for Faraday 2.x compatibility
