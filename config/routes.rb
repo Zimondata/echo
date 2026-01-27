@@ -7,11 +7,6 @@ Rails.application.routes.draw do
   # Root path - Landing page
   root "landing#index"
   
-  # Landing page variations
-  get "landing/brutalist", to: "landing#brutalist"
-  get "landing/terminal", to: "landing#terminal"
-  get "landing/retro", to: "landing#retro"
-  get "landing/organic", to: "landing#organic"
   
   # Auth routes
   namespace :telegram_auth do
@@ -22,6 +17,7 @@ Rails.application.routes.draw do
   resources :sessions, only: [:new, :create, :destroy] do
     collection do
       post :complete_telegram_auth
+      get :complete_telegram_auth
     end
   end
 

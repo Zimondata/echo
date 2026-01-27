@@ -62,9 +62,19 @@ class SessionsController < ApplicationController
       session[:user_id] = auth_session.user.id
       # Clear pending auth token since we successfully logged in
       session.delete(:pending_auth_token)
-      render json: { success: true, redirect_url: dashboard_path }
+      
+      # Handle different request types
+      if request.post?
+        render json: { success: true, redirect_url: dashboard_path }
+      else
+        redirect_to dashboard_path, notice: 'Успешно вошли в систему через Telegram!'
+      end
     else
-      render json: { error: 'Invalid or expired session' }, status: :unauthorized
+      if request.post?
+        render json: { error: 'Invalid or expired session' }, status: :unauthorized
+      else
+        redirect_to login_path, alert: 'Недействительная или истёкшая сессия авторизации'
+      end
     end
   end
   

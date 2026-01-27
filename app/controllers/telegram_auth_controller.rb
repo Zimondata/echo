@@ -13,21 +13,50 @@ class TelegramAuthController < ApplicationController
 
   # GET /telegram_auth/:token/status
   def status
-    session = TelegramAuthSession.find_by(session_token: params[:token])
+    token = params[:token]
+    Rails.logger.info "Auth status check for token: #{token}"
+    
+    session = TelegramAuthSession.find_by(session_token: token)
+    
+    if session.nil?
+      Rails.logger.warn "Auth session not found for token: #{token}"
+      render json: { 
+        status: 'not_found',
+        error: 'Session not found',
+        message: 'Авторизация не найдена или устарела' 
+      }, status: :not_found
+      return
+    end
 
-    if session&.expired?
+    Rails.logger.info "Auth session found: #{session.status}, expires: #{session.expires_at}"
+
+    if session.expired?
+      Rails.logger.warn "Auth session expired for token: #{token}"
       session.expire!
-      render json: { status: 'expired' }, status: :gone
-    elsif session&.status == 'confirmed'
+      render json: { 
+        status: 'expired', 
+        message: 'Время авторизации истекло. Попробуйте снова.'
+      }, status: :gone
+    elsif session.status == 'confirmed'
+      Rails.logger.info "Auth session confirmed for user: #{session.user_id}"
       render json: {
         status: 'confirmed',
         user_id: session.user_id,
-        redirect_url: dashboard_path
+        redirect_url: dashboard_path,
+        message: 'Авторизация успешна!'
       }
-    elsif session
-      render json: { status: 'pending' }
+    elsif session.status == 'pending'
+      Rails.logger.info "Auth session pending for token: #{token}"
+      render json: { 
+        status: 'pending',
+        message: 'Ожидание подтверждения в Telegram'
+      }
     else
-      render json: { status: 'not_found' }, status: :not_found
+      Rails.logger.warn "Auth session in unknown state: #{session.status}"
+      render json: { 
+        status: 'error',
+        message: 'Неизвестное состояние авторизации'
+      }, status: :unprocessable_entity
     end
   end
 end

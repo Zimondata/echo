@@ -303,10 +303,15 @@ class TelegramWebhookJob < ApplicationJob
       )
 
       # Send success message with web link
-      app_url = Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
+      app_url = if Rails.env.development?
+                   'http://localhost:3000'
+                 else
+                   Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
+                 end
+      
       Telegram::BotService.send_message(
         chat_id: chat_id,
-        text: "✅ Вход выполнен успешно!\n\n[Открыть Echo →](#{app_url}/dashboard)"
+        text: "✅ Вход выполнен успешно!\n\n🔗 *Открыть Echo:*\n#{app_url}/dashboard\n\nЕсли страница не обновилась автоматически, нажмите на ссылку выше."
       )
     else
       Telegram::BotService.send_message(

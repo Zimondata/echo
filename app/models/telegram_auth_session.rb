@@ -32,7 +32,7 @@ class TelegramAuthSession < ApplicationRecord
 
   def set_defaults
     self.session_token ||= SecureRandom.urlsafe_base64(24)
-    self.expires_at ||= 15.minutes.from_now
+    self.expires_at ||= 30.minutes.from_now  # Увеличили с 15 до 30 минут
     self.status ||= 'pending'
   end
 end

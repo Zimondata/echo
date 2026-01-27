@@ -15,28 +15,44 @@ class TelegramAuthService
   end
 
   def self.confirm_auth(session_token:, telegram_user:)
+    Rails.logger.info "Confirming auth for session: #{session_token}, telegram_user: #{telegram_user.id}"
+    
     session = TelegramAuthSession.active.find_by(session_token: session_token)
-    return { success: false, error: 'Session not found or expired' } unless session
-
-    # Find or create user from Telegram data
-    user = User.find_or_create_by(telegram_id: telegram_user.id) do |u|
-      u.username = telegram_user.username
-      u.first_name = telegram_user.first_name
-      u.last_name = telegram_user.last_name
-      u.language = telegram_user.language_code || 'ru'
-      u.timezone = 'UTC'
+    unless session
+      Rails.logger.warn "Auth confirmation failed: session not found or expired for token #{session_token}"
+      return { success: false, error: 'Session not found or expired' }
     end
 
-    # Update user info if changed
-    user.update(
-      username: telegram_user.username,
-      first_name: telegram_user.first_name,
-      last_name: telegram_user.last_name
-    )
+    Rails.logger.info "Auth session found: #{session.id}, status: #{session.status}"
 
-    session.confirm!(user)
+    begin
+      # Find or create user from Telegram data
+      user = User.find_or_create_by(telegram_id: telegram_user.id) do |u|
+        u.username = telegram_user.username
+        u.first_name = telegram_user.first_name
+        u.last_name = telegram_user.last_name
+        u.language = telegram_user.language_code || 'ru'
+        u.timezone = 'UTC'
+        Rails.logger.info "Creating new user with telegram_id: #{telegram_user.id}"
+      end
 
-    { success: true, user: user, session: session }
+      # Update user info if changed
+      user.update(
+        username: telegram_user.username,
+        first_name: telegram_user.first_name,
+        last_name: telegram_user.last_name
+      )
+
+      session.confirm!(user)
+      
+      Rails.logger.info "Auth confirmation successful for user: #{user.id}"
+      { success: true, user: user, session: session }
+      
+    rescue StandardError => e
+      Rails.logger.error "Auth confirmation failed with error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      { success: false, error: "Ошибка создания пользователя: #{e.message}" }
+    end
   end
 
   def self.generate_deep_link(session_token)
