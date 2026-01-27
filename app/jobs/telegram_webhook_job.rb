@@ -309,9 +309,17 @@ class TelegramWebhookJob < ApplicationJob
                    Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
                  end
       
-      Telegram::BotService.send_message(
+      Telegram::BotService.send_message_with_keyboard(
         chat_id: chat_id,
-        text: "✅ Вход выполнен успешно!\n\n🔗 *Открыть Echo:*\n#{app_url}/dashboard\n\nЕсли страница не обновилась автоматически, нажмите на ссылку выше."
+        text: "✅ Вход выполнен успешно!\n\nЕсли страница не обновилась автоматически, нажмите на кнопку ниже:",
+        keyboard: [
+          [
+            {
+              text: "🔗 Открыть Echo",
+              url: "#{app_url}/dashboard"
+            }
+          ]
+        ]
       )
     else
       Telegram::BotService.send_message(
