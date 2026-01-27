@@ -318,6 +318,12 @@ class TelegramWebhookJob < ApplicationJob
               text: "🔗 Открыть Echo",
               url: "#{app_url}/dashboard"
             }
+          ],
+          [
+            {
+              text: "✅ Подтвердить вход в системе",
+              callback_data: "telegram_auth_confirm_#{auth_session.session_token}"
+            }
           ]
         ]
       )
