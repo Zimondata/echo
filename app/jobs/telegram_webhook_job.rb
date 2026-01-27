@@ -289,6 +289,7 @@ class TelegramWebhookJob < ApplicationJob
     )
 
     chat_id = callback_query.message.chat.id
+    message_id = callback_query.message.message_id
 
     if result[:success]
       # Broadcast to WebSocket
@@ -302,35 +303,75 @@ class TelegramWebhookJob < ApplicationJob
         }
       )
 
-      # Send success message with web link
+      # Get app URL - Telegram requires HTTPS for buttons
       app_url = if Rails.env.development?
-                   'http://localhost:3000'
+                   'https://unbeset-tressier-roselyn.ngrok-free.dev'
+                 else
+                   Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
+                 end
+
+      # Edit original message to remove buttons
+      Telegram::BotService.client.api.edit_message_text(
+        chat_id: chat_id,
+        message_id: message_id,
+        text: "✅ Авторизация завершена!",
+        parse_mode: "Markdown"
+      )
+
+      # Send new message with dashboard button
+      Telegram::BotService.client.api.send_message(
+        chat_id: chat_id,
+        text: "🎉 Добро пожаловать в Echo!\n\nНажмите на кнопку ниже, чтобы перейти на дашборд:",
+        parse_mode: "Markdown",
+        reply_markup: Telegram::Bot::Types::InlineKeyboardMarkup.new(
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 Перейти на дашборд",
+                url: "#{app_url}/dashboard"
+              }
+            ]
+          ]
+        )
+      )
+    else
+      # Edit original message to show error
+      Telegram::BotService.client.api.edit_message_text(
+        chat_id: chat_id,
+        message_id: message_id,
+        text: "❌ Ошибка авторизации: #{result[:error]}",
+        parse_mode: "Markdown"
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.error "Error editing auth message: #{e.message}"
+    # Fallback: send new message with button if editing fails
+    if result&.dig(:success)
+      app_url = if Rails.env.development?
+                   'https://unbeset-tressier-roselyn.ngrok-free.dev'
                  else
                    Rails.application.credentials.dig(:app_url) || 'https://echo.datapine.space'
                  end
       
-      Telegram::BotService.send_message_with_keyboard(
+      Telegram::BotService.client.api.send_message(
         chat_id: chat_id,
-        text: "✅ Вход выполнен успешно!\n\nЕсли страница не обновилась автоматически, нажмите на кнопку ниже:",
-        keyboard: [
-          [
-            {
-              text: "🔗 Открыть Echo",
-              url: "#{app_url}/dashboard"
-            }
-          ],
-          [
-            {
-              text: "✅ Подтвердить вход в системе",
-              callback_data: "telegram_auth_confirm_#{auth_session.session_token}"
-            }
+        text: "✅ Авторизация завершена!\n\n🎉 Добро пожаловать в Echo!\n\nНажмите на кнопку ниже, чтобы перейти на дашборд:",
+        parse_mode: "Markdown",
+        reply_markup: Telegram::Bot::Types::InlineKeyboardMarkup.new(
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 Перейти на дашборд",
+                url: "#{app_url}/dashboard"
+              }
+            ]
           ]
-        ]
+        )
       )
     else
       Telegram::BotService.send_message(
         chat_id: chat_id,
-        text: "❌ Ошибка: #{result[:error]}"
+        text: "❌ Ошибка авторизации"
       )
     end
   end
