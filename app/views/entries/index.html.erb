@@ -1,32 +1,6 @@
 <style>
   /* === AURI ENTRIES PAGE - Linear + Amie Style === */
 
-  :root {
-    --bg-darkest: #0a0a0f;
-    --bg-dark: #12121a;
-    --bg-card: #1a1a24;
-    --bg-card-hover: #22222e;
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-glow: rgba(139, 92, 246, 0.3);
-
-    --text-primary: #ffffff;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-
-    --violet-500: #8b5cf6;
-    --violet-600: #7c3aed;
-    --violet-glow: rgba(139, 92, 246, 0.15);
-
-    --amber-500: #f59e0b;
-    --amber-glow: rgba(245, 158, 11, 0.15);
-
-    --blue-500: #3b82f6;
-    --blue-glow: rgba(59, 130, 246, 0.15);
-
-    --green-500: #10b981;
-    --green-glow: rgba(16, 185, 129, 0.15);
-  }
-
   /* Animated Background */
   .animated-bg {
     position: fixed;
@@ -75,7 +49,7 @@
 
   /* Gradient Text */
   .gradient-text {
-    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -252,51 +226,7 @@
 
 <div class="min-h-screen w-full relative">
 
-  <!-- === HEADER === -->
-  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
-    <div class="w-full px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-
-        <!-- Left: Logo & Nav -->
-        <div class="flex items-center gap-8">
-          <a href="/" class="text-2xl font-bold gradient-text">Auri</a>
-
-          <nav class="hidden md:flex items-center gap-1">
-            <%= link_to dashboard_path, class: "nav-link" do %>
-              Dashboard
-            <% end %>
-            <%= link_to diary_entries_path, class: "nav-link #{params[:action] == 'diary' ? 'active' : ''}" do %>
-              Дневник
-            <% end %>
-            <%= link_to ideas_entries_path, class: "nav-link #{params[:action] == 'ideas' ? 'active' : ''}" do %>
-              Идеи
-            <% end %>
-            <%= link_to plans_entries_path, class: "nav-link #{params[:action] == 'plans' ? 'active' : ''}" do %>
-              Планы
-            <% end %>
-            <%= link_to nutrition_entries_path, class: "nav-link" do %>
-              Здоровье
-            <% end %>
-            <%= link_to calendar_events_path, class: "nav-link" do %>
-              Календарь
-            <% end %>
-          </nav>
-        </div>
-
-        <!-- Right: Date -->
-        <div class="flex items-center gap-4">
-          <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
-            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span class="text-sm font-medium text-zinc-300">
-              <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
+  <%= render 'shared/unified_header' %>
 
   <!-- === MAIN CONTENT === -->
   <div class="w-full px-6 lg:px-8 py-8">
@@ -305,22 +235,33 @@
     <div class="mb-8 animate-fade-in">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-bold text-white mb-2">
-            <%=
-              case params[:action]
-              when 'ideas' then '💡 Мои идеи'
-              when 'diary' then '📔 Дневник'
-              when 'plans' then '📋 Планы'
-              else '📝 Все записи'
-              end
-            %>
+          <h1 class="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <% icon_path = case params[:action]
+                           when 'ideas'
+                             'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'
+                           when 'diary'
+                             'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
+                           when 'plans'
+                             'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'
+                           else
+                             'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                           end %>
+            <svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="<%= icon_path %>"/>
+            </svg>
+            <%= case params[:action]
+                when 'ideas' then 'Мои идеи'
+                when 'diary' then 'Дневник'
+                when 'plans' then 'Планы'
+                else 'Все записи'
+                end %>
           </h1>
-          <p class="text-zinc-500">
+          <p class="theme-text-secondary">
             Найдено: <span class="text-violet-400 font-medium"><%= @entries.count %></span> записей
           </p>
         </div>
 
-        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg theme-text-secondary transition-all" style="background: var(--bg-card); border: 1px solid var(--border-subtle);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
@@ -333,19 +274,27 @@
     <div class="mb-8 animate-fade-in" style="animation-delay: 0.1s; opacity: 0;">
       <div class="flex flex-wrap gap-2">
         <%= link_to entries_path, class: "tab-link #{params[:action] == 'index' ? 'active' : ''}" do %>
-          <span>📝</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
           <span>Все записи</span>
         <% end %>
         <%= link_to ideas_entries_path, class: "tab-link #{params[:action] == 'ideas' ? 'active' : ''}" do %>
-          <span>💡</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
           <span>Идеи</span>
         <% end %>
         <%= link_to diary_entries_path, class: "tab-link #{params[:action] == 'diary' ? 'active' : ''}" do %>
-          <span>📔</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
           <span>Дневник</span>
         <% end %>
         <%= link_to plans_entries_path, class: "tab-link #{params[:action] == 'plans' ? 'active' : ''}" do %>
-          <span>📋</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
           <span>Планы</span>
         <% end %>
       </div>
@@ -371,14 +320,14 @@
                 <% end %>
               </div>
 
-              <span class="text-xs text-zinc-600">
+              <span class="text-xs theme-text-muted">
                 <%= entry.created_at.in_time_zone(@user&.timezone || 'UTC').strftime('%d.%m.%Y') %>
               </span>
             </div>
 
             <!-- Entry Content -->
             <div class="mb-4">
-              <p class="text-zinc-200 text-sm leading-relaxed line-clamp-4">
+              <p class="theme-text-primary text-sm leading-relaxed line-clamp-4">
                 <%= entry.content.length > 200 ? entry.content.truncate(200) : entry.content %>
               </p>
             </div>
@@ -417,7 +366,7 @@
     <% else %>
       <!-- Empty State -->
       <div class="glass-card p-12 text-center animate-fade-in">
-        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
           <span class="text-4xl">
             <%=
               case params[:action]
@@ -439,7 +388,7 @@
             end
           %>
         </h3>
-        <p class="text-zinc-500 max-w-md mx-auto mb-6">
+        <p class="theme-text-secondary max-w-md mx-auto mb-6">
           Отправьте боту свои мысли в Telegram, и они появятся здесь автоматически
         </p>
         <a href="https://t.me/auriAI_bot" target="_blank"

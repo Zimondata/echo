@@ -1,36 +1,7 @@
 <style>
   /* === AURI DASHBOARD - Linear + Amie Style === */
 
-  :root {
-    --bg-darkest: #0a0a0f;
-    --bg-dark: #12121a;
-    --bg-card: #1a1a24;
-    --bg-card-hover: #22222e;
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-glow: rgba(139, 92, 246, 0.3);
-
-    --text-primary: #ffffff;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-
-    --violet-500: #8b5cf6;
-    --violet-600: #7c3aed;
-    --violet-glow: rgba(139, 92, 246, 0.15);
-
-    --amber-500: #f59e0b;
-    --amber-glow: rgba(245, 158, 11, 0.15);
-
-    --blue-500: #3b82f6;
-    --blue-glow: rgba(59, 130, 246, 0.15);
-
-    --green-500: #10b981;
-    --green-glow: rgba(16, 185, 129, 0.15);
-
-    --red-500: #ef4444;
-  }
-
   body {
-    background: var(--bg-darkest);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
@@ -88,7 +59,7 @@
 
   /* Gradient Text */
   .gradient-text {
-    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -445,64 +416,9 @@
 <!-- Animated Background -->
 <div class="animated-bg"></div>
 
+<%= render 'shared/unified_header' %>
+
 <div class="min-h-screen w-full relative">
-
-  <!-- === HEADER === -->
-  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
-    <div class="w-full px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-
-        <!-- Left: Logo & Nav -->
-        <div class="flex items-center gap-8">
-          <h1 class="text-2xl font-bold gradient-text">Auri</h1>
-
-          <nav class="hidden md:flex items-center gap-1">
-            <%= link_to dashboard_path, class: "nav-link #{current_page?(dashboard_path) ? 'active' : ''}" do %>
-              Dashboard
-            <% end %>
-            <%= link_to diary_entries_path, class: "nav-link" do %>
-              Дневник
-            <% end %>
-            <%= link_to ideas_entries_path, class: "nav-link" do %>
-              Идеи
-            <% end %>
-            <%= link_to plans_entries_path, class: "nav-link" do %>
-              Планы
-            <% end %>
-            <%= link_to nutrition_entries_path, class: "nav-link" do %>
-              Здоровье
-            <% end %>
-            <%= link_to calendar_events_path, class: "nav-link" do %>
-              Календарь
-            <% end %>
-            <%= link_to reminders_path, class: "nav-link" do %>
-              Напоминания
-            <% end %>
-          </nav>
-        </div>
-
-        <!-- Right: Date & Actions -->
-        <div class="flex items-center gap-4">
-          <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
-            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span class="text-sm font-medium text-zinc-300">
-              <%= Time.current.in_time_zone(@user&.timezone || 'UTC').strftime("%d %B, %A") %>
-            </span>
-          </div>
-
-          <% if logged_in? %>
-            <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "p-2 rounded-lg hover:bg-white/5 transition-colors group" do %>
-              <svg class="w-5 h-5 text-zinc-500 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-              </svg>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </header>
 
   <!-- === MAIN CONTENT === -->
   <div class="w-full px-6 lg:px-8 py-8">
@@ -771,11 +687,28 @@
                         </svg>
                       </div>
 
-                      <span class="text-lg"><%= category_info[:icon] %></span>
+                      <div class="p-1.5 rounded-lg" style="background: <%= category_info[:color] %>20;">
+                        <svg class="w-4 h-4" style="color: <%= category_info[:color] %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <% case category_info[:icon] %>
+                          <% when 'briefcase' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                          <% when 'heart' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                          <% when 'home' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                          <% when 'lightbulb' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                          <% when 'rocket' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                          <% else %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                          <% end %>
+                        </svg>
+                      </div>
 
                       <div class="flex-1 min-w-0">
                         <p class="task-text text-sm text-zinc-200 truncate">
-                          <%= event.title.gsub(category_info[:icon], '').strip %>
+                          <%= event.title %>
                         </p>
                       </div>
 
@@ -799,9 +732,11 @@
 
                 <% if @today_events.nil? || @today_events.empty? %>
                   <div class="text-center py-12">
-                    <div class="empty-state-icon text-6xl mb-4">
+                    <div class="empty-state-icon mb-4 flex justify-center">
                       <% greetings = ["Свободный день!", "Чистый лист!", "Время творить!"] %>
-                      <%= %w[🎉 ✨ 🌟 🎯].sample %>
+                      <svg class="w-16 h-16 text-amber-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                      </svg>
                     </div>
                     <p class="text-white font-medium mb-1"><%= greetings.sample %></p>
                     <p class="text-zinc-500 text-sm">Нажми <span class="kbd">N</span> чтобы добавить задачу</p>
@@ -846,11 +781,28 @@
                         </svg>
                       </div>
 
-                      <span class="text-lg"><%= category_info[:icon] %></span>
+                      <div class="p-1.5 rounded-lg" style="background: <%= category_info[:color] %>20;">
+                        <svg class="w-4 h-4" style="color: <%= category_info[:color] %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <% case category_info[:icon] %>
+                          <% when 'briefcase' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                          <% when 'heart' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                          <% when 'home' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                          <% when 'lightbulb' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                          <% when 'rocket' %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                          <% else %>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                          <% end %>
+                        </svg>
+                      </div>
 
                       <div class="flex-1 min-w-0">
                         <p class="task-text text-sm text-zinc-200 truncate">
-                          <%= event.title.gsub(category_info[:icon], '').strip %>
+                          <%= event.title %>
                         </p>
                       </div>
 
@@ -874,8 +826,10 @@
 
                 <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
                   <div class="text-center py-12">
-                    <div class="empty-state-icon text-6xl mb-4">
-                      <%= %w[🌙 🔮 🚀 💫].sample %>
+                    <div class="empty-state-icon mb-4 flex justify-center">
+                      <svg class="w-16 h-16 text-blue-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                      </svg>
                     </div>
                     <p class="text-white font-medium mb-1">Завтра пока свободно</p>
                     <p class="text-zinc-500 text-sm">Спланируй завтрашний день заранее</p>
@@ -936,7 +890,11 @@
 
             <% if @recent_entries.nil? || @recent_entries.empty? %>
               <div class="col-span-2 text-center py-8">
-                <div class="text-4xl mb-3">📝</div>
+                <div class="mb-3 flex justify-center">
+                  <svg class="w-12 h-12 text-zinc-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                  </svg>
+                </div>
                 <p class="text-zinc-400 text-sm">Отправь сообщение в Telegram бот</p>
               </div>
             <% end %>

@@ -1,0 +1,137 @@
+<!-- === UNIFIED HEADER === -->
+<header class="sticky top-0 z-50 border-b backdrop-blur-xl unified-header">
+  <div class="w-full px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+
+      <!-- Left: Logo & Nav -->
+      <div class="flex items-center gap-8">
+        <%= link_to dashboard_path, class: "flex items-center gap-2 text-2xl font-bold gradient-text no-underline" do %>
+          <svg class="w-6 h-6 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Echo</span>
+        <% end %>
+
+        <nav class="hidden md:flex items-center gap-1">
+          <%= link_to dashboard_path, class: "nav-link #{current_page?(dashboard_path) ? 'active' : ''}" do %>
+            Dashboard
+          <% end %>
+          <%= link_to diary_entries_path, class: "nav-link #{current_page?(diary_entries_path) ? 'active' : ''}" do %>
+            Дневник
+          <% end %>
+          <%= link_to ideas_entries_path, class: "nav-link #{current_page?(ideas_entries_path) ? 'active' : ''}" do %>
+            Идеи
+          <% end %>
+          <%= link_to plans_entries_path, class: "nav-link #{current_page?(plans_entries_path) ? 'active' : ''}" do %>
+            Планы
+          <% end %>
+          <%= link_to nutrition_entries_path, class: "nav-link #{current_page?(nutrition_entries_path) ? 'active' : ''}" do %>
+            Здоровье
+          <% end %>
+          <%= link_to calendar_events_path, class: "nav-link #{current_page?(calendar_events_path) ? 'active' : ''}" do %>
+            Календарь
+          <% end %>
+          <%= link_to reminders_path, class: "nav-link #{current_page?(reminders_path) ? 'active' : ''}" do %>
+            Напоминания
+          <% end %>
+        </nav>
+      </div>
+
+      <!-- Right: Date & Actions -->
+      <div class="flex items-center gap-4">
+        <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
+          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <span class="text-sm font-medium text-zinc-300">
+            <%= Time.current.in_time_zone(current_user&.timezone || 'UTC').strftime("%d %B, %A") %>
+          </span>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" class="theme-toggle" title="Переключить тему">
+          <svg class="theme-icon theme-icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <svg class="theme-icon theme-icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+
+        <% if logged_in? %>
+          <%= link_to logout_path, method: :delete, data: { turbo_method: :delete }, class: "p-2 rounded-lg hover:bg-white/5 transition-colors group" do %>
+            <svg class="w-5 h-5 text-zinc-500 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  /* Gradient text for logo */
+  .gradient-text {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Nav Link Styles */
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.1);
+  }
+
+  .nav-link.active {
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+  }
+
+  [data-theme="light"] .nav-link:hover {
+    background: rgba(139, 92, 246, 0.08);
+  }
+
+  [data-theme="light"] .nav-link.active {
+    background: rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+  }
+</style>
+
+<script>
+  // Theme management
+  function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    console.log('Switching theme from', currentTheme, 'to', newTheme);
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+
+    // Force repaint
+    document.body.style.display = 'none';
+    document.body.offsetHeight; // Trigger reflow
+    document.body.style.display = '';
+  }
+
+  // Load saved theme on page load
+  (function() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    console.log('Loading theme:', savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  })();
+</script>

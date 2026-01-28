@@ -3,24 +3,6 @@
 <style>
   /* === AURI HEALTH PAGE - Linear + Amie Style === */
 
-  :root {
-    --bg-darkest: #0a0a0f;
-    --bg-card: #1a1a24;
-    --bg-card-hover: #22222e;
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-glow: rgba(139, 92, 246, 0.3);
-    --text-primary: #ffffff;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-    --violet-500: #8b5cf6;
-    --violet-glow: rgba(139, 92, 246, 0.15);
-    --amber-500: #f59e0b;
-    --blue-500: #3b82f6;
-    --green-500: #10b981;
-    --red-500: #ef4444;
-    --pink-500: #ec4899;
-  }
-
   .animated-bg {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -48,7 +30,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -180,43 +162,19 @@
 
 <div class="min-h-screen w-full relative">
 
-  <!-- === HEADER === -->
-  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
-    <div class="w-full px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-        <div class="flex items-center gap-8">
-          <a href="/" class="text-2xl font-bold gradient-text">Auri</a>
-          <nav class="hidden md:flex items-center gap-1">
-            <%= link_to dashboard_path, class: "nav-link" do %>Dashboard<% end %>
-            <%= link_to diary_entries_path, class: "nav-link" do %>Дневник<% end %>
-            <%= link_to ideas_entries_path, class: "nav-link" do %>Идеи<% end %>
-            <%= link_to plans_entries_path, class: "nav-link" do %>Планы<% end %>
-            <%= link_to nutrition_entries_path, class: "nav-link active" do %>Здоровье<% end %>
-            <%= link_to calendar_events_path, class: "nav-link" do %>Календарь<% end %>
-            <%= link_to reminders_path, class: "nav-link" do %>Напоминания<% end %>
-          </nav>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
-            <span class="text-sm font-medium text-zinc-300"><%= @selected_date.strftime("%d %B") %></span>
-          </div>
-          <%= link_to new_nutrition_entry_path, class: "px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 text-white text-sm font-medium hover:from-violet-500 hover:to-violet-400 transition-all flex items-center gap-2" do %>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Добавить
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </header>
+  <%= render 'shared/unified_header' %>
 
   <!-- === MAIN CONTENT === -->
   <div class="w-full px-6 lg:px-8 py-8">
 
     <!-- Page Header -->
     <div class="mb-8 animate-fade-in">
-      <h1 class="text-3xl font-bold text-white mb-2">🏃‍♂️ Дневник здоровья</h1>
+      <h1 class="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        Дневник здоровья
+      </h1>
       <p class="text-zinc-500">Питание, активность и анализ дня</p>
     </div>
 
@@ -225,19 +183,25 @@
       <div class="flex gap-1">
         <button class="tab-button active" onclick="switchTab('nutrition')" id="nutrition-tab">
           <span class="flex items-center justify-center gap-2">
-            <span class="text-lg">🍽️</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+            </svg>
             <span>Питание</span>
           </span>
         </button>
         <button class="tab-button" onclick="switchTab('activity')" id="activity-tab">
           <span class="flex items-center justify-center gap-2">
-            <span class="text-lg">🏃‍♂️</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
             <span>Активность</span>
           </span>
         </button>
         <button class="tab-button" onclick="switchTab('analysis')" id="analysis-tab">
           <span class="flex items-center justify-center gap-2">
-            <span class="text-lg">📊</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
             <span>Анализ</span>
           </span>
         </button>
@@ -323,13 +287,30 @@
             </div>
 
             <div class="space-y-6">
-              <% meal_types = { 'breakfast' => ['🌅', 'Завтрак'], 'lunch' => ['☀️', 'Обед'], 'dinner' => ['🌙', 'Ужин'], 'snack' => ['🍎', 'Перекус'] } %>
-              <% meal_types.each do |meal_type, (emoji, name)| %>
+              <% meal_types = {
+                'breakfast' => ['sunrise', 'Завтрак', '#f59e0b'],
+                'lunch' => ['sun', 'Обед', '#eab308'],
+                'dinner' => ['moon', 'Ужин', '#6366f1'],
+                'snack' => ['apple', 'Перекус', '#10b981']
+              } %>
+              <% meal_types.each do |meal_type, (icon, name, color)| %>
                 <% meals = @meals[meal_type] || [] %>
                 <div class="border-l-2 border-violet-500/30 pl-4">
                   <div class="flex items-center justify-between mb-3">
                     <h3 class="font-medium text-white flex items-center gap-2">
-                      <span><%= emoji %></span>
+                      <svg class="w-5 h-5" style="color: <%= color %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <% case icon %>
+                        <% when 'sunrise' %>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <% when 'sun' %>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
+                        <% when 'moon' %>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        <% when 'apple' %>
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a3 3 0 013 3"></path>
+                        <% end %>
+                      </svg>
                       <%= name %>
                       <span class="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full"><%= meals.count %></span>
                     </h3>
@@ -418,13 +399,27 @@
 
           <div class="glass-card p-6 animate-fade-in" style="animation-delay: 0.45s; opacity: 0;">
             <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
-              <span class="text-lg">⚡</span>
+              <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
               Быстрые действия
             </h3>
             <div class="space-y-2">
-              <% meal_types.each do |meal_type, (emoji, name)| %>
+              <% meal_types.each do |meal_type, (icon, name, color)| %>
                 <%= link_to new_nutrition_entry_path(meal_type: meal_type), class: "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-zinc-300 hover:bg-white/10 hover:text-white transition-all" do %>
-                  <span class="text-lg"><%= emoji %></span>
+                  <svg class="w-5 h-5" style="color: <%= color %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <% case icon %>
+                    <% when 'sunrise' %>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    <% when 'sun' %>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
+                    <% when 'moon' %>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    <% when 'apple' %>
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a3 3 0 013 3"></path>
+                    <% end %>
+                  </svg>
                   <span><%= name %></span>
                 <% end %>
               <% end %>
@@ -460,7 +455,12 @@
 
         <div class="stat-card" style="--accent-color: var(--amber-500);">
           <div class="flex items-center gap-4">
-            <div class="p-3 rounded-xl bg-amber-500/20"><span class="text-xl">🔥</span></div>
+            <div class="p-3 rounded-xl bg-amber-500/20">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+              </svg>
+            </div>
             <div>
               <p class="text-2xl font-bold text-white"><%= @activity_totals[:total_calories_burned] %></p>
               <p class="text-sm text-zinc-500">Сожжено</p>
@@ -503,9 +503,28 @@
                       <div>
                         <h3 class="font-medium text-white"><%= activity.activity_name %></h3>
                         <div class="flex items-center gap-4 text-sm text-zinc-500">
-                          <span>⏱️ <%= activity.formatted_duration %></span>
-                          <% if activity.distance_km %><span>📏 <%= activity.formatted_distance %></span><% end %>
-                          <% if activity.calories_burned %><span>🔥 <%= activity.calories_burned %> ккал</span><% end %>
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <%= activity.formatted_duration %>
+                          </span>
+                          <% if activity.distance_km %>
+                            <span class="flex items-center gap-1">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                              </svg>
+                              <%= activity.formatted_distance %>
+                            </span>
+                          <% end %>
+                          <% if activity.calories_burned %>
+                            <span class="flex items-center gap-1">
+                              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                              </svg>
+                              <%= activity.calories_burned %> ккал
+                            </span>
+                          <% end %>
                         </div>
                       </div>
                     </div>
