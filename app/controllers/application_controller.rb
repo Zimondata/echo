@@ -18,6 +18,13 @@ class ApplicationController < ActionController::Base
   def authenticate_user!
     unless logged_in?
       redirect_to root_path, alert: 'Необходимо войти в систему'
+      return
+    end
+
+    # Check if user is whitelisted
+    unless TELEGRAM_WHITELIST.include?(current_user.telegram_id.to_i)
+      session.delete(:user_id)
+      redirect_to root_path, alert: 'Доступ запрещён'
     end
   end
 end

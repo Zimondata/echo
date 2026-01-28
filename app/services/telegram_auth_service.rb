@@ -16,7 +16,13 @@ class TelegramAuthService
 
   def self.confirm_auth(session_token:, telegram_user:)
     Rails.logger.info "Confirming auth for session: #{session_token}, telegram_user: #{telegram_user.id}"
-    
+
+    # Check whitelist
+    unless TELEGRAM_WHITELIST.include?(telegram_user.id.to_i)
+      Rails.logger.warn "Auth blocked: telegram_id #{telegram_user.id} not in whitelist"
+      return { success: false, error: 'Access denied' }
+    end
+
     session = TelegramAuthSession.active.find_by(session_token: session_token)
     unless session
       Rails.logger.warn "Auth confirmation failed: session not found or expired for token #{session_token}"
