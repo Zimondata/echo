@@ -4,8 +4,11 @@ Rails.application.routes.draw do
 
   # Activity Entries
   resources :activity_entries, only: [:index, :show, :new, :create, :edit, :update, :destroy]
-  # Root path - Landing page
-  root "landing#index"
+  # Root path - Landing page (showcase version)
+  root "landing#showcase"
+  get "old", to: "landing#index"
+  get "video", to: "landing#video"
+  get "showcase", to: "landing#showcase"
   
   
   # Auth routes

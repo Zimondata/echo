@@ -18,11 +18,11 @@ class CalendarEvent < ApplicationRecord
 
   # Life categories (spheres of life)
   LIFE_CATEGORIES = {
-    'work' => { color: '#3B82F6', icon: '💼', label: 'Работа' },
-    'health' => { color: '#10B981', icon: '💪', label: 'Здоровье' },
-    'personal' => { color: '#F59E0B', icon: '🏠', label: 'Личное' },
-    'ideas' => { color: '#8B5CF6', icon: '💡', label: 'Идеи' },
-    'projects' => { color: '#EC4899', icon: '🚀', label: 'Проекты' }
+    'work' => { color: '#3B82F6', icon: 'briefcase', label: 'Работа' },
+    'health' => { color: '#10B981', icon: 'heart', label: 'Здоровье' },
+    'personal' => { color: '#F59E0B', icon: 'home', label: 'Личное' },
+    'ideas' => { color: '#8B5CF6', icon: 'lightbulb', label: 'Идеи' },
+    'projects' => { color: '#EC4899', icon: 'rocket', label: 'Проекты' }
   }.freeze
 
   # Validations

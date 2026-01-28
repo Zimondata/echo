@@ -1,271 +1,464 @@
 
 <!-- Navigation -->
-<nav class="nav" id="main-nav">
-  <div class="nav-content">
+<nav class="nav">
+  <div class="nav-container">
     <div class="nav-brand">
-      <div class="nav-logo">E</div>
-      <span>Echo</span>
+      <div class="nav-logo">🎤</div>
+      <span class="nav-title">Echo</span>
     </div>
-    <ul class="nav-links">
-      <li><a href="#pain">Проблема</a></li>
-      <li><a href="#benefits">Решение</a></li>
-      <li><a href="#product">Как работает</a></li>
-      <li><a href="#offer">Цена</a></li>
-    </ul>
+    <div class="nav-links">
+      <a href="#problem" class="nav-link">Проблема</a>
+      <a href="#solution" class="nav-link">Решение</a>
+      <a href="#pricing" class="nav-link">Цена</a>
+    </div>
   </div>
 </nav>
 
-<!-- 1. Hero Section (5%) -->
+<!-- Hero Section -->
 <section class="hero">
-  <div class="hero-background"></div>
-  <div class="hero-content">
-    <div class="hero-badge">Для предпринимателей-одиночек</div>
-    <h1 class="hero-title">
-      Перестаньте терять <span class="highlight">1.5 часа в день</span><br>
-      на переключение между приложениями
-    </h1>
-    <p class="hero-subtitle">
-      Echo — это voice-first AI компаньон, который знает ваш контекст, находит ваш flow state и заменяет 5 приложений одним решением.
-    </p>
-    <div class="hero-cta">
-      <div class="telegram-cta-wrapper">
-        <div class="telegram-cta-glow"></div>
-        <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: #54a9eb !important; color: white !important;">
-          <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; margin-right: 8px;">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
-          </svg>
-          Войти через Telegram
-        </a>
-      </div>
-      <p style="margin-top: 16px; font-size: 14px; color: var(--color-text-light);">
-        Без регистрации, без карты — просто войдите через Telegram
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- 2. Pain & Situations (15%) -->
-<section class="section pain-section" id="pain">
-  <div class="container">
-    <div class="section-header scroll-reveal">
-      <div class="section-badge" style="background: #FEF2F2; color: #DC2626;">Парадокс основателя</div>
-      <h2 class="section-title">Одиночество в 2 часа ночи</h2>
-      <p class="section-subtitle">Вы строите будущее, но тонете в рутине настоящего.</p>
-    </div>
-
-    <div class="pain-grid">
-      <div class="pain-card scroll-reveal">
-        <div class="pain-icon">📉</div>
-        <h3>Productivity Theater</h3>
-        <p>"Я трачу больше времени на настройку Notion и планирование задач, чем на их выполнение. К обеду мой идеальный to-do список уже неактуален."</p>
-      </div>
-      <div class="pain-card scroll-reveal">
-        <div class="pain-icon">🤯</div>
-        <h3>Контекстный Ад</h3>
-        <p>"Переключение между Slack, Calendar, ChatGPT и заметками убивает мой фокус. Я теряю 1.5 часа каждый день просто на то, чтобы вспомнить 'на чем я остановился'."</p>
-      </div>
-    </div>
-
-    <div class="testimonials-grid">
-      <div class="testimonial-card scroll-reveal">
-        <p class="testimonial-quote">
-          "It's 2AM, the house is silent, and you're tweaking a landing page that no one's going to see for weeks. You start questioning everything."
-        </p>
-        <div class="testimonial-author">— r/Entrepreneur, 176 upvotes</div>
-      </div>
-      <div class="testimonial-card scroll-reveal">
-        <p class="testimonial-quote">
-          "Nobody talks about how lonely the early grind phase actually is. You need random chatter to get out of your head."
-        </p>
-        <div class="testimonial-author">— Solo founder confession</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 3. Benefits (20%) -->
-<section class="section benefits-section" id="benefits">
-  <div class="container">
-    <div class="section-header scroll-reveal">
-      <div class="section-badge">Решение</div>
-      <h2 class="section-title">Превратите хаос в ясность</h2>
-      <p class="section-subtitle">Три принципа, которые вернут вам контроль над временем</p>
+  <div class="hero-container">
+    <div class="hero-badge">
+      <span>🎯</span>
+      Для русскоязычных соло-предпринимателей и фрилансеров
     </div>
     
-    <div class="benefits-grid">
-      <div class="benefit-card scroll-reveal">
-        <div class="benefit-icon">🎤</div>
-        <h3 class="benefit-title">Voice Brain Dump</h3>
-        <p class="benefit-description">
-          Выскажите мысль за 30 секунд. Echo не просто транскрибирует — он понимает суть, создает задачи и раскладывает их по проектам.
-        </p>
-      </div>
-      
-      <div class="benefit-card scroll-reveal">
-        <div class="benefit-icon">⚡</div>
-        <h3 class="benefit-title">Flow State Optimization</h3>
-        <p class="benefit-description">
-          AI анализирует вашу энергию и календарь. "Вчера ты был в потоке с 10 до 12. Давай заблокируем это время на завтра для Deep Work?"
-        </p>
-      </div>
-      
-      <div class="benefit-card scroll-reveal">
-        <div class="benefit-icon">🧠</div>
-        <h3 class="benefit-title">Contextual Memory</h3>
-        <p class="benefit-description">
-          Больше не нужно искать в заметках. "Echo, что мы решили по дизайну на прошлой неделе?" — он помнит весь контекст вашего бизнеса.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+    <h1 class="hero-title">
+      Echo — это <span class="highlight">Jarvis</span> в твоём Telegram
+    </h1>
+    
+    <p class="hero-description">
+      Скажи что угодно голосом, и он организует твою жизнь. Без новых приложений, 
+      без переключений, без потери контекста. Просто разговаривай с Echo как с личным ассистентом.
+    </p>
 
-<!-- 4. Product Deep Dive (40%) -->
-<section class="section product-section" id="product">
-  <div class="container">
-    <div class="section-header scroll-reveal">
-      <div class="section-badge">Как это работает</div>
-      <h2 class="section-title">Один день с Echo</h2>
-      <p class="section-subtitle">Ваш AI-партнёр, который эволюционирует вместе с вами</p>
-    </div>
-
-    <div class="product-timeline">
-      <!-- Morning -->
-      <div class="timeline-item scroll-reveal">
-        <div class="timeline-time">09:00</div>
-        <div class="timeline-content">
-          <h3>Утренний брифинг</h3>
-          <p>Вместо хаоса уведомлений — четкая сводка. Echo напоминает о главном фокусе дня, основываясь на ваших целях и вчерашних инсайтах.</p>
-          <div class="chat-bubble">
-            "Доброе утро! Сегодня у тебя 3 часа Deep Work блока. Главная цель — доделать MVP. Я отменил неважное уведомление."
-          </div>
-        </div>
-        <div class="timeline-visual">☀️</div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-number">55</div>
+        <div class="stat-label">минут экономии в день</div>
       </div>
-
-      <!-- Day -->
-      <div class="timeline-item scroll-reveal">
-        <div class="timeline-time">14:30</div>
-        <div class="timeline-content">
-          <h3>Мгновенный захват контекста</h3>
-          <p>Идея пришла во время прогулки? Нажмите кнопку и скажите. Echo поймет, к какому проекту это относится, и добавит в бэклог.</p>
-          <div class="chat-bubble user">
-            "Добавь фичу с темной темой в бэклог дизайна, но с низким приоритетом."
-          </div>
-          <div class="chat-bubble">
-            "Сделано. Добавил в проект 'Design System'. Напомнить об этом на спринте в пятницу?"
-          </div>
-        </div>
-        <div class="timeline-visual">🚶‍♂️</div>
+      <div class="stat-card">
+        <div class="stat-number">10→1</div>
+        <div class="stat-label">приложений заменяет</div>
       </div>
-
-      <!-- Evening -->
-      <div class="timeline-item scroll-reveal">
-        <div class="timeline-time">20:00</div>
-        <div class="timeline-content">
-          <h3>Вечерняя рефлексия и закрытие дня</h3>
-          <p>Echo помогает "выгрузить" мозг, чтобы вы могли спокойно отдохнуть. Анализ паттернов усталости и побед.</p>
-          <div class="chat-bubble">
-            "Отличный прогресс по MVP. Я заметил, что после 16:00 ты теряешь фокус. Может, перенесем звонки на это время?"
-          </div>
-        </div>
-        <div class="timeline-visual">🌙</div>
+      <div class="stat-card">
+        <div class="stat-number">$810</div>
+        <div class="stat-label">ценности в месяц</div>
       </div>
     </div>
 
-    <!-- Dashboard Preview -->
-    <div class="dashboard-preview scroll-reveal">
-      <h3>Визуальный контроль</h3>
-      <p>Для тех моментов, когда нужно увидеть полную картину. Dashboard с Kanban, календарем и аналитикой продуктивности.</p>
-      <div class="dashboard-mockup">
-        <div class="mockup-header">Echo Dashboard</div>
-        <div class="mockup-grid">
-          <div class="mockup-card">🎯 Focus Score: 85%</div>
-          <div class="mockup-card">📅 Calendar Optimized</div>
-          <div class="mockup-card">⚡ Flow State: 4h</div>
+    <div class="hero-cta">
+      <a href="/login" class="cta-button">
+        <span>📱</span>
+        Попробовать в Telegram
+        <span class="cta-arrow">→</span>
+      </a>
+      <p class="cta-note">
+        50 взаимодействий бесплатно • Без карты • За 30 секунд
+      </p>
+    </div>
+
+    <div class="hero-demo">
+      <div class="demo-phone">
+        <div class="demo-screen">
+          <div class="demo-message user">
+            <span class="message-icon">🎤</span>
+            "Добавь встречу с клиентом на завтра в 15:00, и напомни мне купить подарок маме"
+          </div>
+          <div class="demo-message assistant">
+            ✅ Встреча добавлена в календарь<br>
+            ⏰ Напоминание создано<br>
+            🎯 Ещё что-нибудь запланируем?
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 5. Offer & CTA (20%) -->
-<section class="section offer-section" id="offer">
-  <div class="container">
-    <div class="section-header scroll-reveal">
-      <div class="section-badge" style="background: #ECFDF5; color: #059669;">Предложение</div>
-      <h2 class="section-title">Инвестиция в вашу ясность</h2>
-      <p class="section-subtitle">Сколько стоит ваше спокойствие и фокус?</p>
+<!-- Problem Section -->
+<section class="problem-section" id="problem">
+  <div class="problem-container">
+    <div class="problem-header">
+      <div class="section-badge danger">
+        <span class="badge-emoji">😵‍💫</span>
+        Синдром 10 приложений
+      </div>
+      <h2 class="section-title">
+        "The Overwhelmed Builder" — это про вас?
+      </h2>
     </div>
 
-    <div class="offer-container">
-      <!-- Cost Comparison -->
-      <div class="cost-comparison-box scroll-reveal">
-        <h3 class="comparison-title">Старый путь (Фрагментация)</h3>
-        <div class="cost-list">
-          <div class="cost-row"><span>Notion</span> <span>$20</span></div>
-          <div class="cost-row"><span>Motion</span> <span>$34</span></div>
-          <div class="cost-row"><span>ChatGPT Plus</span> <span>$20</span></div>
-          <div class="cost-row"><span>Headspace</span> <span>$15</span></div>
-          <div class="cost-row total"><span>Итого</span> <span>$189/мес</span></div>
+    <div class="problem-story">
+      <div class="story-timeline">
+        <div class="story-step">
+          <div class="step-time">09:00</div>
+          <div class="step-content">
+            <div class="step-icon">📝</div>
+            <p><strong>Утром:</strong> Открываю Todoist → проверяю задачи → закрываю</p>
+          </div>
         </div>
-        <div class="pain-label">❌ Потеря контекста</div>
-      </div>
-
-      <div class="offer-box scroll-reveal">
-        <div class="best-value-badge">Best Value</div>
-        <h3 class="offer-title">Echo (AI Partner)</h3>
-        <div class="offer-price">$97<span>/месяц</span></div>
-        <ul class="offer-features">
-          <li>✅ Voice-first capture</li>
-          <li>✅ Contextual AI Memory</li>
-          <li>✅ Flow State Optimization</li>
-          <li>✅ Telegram Integration</li>
-          <li>✅ Web Dashboard</li>
-        </ul>
-        <div class="savings-label">⚡ Экономия $1,100 в год</div>
         
-        <div class="telegram-cta-wrapper" style="width: 100%; margin-top: 32px;">
-          <div class="telegram-cta-glow"></div>
-          <a href="/login" class="telegram-cta-button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; width: 100%; background: #54a9eb !important; color: white !important;">
-            <svg class="telegram-cta-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.56c-.21 2.27-1.13 7.75-1.6 10.29-.2 1.08-.59 1.44-.97 1.47-.82.07-1.45-.54-2.24-.97-1.24-.68-1.94-1.1-3.14-1.77-1.39-.77-.49-1.19.3-1.88.21-.18 3.85-3.52 3.92-3.82.01-.04.02-.18-.07-.26s-.22-.05-.32-.03c-.14.03-2.31 1.47-6.52 4.31-.62.43-1.17.63-1.67.62-.55-.01-1.6-.31-2.39-.56-.96-.31-1.72-.47-1.66-1 .04-.27.42-.55 1.16-.83 4.54-1.97 7.57-3.28 9.08-3.91 4.33-1.82 5.23-2.14 5.82-2.15.13 0 .41.03.59.18.15.12.19.29.21.43.02.14.05.3.04.46z"/>
-            </svg>
-            Войти через Telegram
-          </a>
+        <div class="story-step">
+          <div class="step-time">11:30</div>
+          <div class="step-content">
+            <div class="step-icon">💡</div>
+            <p><strong>Идея пришла на ходу:</strong> Записываю в заметки телефона → забываю</p>
+          </div>
         </div>
-        <p class="offer-guarantee">14 дней бесплатно • Отмена в любой момент</p>
+        
+        <div class="story-step">
+          <div class="step-time">14:00</div>
+          <div class="step-content">
+            <div class="step-icon">🍽️</div>
+            <p><strong>Обед:</strong> MyFitnessPal → ищу "куриная грудка с рисом" → сдаюсь</p>
+          </div>
+        </div>
+        
+        <div class="story-step">
+          <div class="step-time">21:00</div>
+          <div class="step-content">
+            <div class="step-icon">📔</div>
+            <p><strong>Вечером:</strong> "Надо написать в дневник" → открываю приложение → "потом"</p>
+          </div>
+        </div>
+        
+        <div class="story-step">
+          <div class="step-time">02:00</div>
+          <div class="step-content">
+            <div class="step-icon">💭</div>
+            <p><strong>Ночью:</strong> Идея проекта → записываю куда-то → утром не найти</p>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <div class="problem-stats">
+      <div class="stat-brutal">
+        <div class="stat-number">84%</div>
+        <div class="stat-text">работников испытывают digital exhaustion</div>
+      </div>
+      <div class="stat-brutal">
+        <div class="stat-number">44</div>
+        <div class="stat-text">часа в год теряете на переключения</div>
+      </div>
+      <div class="stat-brutal">
+        <div class="stat-number">71%</div>
+        <div class="stat-text">бросают фитнес-приложения к 3 месяцу</div>
+      </div>
+    </div>
+
+    <div class="problem-quotes">
+      <blockquote class="quote-card">
+        <p class="quote-text">
+          "2 часа ночи, дом тихий, и ты правишь лендинг, который никто не увидит неделями. 
+          Начинаешь сомневаться во всём."
+        </p>
+        <cite class="quote-author">— r/Entrepreneur, 176 upvotes</cite>
+      </blockquote>
+      
+      <blockquote class="quote-card">
+        <p class="quote-text">
+          "Никто не говорит, какой одинокой бывает ранняя стадия работы. 
+          Нужен случайный собеседник, чтобы выйти из собственной головы."
+        </p>
+        <cite class="quote-author">— Исповедь соло-фаундера</cite>
+      </blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- Solution Section -->
+<section class="solution-section" id="solution">
+  <div class="solution-container">
+    <div class="solution-header">
+      <div class="section-badge success">
+        <span class="badge-emoji">✨</span>
+        Решение
+      </div>
+      <h2 class="section-title">
+        Одно приложение вместо десяти
+      </h2>
+      <p class="section-subtitle">
+        Echo заменяет Todoist + MyFitnessPal + Notion + дневник + захват идей одним разговором в Telegram
+      </p>
+    </div>
+
+    <div class="solution-demo">
+      <div class="demo-conversation">
+        <div class="conversation-step">
+          <div class="step-number">1</div>
+          <div class="user-message">
+            <div class="message-bubble">
+              <span class="voice-icon">🎤</span>
+              "Добавь встречу с клиентом завтра в 15:00, напомни купить подарок маме, и я съел бургер с картошкой"
+            </div>
+            <p class="message-label">Одно голосовое сообщение</p>
+          </div>
+        </div>
+
+        <div class="conversation-arrow">↓</div>
+
+        <div class="conversation-step">
+          <div class="step-number">2</div>
+          <div class="assistant-response">
+            <div class="response-grid">
+              <div class="response-item">
+                <div class="response-icon">📅</div>
+                <p><strong>Календарь:</strong> встреча добавлена</p>
+              </div>
+              <div class="response-item">
+                <div class="response-icon">⏰</div>
+                <p><strong>Напоминание:</strong> создано</p>
+              </div>
+              <div class="response-item">
+                <div class="response-icon">🍔</div>
+                <p><strong>Питание:</strong> ~650 калорий записано</p>
+              </div>
+            </div>
+            <p class="message-label">Echo всё понял и организовал</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="solution-benefits">
+      <div class="benefit-card">
+        <div class="benefit-icon">⚡</div>
+        <h3>Мгновенный захват</h3>
+        <p>Голосом за 30 секунд вместо переключения между приложениями</p>
+      </div>
+      
+      <div class="benefit-card">
+        <div class="benefit-icon">🧠</div>
+        <h3>Контекстная память</h3>
+        <p>"Echo, что мы решили по дизайну?" — помнит весь контекст вашего бизнеса</p>
+      </div>
+      
+      <div class="benefit-card">
+        <div class="benefit-icon">🎯</div>
+        <h3>Zero friction</h3>
+        <p>Работает там, где вы уже живёте — в Telegram</p>
+      </div>
+    </div>
+
+    <div class="value-proposition">
+      <div class="value-box">
+        <h3>Что даёт Echo</h3>
+        <ul class="value-list">
+          <li>✅ Захватывает 100% мыслей одним голосовым</li>
+          <li>✅ Автоматически получаете дневник дня</li>
+          <li>✅ Трекинг питания за 5 секунд вместо 5 минут</li>
+          <li>✅ Одна точка входа вместо 10 приложений</li>
+          <li>✅ AI понимает естественную речь</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="pricing-section" id="pricing">
+  <div class="pricing-container">
+    <div class="pricing-header">
+      <div class="section-badge money">
+        <span class="badge-emoji">💰</span>
+        Инвестиция в ясность
+      </div>
+      <h2 class="section-title">
+        $9 в месяц за 27 сэкономленных часов
+      </h2>
+      <p class="section-subtitle">
+        Это $0.33 за сэкономленный час vs. ваш почасовой рейт $30+
+      </p>
+    </div>
+
+    <div class="pricing-comparison">
+      <div class="comparison-side old-way">
+        <h3>Старый путь</h3>
+        <div class="cost-breakdown">
+          <div class="cost-item">
+            <span class="app-name">Todoist</span>
+            <span class="app-price">$4</span>
+          </div>
+          <div class="cost-item">
+            <span class="app-name">Notion</span>
+            <span class="app-price">$8</span>
+          </div>
+          <div class="cost-item">
+            <span class="app-name">MyFitnessPal</span>
+            <span class="app-price">$10</span>
+          </div>
+          <div class="cost-item">
+            <span class="app-name">Дневник</span>
+            <span class="app-price">$5</span>
+          </div>
+          <div class="cost-total">
+            <span>Итого:</span>
+            <span class="total-price">$27/мес</span>
+          </div>
+        </div>
+        <div class="pain-points">
+          <p>❌ 44+ часа в год на переключения</p>
+          <p>❌ Потеря контекста</p>
+          <p>❌ Дисциплина для каждого приложения</p>
+        </div>
+      </div>
+
+      <div class="comparison-vs">VS</div>
+
+      <div class="comparison-side new-way">
+        <h3>Echo путь</h3>
+        <div class="echo-pricing">
+          <div class="plan free">
+            <h4>Free</h4>
+            <div class="price">$0<span>/мес</span></div>
+            <ul>
+              <li>✅ 50 взаимодействий/месяц</li>
+              <li>✅ Все базовые функции</li>
+              <li>✅ Telegram интеграция</li>
+            </ul>
+            <a href="/login" class="plan-button secondary">Попробовать</a>
+          </div>
+
+          <div class="plan pro featured">
+            <div class="plan-badge">Популярный</div>
+            <h4>Pro</h4>
+            <div class="price">$9<span>/мес</span></div>
+            <ul>
+              <li>✅ Безлимит взаимодействий</li>
+              <li>✅ Все функции</li>
+              <li>✅ Приоритетная обработка</li>
+              <li>✅ Веб-дашборд</li>
+              <li>✅ История и аналитика</li>
+            </ul>
+            <a href="/login" class="plan-button primary">
+              <span class="cta-icon">📱</span>
+              Начать в Telegram
+            </a>
+            <p class="plan-note">или $79/год (экономия 28%)</p>
+          </div>
+        </div>
+        <div class="benefits">
+          <p>✅ Экономия 55 мин/день = 27 часов/месяц</p>
+          <p>✅ Один интерфейс вместо 10</p>
+          <p>✅ Zero friction, работает в Telegram</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="value-calculation">
+      <div class="calculation-box">
+        <h3>Расчёт ценности</h3>
+        <div class="calc-row">
+          <span>Ваш почасовой рейт:</span>
+          <strong>$30/час</strong>
+        </div>
+        <div class="calc-row">
+          <span>Экономия времени:</span>
+          <strong>27 часов/месяц</strong>
+        </div>
+        <div class="calc-row total">
+          <span>Ценность Echo:</span>
+          <strong>$810/месяц</strong>
+        </div>
+        <div class="calc-row roi">
+          <span>ROI:</span>
+          <strong>9000%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="regional-pricing">
+      <h3>💰 Специальные цены для СНГ</h3>
+      <div class="regional-plans">
+        <div class="regional-plan">
+          <span class="plan-name">Pro</span>
+          <span class="plan-price">499₽/мес</span>
+          <span class="plan-note">~$5</span>
+        </div>
+        <div class="regional-plan">
+          <span class="plan-name">Pro Annual</span>
+          <span class="plan-price">3,999₽/год</span>
+          <span class="plan-note">~$42, экономия 33%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="final-cta">
+      <h3>Попробуйте Echo прямо сейчас</h3>
+      <p>50 взаимодействий бесплатно • Без карты • Настройка за 30 секунд</p>
+      
+      <a href="/login" class="cta-button massive">
+        <span class="cta-icon">🎤</span>
+        Войти через Telegram и попробовать
+        <span class="cta-arrow">→</span>
+      </a>
+      
+      <p class="guarantee">
+        💎 Если не сэкономите минимум 30 минут в первую неделю — вернём деньги
+      </p>
     </div>
   </div>
 </section>
 
 <!-- Footer -->
 <footer class="footer">
-  <div class="container">
-    <div class="footer-content">
-      <div>
-        <div class="footer-brand">Echo</div>
+  <div class="footer-container">
+    <div class="footer-main">
+      <div class="footer-brand-section">
+        <div class="footer-brand">
+          <span class="footer-logo">🎤</span>
+          Echo
+        </div>
         <p class="footer-description">
-          Voice-first AI компаньон для предпринимателей-одиночек. Превращает хаос дня в осмысленные паттерны.
+          Jarvis в твоём Telegram. Превращает хаос предпринимательской жизни в ясность и фокус.
         </p>
+        <div class="footer-stats">
+          <span>55 мин экономии в день</span>
+          <span>•</span>
+          <span>10 → 1 приложений</span>
+          <span>•</span>
+          <span>Zero friction</span>
+        </div>
       </div>
-      <div>
-        <ul class="footer-links">
-          <li><a href="#pain">Проблема</a></li>
-          <li><a href="#benefits">Решение</a></li>
-          <li><a href="#product">Как это работает</a></li>
-        </ul>
-      </div>
-      <div>
-        <ul class="footer-links">
-          <li><a href="https://t.me/auriAI_bot">@auriAI_bot</a></li>
-          <li><a href="mailto:hello@echo-ai.app">hello@echo-ai.app</a></li>
-        </ul>
+      
+      <div class="footer-links-section">
+        <div class="footer-column">
+          <h4>Продукт</h4>
+          <ul>
+            <li><a href="#problem">Проблема</a></li>
+            <li><a href="#solution">Решение</a></li>
+            <li><a href="#pricing">Цены</a></li>
+            <li><a href="/dashboard">Дашборд</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Контакты</h4>
+          <ul>
+            <li><a href="https://t.me/echo_ai_bot">@echo_ai_bot</a></li>
+            <li><a href="mailto:hello@echo.datapine.space">hello@echo.datapine.space</a></li>
+            <li><a href="https://t.me/datapine">Поддержка</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>ICP</h4>
+          <ul>
+            <li>🗣️ Русскоязычные</li>
+            <li>👤 Соло-предприниматели</li>
+            <li>💻 Фрилансеры</li>
+            <li>🚀 Стартаперы</li>
+          </ul>
+        </div>
       </div>
     </div>
+    
     <div class="footer-bottom">
-      <p>&copy; 2024 Echo. Сделано с ❤️ для предпринимателей.</p>
+      <p>&copy; 2024 Echo. Сделано с ❤️ для "Overwhelmed Builders".</p>
+      <p class="footer-tagline">
+        <strong>One-liner:</strong> Echo — это Jarvis в твоём Telegram. Скажи что угодно голосом, и он организует твою жизнь.
+      </p>
     </div>
   </div>
 </footer>
