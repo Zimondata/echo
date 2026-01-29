@@ -7,26 +7,6 @@ class TelegramWebhookJob < ApplicationJob
 
     update = Telegram::Bot::Types::Update.new(update_data)
 
-    # Check whitelist for both messages and callbacks
-    telegram_id = if update.message
-                    update.message.from.id
-                  elsif update.callback_query
-                    update.callback_query.from.id
-                  end
-
-    unless TELEGRAM_WHITELIST.include?(telegram_id.to_i)
-      Rails.logger.warn "Blocked message from non-whitelisted user: #{telegram_id}"
-      # Send access denied message
-      chat_id = update.message&.chat&.id || update.callback_query&.message&.chat&.id
-      if chat_id
-        Telegram::BotService.send_message(
-          chat_id: chat_id,
-          text: "🚫 Доступ запрещён. Этот бот доступен только для владельца."
-        )
-      end
-      return
-    end
-
     if update.message
       # Handle regular message
       message = update.message
