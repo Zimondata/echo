@@ -47,7 +47,7 @@ gem "thruster", require: false
 gem "telegram-bot-ruby", "~> 2.0"  # Telegram Bot API
 gem "faraday", "~> 2.7"            # HTTP client
 gem "faraday-multipart", "~> 1.0"  # Multipart support for Faraday
-gem "ruby-openai", "7.0.1"         # OpenAI (Whisper, GPT-4) - specific version for Faraday 2.x compatibility
+gem "ruby-openai", "8.3.0"         # OpenAI (Whisper, GPT-4) - specific version for Faraday 2.x compatibility
 gem "google-apis-calendar_v3"      # Google Calendar API
 gem "googleauth"                    # Google OAuth
 gem "httparty", "~> 0.22"          # HTTP requests
