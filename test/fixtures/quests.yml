@@ -9,7 +9,7 @@ one:
   due_date: 2025-10-27 22:03:17
   steps: 
   completion_rate: 1
-  user: one
+  user: john
 
 two:
   entry: two
@@ -20,4 +20,4 @@ two:
   due_date: 2025-10-27 22:03:17
   steps: 
   completion_rate: 1
-  user: two
+  user: moscow_user

@@ -1,13 +1,13 @@
 class Api::V1::RemindersController < Api::BaseController
-  before_action :find_reminder, only: [:show, :update, :destroy]
-  
+  before_action :find_reminder, only: [ :show, :update, :destroy ]
+
   def index
     @reminders = current_user.reminders.includes(:entry)
     render json: { reminders: @reminders }
   end
 
   def show
-    render json: { 
+    render json: {
       reminder: {
         id: @reminder.id,
         message: @reminder.message,
@@ -22,9 +22,9 @@ class Api::V1::RemindersController < Api::BaseController
 
   def create
     @reminder = current_user.reminders.build(reminder_params)
-    
+
     if @reminder.save
-      render json: { 
+      render json: {
         reminder: {
           id: @reminder.id,
           message: @reminder.message,
@@ -39,7 +39,7 @@ class Api::V1::RemindersController < Api::BaseController
 
   def update
     if @reminder.update(reminder_params)
-      render json: { 
+      render json: {
         reminder: {
           id: @reminder.id,
           message: @reminder.message,
@@ -54,7 +54,7 @@ class Api::V1::RemindersController < Api::BaseController
 
   def destroy
     @reminder.destroy
-    render json: { message: 'Напоминание удалено' }
+    render json: { message: "Напоминание удалено" }
   end
 
   private
@@ -62,11 +62,15 @@ class Api::V1::RemindersController < Api::BaseController
   def find_reminder
     @reminder = current_user.reminders.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Напоминание не найдено' }, status: :not_found
+    render json: { error: "Напоминание не найдено" }, status: :not_found
   end
 
   def reminder_params
-    params[:reminder_type] ||= 'one_time' # Default to one_time
-    params.permit(:message, :remind_at, :reminder_type, :user_id, :entry_id)
+    permitted = params.permit(:message, :remind_at, :reminder_type)
+    permitted[:reminder_type] ||= "one_time" if action_name == "create"
+    if params[:entry_id].present?
+      permitted[:entry_id] = current_user.entries.find(params[:entry_id]).id
+    end
+    permitted
   end
 end

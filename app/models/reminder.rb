@@ -6,7 +6,7 @@ class Reminder < ApplicationRecord
   # Validations
   validates :reminder_type, presence: true, inclusion: { in: %w[one_time recurring smart] }
   validates :remind_at, presence: true
-  validates :status, inclusion: { in: %w[pending sent snoozed cancelled] }
+  validates :status, inclusion: { in: %w[pending sending sent snoozed cancelled] }
   validates :priority, inclusion: { in: %w[high medium low] }, allow_nil: true
   validates :smart_type, inclusion: { in: %w[idea pattern goal context suggestion] }, allow_nil: true
 
@@ -41,7 +41,7 @@ class Reminder < ApplicationRecord
 
   def related_entries
     return Entry.none if related_entry_ids.blank?
-    Entry.where(id: related_entry_ids)
+    user.entries.where(id: related_entry_ids)
   end
 
   def mark_as_sent!
@@ -49,10 +49,11 @@ class Reminder < ApplicationRecord
   end
 
   def snooze!(duration_minutes = 30)
+    base_time = [ remind_at, Time.current ].compact.max
     update!(
       status: "pending",
-      remind_at: Time.current + duration_minutes.minutes,
-      metadata: metadata.merge(snoozed_count: (metadata["snoozed_count"] || 0) + 1),
+      remind_at: base_time + duration_minutes.minutes,
+      metadata: (metadata || {}).merge(snoozed_count: ((metadata || {})["snoozed_count"] || 0) + 1),
       user_feedback: "snoozed"
     )
   end

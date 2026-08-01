@@ -1,32 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru" data-theme="dark-violet" data-color-scheme="dark">
   <head>
-    <title><%= content_for(:title) || "Echo - AI Personal Assistant" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for(:title) || "Echo — личный центр исполнения" %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta id="echo-theme-color" name="theme-color" content="#09090f">
+    <script>
+      (() => {
+        const themes = {
+          "dark-violet": { scheme: "dark", color: "#09090f" },
+          "light-violet": { scheme: "light", color: "#f6f3fa" }
+        };
+        const requested = new URLSearchParams(window.location.search).get("theme");
+        let stored = null;
+        try { stored = localStorage.getItem("echo-theme"); } catch (_) {}
+        const theme = themes[requested] ? requested : (themes[stored] ? stored : "dark-violet");
+        const config = themes[theme];
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.colorScheme = config.scheme;
+        document.documentElement.style.colorScheme = config.scheme;
+        if (requested && themes[requested]) {
+          try { localStorage.setItem("echo-theme", theme); } catch (_) {}
+        }
+        const meta = document.querySelector("#echo-theme-color");
+        if (meta) meta.setAttribute("content", config.color);
+      })();
+    </script>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <link rel="stylesheet" href="/assets/themes.css?v=<%= Time.now.to_i %>" data-turbo-track="reload">
     <%= javascript_importmap_tags %>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background: var(--bg-darkest);
-        color: var(--text-primary);
-      }
-    </style>
   </head>
-
   <body class="min-h-screen">
-    <!-- Main Content - Full Width -->
-    <main class="min-h-screen">
-      <%= yield %>
-    </main>
+    <main class="min-h-screen"><%= yield %></main>
   </body>
 </html>

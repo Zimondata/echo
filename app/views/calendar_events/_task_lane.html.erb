@@ -1,0 +1,53 @@
+<%= turbo_frame_tag "task_lane", class: "calendar-tasks" do %>
+  <details class="task-lane" data-controller="task-lane" open>
+    <summary class="task-lane-summary">
+      <span class="task-lane-heading">Задачи без времени</span>
+      <span id="task_lane_count" class="task-lane-count"><%= tasks.size %></span>
+      <span class="task-lane-chevron" aria-hidden="true">▾</span>
+    </summary>
+
+    <div class="task-lane-body">
+      <%= render "tasks/task_feedback", message: flash[:task_notice] %>
+
+      <%= form_with model: task, url: tasks_path, namespace: "new_task", class: "task-form", data: { task_form: true } do |form| %>
+        <% if task.errors.any? %>
+          <div class="task-form-errors" role="alert" data-task-errors>
+            <% task.errors.full_messages.each do |message| %>
+              <div class="task-form-error"><%= message %></div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%= hidden_field_tag :view, calendar_view %>
+        <%= hidden_field_tag :date, calendar_date %>
+
+        <div class="task-form-row">
+          <%= form.label :title, "Новая задача", class: "task-visually-hidden" %>
+          <%= form.text_field :title, class: "task-input", placeholder: "Что нужно сделать?", maxlength: 255, autocomplete: "off", autofocus: task.errors.any? %>
+          <%= form.submit "Добавить", class: "task-submit" %>
+        </div>
+
+        <p class="task-form-hint">Необязательно: следующий шаг, оценка в минутах, срок.</p>
+
+        <%= form.label :next_action, "Следующий шаг", class: "task-visually-hidden" %>
+        <%= form.text_field :next_action, class: "task-input task-input-compact", placeholder: "Следующий шаг", maxlength: 255, autocomplete: "off" %>
+
+        <div class="task-optional-grid">
+          <%= form.label :estimate_minutes, "Оценка в минутах", class: "task-visually-hidden" %>
+          <%= form.number_field :estimate_minutes, class: "task-input task-input-compact", placeholder: "мин", min: 1, step: 1 %>
+          <%= form.label :due_on, "Срок", class: "task-visually-hidden" %>
+          <%= form.date_field :due_on, class: "task-input task-input-compact" %>
+        </div>
+      <% end %>
+
+      <% if calendar_view == "week" && tasks.any? %>
+        <p class="task-drag-hint" data-planner-drag-hint><strong>Перетащи задачу</strong> на нужный час. Кнопка «Запланировать» остаётся для точного ввода.</p>
+      <% end %>
+
+      <%= render "tasks/task_items",
+                 tasks: tasks,
+                 calendar_view: calendar_view,
+                 calendar_date: calendar_date %>
+    </div>
+  </details>
+<% end %>

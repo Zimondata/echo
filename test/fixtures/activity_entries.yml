@@ -1,7 +1,7 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  user: one
+  user: john
   activity_type: MyString
   duration_minutes: 1
   distance_km: 9.99
@@ -15,7 +15,7 @@ one:
   screenshot_url: MyString
 
 two:
-  user: two
+  user: moscow_user
   activity_type: MyString
   duration_minutes: 1
   distance_km: 9.99

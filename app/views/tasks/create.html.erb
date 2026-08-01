@@ -1,0 +1,13 @@
+<%= render "calendar_events/task_lane_styles" %>
+<%= render "shared/unified_header" %>
+
+<main class="task-fallback-page">
+  <div class="task-fallback-shell">
+    <%= link_to "← Вернуться в календарь", calendar_events_path(view: @calendar_view, date: @calendar_date), class: "task-fallback-back" %>
+    <%= render "calendar_events/task_lane",
+               task: @task,
+               tasks: @unscheduled_tasks,
+               calendar_view: @calendar_view,
+               calendar_date: @calendar_date %>
+  </div>
+</main>

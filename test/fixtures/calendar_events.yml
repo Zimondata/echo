@@ -2,7 +2,7 @@
 
 one:
   entry: one
-  user: one
+  user: john
   title: "Встреча с клиентом"
   description: "Обсуждение нового проекта"
   start_time: <%= 1.day.from_now.beginning_of_hour %>
@@ -15,7 +15,7 @@ one:
 
 two:
   entry: two
-  user: two
+  user: moscow_user
   title: "Планирование недели"
   description: "Составить план на следующую неделю"
   start_time: <%= 2.days.from_now.beginning_of_hour %>

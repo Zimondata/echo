@@ -1,38 +1,18 @@
 require "test_helper"
 
 class ActivityEntriesControllerTest < ActionDispatch::IntegrationTest
-  test "should get index" do
-    get activity_entries_index_url
-    assert_response :success
+  test "redirects guests to login" do
+    get activity_entries_url
+    assert_redirected_to root_path
   end
 
-  test "should get show" do
-    get activity_entries_show_url
+  test "renders authenticated activity index" do
+    auth = TelegramAuthSession.create!
+    auth.confirm!(users(:john))
+    post "/sessions/complete_telegram_auth", params: { session_token: auth.session_token }
     assert_response :success
-  end
 
-  test "should get new" do
-    get activity_entries_new_url
-    assert_response :success
-  end
-
-  test "should get create" do
-    get activity_entries_create_url
-    assert_response :success
-  end
-
-  test "should get edit" do
-    get activity_entries_edit_url
-    assert_response :success
-  end
-
-  test "should get update" do
-    get activity_entries_update_url
-    assert_response :success
-  end
-
-  test "should get destroy" do
-    get activity_entries_destroy_url
+    get activity_entries_url
     assert_response :success
   end
 end

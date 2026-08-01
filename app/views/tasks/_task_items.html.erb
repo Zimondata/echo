@@ -1,0 +1,18 @@
+<div id="task_lane_items">
+  <% if tasks.any? %>
+    <ul class="task-list">
+      <% tasks.each do |lane_task| %>
+        <li id="<%= dom_id(lane_task, :shell) %>" class="task-card-shell">
+          <%= turbo_frame_tag dom_id(lane_task) do %>
+            <%= render "tasks/task_card",
+                       task: lane_task,
+                       calendar_view: calendar_view,
+                       calendar_date: calendar_date %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="task-lane-empty" data-task-lane-empty>Добавь задачу здесь. Она останется в этом списке, пока ты не назначишь ей дату и время.</p>
+  <% end %>
+</div>

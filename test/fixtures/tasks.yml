@@ -1,0 +1,40 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+inbox_task:
+  user: john
+  title: "Собрать материалы для отчёта"
+  next_action: "Открыть прошлогодний отчёт"
+  owner_type: "user"
+  status: "inbox"
+  estimate_minutes: 25
+
+someday_task:
+  user: john
+  title: "Придумать название для подкаста"
+  owner_type: "user"
+  status: "someday"
+
+next_task:
+  user: john
+  title: "Подготовить вопросы к созвону"
+  owner_type: "user"
+  status: "next"
+
+scheduled_task:
+  user: john
+  title: "Уже стоит в календаре"
+  owner_type: "user"
+  status: "scheduled"
+
+deleted_task:
+  user: john
+  title: "Удалённая задача"
+  owner_type: "user"
+  status: "inbox"
+  deleted_at: <%= 1.hour.ago.to_fs(:db) %>
+
+other_user_task:
+  user: moscow_user
+  title: "Чужая задача"
+  owner_type: "user"
+  status: "inbox"

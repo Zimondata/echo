@@ -1,0 +1,61 @@
+<% content_for :title, "Настройки — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Твои данные · твои границы</p>
+      <h1 class="echo-title">Настройки</h1>
+      <p class="echo-subtitle">Время, уведомления, доступ и границы ассистента — без скрытых переключателей.</p>
+    </div>
+  </header>
+
+  <% if flash[:notice] %><div class="echo-notice"><%= flash[:notice] %></div><% end %>
+
+  <%= form_with model: @user, url: settings_path, method: :patch, class: "echo-stack" do |form| %>
+    <section class="echo-surface">
+      <div class="echo-surface__header"><p class="echo-label">Локальный контекст</p><h2 class="echo-section-heading mt-1">Время и язык</h2></div>
+      <div class="echo-surface__body grid gap-4 sm:grid-cols-2">
+        <label class="text-sm font-semibold" style="color:var(--ink-secondary)">Часовой пояс<%= form.select :timezone, options_for_select(ActiveSupport::TimeZone.all.map { |zone| [zone.to_s, zone.tzinfo.identifier] }.uniq { |option| option.last }, @user.timezone), {}, class: "echo-select mt-2" %></label>
+        <label class="text-sm font-semibold" style="color:var(--ink-secondary)">Язык<%= form.select :language, [["Русский", "ru"], ["English", "en"]], {}, class: "echo-select mt-2" %></label>
+      </div>
+    </section>
+
+    <section class="echo-surface">
+      <div class="echo-surface__header"><p class="echo-label">Меньше шума</p><h2 class="echo-section-heading mt-1">Тихие часы</h2><p class="echo-section-copy">Гибкие подсказки молчат. Срочные обязательства остаются отдельным классом.</p></div>
+      <div class="echo-surface__body grid gap-4 sm:grid-cols-2">
+        <label class="text-sm font-semibold" style="color:var(--ink-secondary)">Начало<%= time_field_tag "user[quiet_start]", @user.settings["quiet_start"], class: "echo-input mt-2" %></label>
+        <label class="text-sm font-semibold" style="color:var(--ink-secondary)">Конец<%= time_field_tag "user[quiet_end]", @user.settings["quiet_end"], class: "echo-input mt-2" %></label>
+      </div>
+    </section>
+
+    <section class="echo-surface">
+      <div class="echo-surface__header"><p class="echo-label">Состояние системы</p><h2 class="echo-section-heading mt-1">Интеграции и данные</h2></div>
+      <div class="echo-surface__body grid gap-3 sm:grid-cols-2">
+        <div class="echo-row" style="background:var(--surface-inset)">
+          <span class="echo-row__marker" aria-hidden="true"></span>
+          <div><p class="echo-row__title">Календарь</p><p class="echo-row__meta">Локальный ручной календарь. Внешняя запись выключена.</p><span class="echo-badge echo-badge--success mt-3">Manual core работает</span></div>
+        </div>
+        <div class="echo-row" style="background:var(--surface-inset)">
+          <span class="echo-row__marker echo-row__marker--fixed" aria-hidden="true"></span>
+          <div><p class="echo-row__title">Ассистент</p><p class="echo-row__meta">Может предлагать и готовить. Внешняя отправка требует Approval.</p><span class="echo-badge echo-badge--fixed mt-3">Scoped approval</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="flex justify-end"><%= form.submit "Сохранить настройки", class: "echo-button echo-button--primary" %></div>
+  <% end %>
+
+  <% if logged_in? %>
+    <section class="echo-surface mt-6" aria-labelledby="session-heading">
+      <div class="echo-surface__header">
+        <p class="echo-label">Аккаунт</p>
+        <h2 id="session-heading" class="echo-section-heading mt-1">Текущая сессия</h2>
+        <p class="echo-section-copy">Заверши локальную сессию на этом устройстве.</p>
+      </div>
+      <div class="echo-surface__body flex justify-end">
+        <%= button_to "Выйти из Echo", logout_path, method: :delete, class: "echo-button echo-button--danger", form: { data: { turbo: false } } %>
+      </div>
+    </section>
+  <% end %>
+</div>

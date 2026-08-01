@@ -12,6 +12,11 @@ class User < ApplicationRecord
   has_many :nutrition_entries, dependent: :destroy
   has_many :activity_entries, dependent: :destroy
   has_many :quests, dependent: :destroy
+  has_many :tasks, dependent: :destroy
+  has_many :rhythms, dependent: :destroy
+  has_many :captures, dependent: :destroy
+  has_many :agent_runs, dependent: :destroy
+  has_many :echo_service_tokens, dependent: :destroy
 
   # Scopes
   scope :active, -> { where.not(telegram_id: nil) }

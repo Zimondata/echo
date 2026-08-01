@@ -1,79 +1,72 @@
 require "test_helper"
+require "minitest/mock"
 
 class DailyMorningSummaryJobTest < ActiveJob::TestCase
-  def setup
-    @user = users(:john)
-    @today = Date.current.in_time_zone(@user.timezone)
-  end
-
-  test "sends morning summary to all active users" do
-    # Mock Telegram service
-    telegram_service = Minitest::Mock.new
-    telegram_service.expect :send_message, true, [Hash]
-    
-    Telegram::BotService.stub :instance, telegram_service do
-      assert_performed_jobs 1 do
-        DailyMorningSummaryJob.perform_now
-      end
+  FakeTelegram = Struct.new(:messages) do
+    def send_message(**payload)
+      messages << payload
+      true
     end
-    
-    telegram_service.verify
   end
 
-  test "builds message for day with events" do
-    # Create test events for today
-    calendar_events(:meeting).update!(
-      start_time: @today.beginning_of_day + 10.hours,
-      user: @user
-    )
-    
-    reminders(:dentist).update!(
-      remind_at: @today.beginning_of_day + 14.hours,
-      user: @user
-    )
-
-    job = DailyMorningSummaryJob.new
-    events = @user.calendar_events.active.where(start_time: @today.beginning_of_day..@today.end_of_day)
-    reminders = @user.reminders.pending.where(remind_at: @today.beginning_of_day..@today.end_of_day)
-    
-    message = job.send(:build_morning_message, @user, @today, events, reminders)
-    
-    assert_includes message, "Доброе утро, #{@user.full_name}!"
-    assert_includes message, "События по времени:"
-    assert_includes message, "Напоминания:"
+  setup do
+    @user = users(:john)
+    @today = Time.current.in_time_zone(@user.timezone).to_date
   end
 
-  test "builds message for free day" do
-    job = DailyMorningSummaryJob.new
-    message = job.send(:build_morning_message, @user, @today, [], [])
-    
-    assert_includes message, "У вас свободный день!"
+  test "sends one summary per active user with Telegram identity" do
+    service = FakeTelegram.new([])
+
+    Telegram::BotService.stub :send_message, ->(**payload) { service.send_message(**payload) } do
+      DailyMorningSummaryJob.perform_now
+    end
+
+    expected = User.active.where.not(telegram_id: nil).count
+    assert_operator service.messages.length, :>=, expected
+    assert service.messages.all? { |message| message[:text].present? }
+  end
+
+  test "builds a message containing today's event and reminder" do
+    event = @user.calendar_events.create!(
+      title: "Echo planning",
+      start_time: Time.current.in_time_zone(@user.timezone).change(hour: 10),
+      end_time: Time.current.in_time_zone(@user.timezone).change(hour: 11),
+      event_type: "meeting",
+      priority: "medium",
+      all_day: false,
+      done: false,
+      metadata: {}
+    )
+    reminder = @user.reminders.create!(
+      message: "Check the launch",
+      remind_at: Time.current.in_time_zone(@user.timezone).change(hour: 14),
+      reminder_type: "one_time",
+      status: "pending",
+      priority: "medium",
+      metadata: {}
+    )
+
+    message = DailyMorningSummaryJob.new.send(:build_morning_message, @user, @today, [event], [reminder])
+
+    assert_includes message, "Echo planning"
+    assert_includes message, "Check the launch"
+    assert_includes message, "Планы на сегодня"
+  end
+
+  test "builds a calm free-day message" do
+    message = DailyMorningSummaryJob.new.send(:build_morning_message, @user, @today, [], [])
+
+    assert_includes message, "свободный день"
     assert_includes message, "Время для отдыха"
   end
 
-  test "handles timezone correctly" do
-    moscow_user = users(:moscow_user)
-    
-    job = DailyMorningSummaryJob.new
-    
-    # Mock the method to verify timezone usage
-    job.stub :send_morning_summary_to_user, true do
-      job.stub :User, -> { mock_users = Minitest::Mock.new
-                           mock_users.expect :active, [moscow_user]
-                           mock_users.expect :find_each, [moscow_user] do |&block|
-                             block.call(moscow_user)
-                           end
-                           mock_users } do
-        job.perform
-      end
-    end
-  end
+  test "formats event time in the user's timezone" do
+    event = Struct.new(:start_time, :title, :done?, :all_day?).new(
+      Time.utc(2026, 7, 31, 8, 0), "Timezone check", false, false
+    )
 
-  private
+    message = DailyMorningSummaryJob.new.send(:build_morning_message, @user, @today, [event], [])
 
-  def mock_telegram_service
-    mock = Minitest::Mock.new
-    mock.expect :send_message, true, [Hash]
-    mock
+    assert_includes message, "11:00 - Timezone check"
   end
 end

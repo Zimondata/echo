@@ -1,0 +1,107 @@
+<dialog class="calendar-quick-dialog"
+        data-calendar-quick-create-target="dialog"
+        data-action="click->calendar-quick-create#backdrop close->calendar-quick-create#restoreFocus">
+  <div class="calendar-quick-shell">
+    <header class="calendar-quick-header">
+      <div>
+        <span class="calendar-quick-kicker">Быстрое создание</span>
+        <h2>Добавить в день</h2>
+      </div>
+      <button type="button" class="calendar-quick-close" aria-label="Закрыть" data-action="calendar-quick-create#close">×</button>
+    </header>
+
+    <div class="calendar-quick-tabs" role="tablist" aria-label="Что создать">
+      <button type="button" role="tab" aria-selected="true" data-calendar-quick-create-target="eventTab" data-action="calendar-quick-create#selectEvent">План</button>
+      <button type="button" role="tab" aria-selected="false" data-calendar-quick-create-target="noteTab" data-action="calendar-quick-create#selectNote">Заметка</button>
+    </div>
+
+    <section data-calendar-quick-create-target="eventPanel">
+      <%= form_with model: @quick_event, class: "calendar-quick-form" do |form| %>
+        <%= hidden_field_tag :return_view, @calendar_view %>
+        <%= hidden_field_tag :return_date, @current_date.iso8601 %>
+        <%= form.hidden_field :start_time, data: { calendar_quick_create_target: "start" } %>
+        <%= form.hidden_field :end_time, data: { calendar_quick_create_target: "end" } %>
+        <%= form.hidden_field :event_type, value: "plan" %>
+        <%= form.hidden_field :priority, value: "medium" %>
+
+        <div class="calendar-quick-field">
+          <%= form.label :title, "Что запланировать" %>
+          <%= form.text_field :title, placeholder: "Например, собрать первый экран", required: true, autocomplete: "off", data: { calendar_quick_create_target: "title" } %>
+        </div>
+
+        <div class="calendar-quick-when">
+          <label class="calendar-quick-field">
+            <span>Дата</span>
+            <input type="date" value="<%= @current_date.iso8601 %>" required data-calendar-quick-create-target="date" data-action="change->calendar-quick-create#updateSchedule">
+          </label>
+          <label class="calendar-quick-field">
+            <span>Начало</span>
+            <input type="time" value="09:00" step="900" required data-calendar-quick-create-target="time" data-action="change->calendar-quick-create#updateSchedule">
+          </label>
+          <div class="calendar-quick-range" aria-live="polite" data-calendar-quick-create-target="endLabel">09:00 → 10:00</div>
+        </div>
+
+        <div class="calendar-quick-duration" aria-label="Длительность">
+          <% [["15 мин", 15], ["30 мин", 30], ["45 мин", 45], ["1 ч", 60], ["1,5 ч", 90], ["2 ч", 120]].each do |label, minutes| %>
+            <button type="button"
+                    data-calendar-quick-create-target="duration"
+                    data-duration-minutes="<%= minutes %>"
+                    data-action="calendar-quick-create#chooseDuration"
+                    aria-pressed="<%= minutes == 60 %>"><%= label %></button>
+          <% end %>
+        </div>
+
+        <label class="calendar-quick-all-day">
+          <%= form.check_box :all_day, data: { calendar_quick_create_target: "allDay", action: "change->calendar-quick-create#updateSchedule" } %>
+          <span>Весь день</span>
+        </label>
+
+        <details class="calendar-quick-details">
+          <summary>Детали</summary>
+          <div class="calendar-quick-details-grid">
+            <label class="calendar-quick-field">
+              <span>Сфера</span>
+              <%= form.select :life_category, CalendarEvent::LIFE_CATEGORIES.map { |value, info| [info[:label], value] } %>
+            </label>
+            <label class="calendar-quick-field">
+              <span>Напомнить</span>
+              <%= form.select :reminder_minutes, [["Не напоминать", nil], ["За 10 минут", 10], ["За 30 минут", 30], ["За час", 60]] %>
+            </label>
+            <label class="calendar-quick-field calendar-quick-field--full">
+              <span>Контекст</span>
+              <%= form.text_area :description, rows: 3, placeholder: "Ссылка, результат или короткая подготовка" %>
+            </label>
+          </div>
+        </details>
+
+        <footer class="calendar-quick-actions">
+          <button type="button" class="calendar-quick-secondary" data-action="calendar-quick-create#close">Отмена</button>
+          <%= form.submit "Создать план", class: "calendar-quick-submit" %>
+        </footer>
+      <% end %>
+    </section>
+
+    <section hidden data-calendar-quick-create-target="notePanel">
+      <%= form_with model: @quick_note, class: "calendar-quick-form" do |form| %>
+        <%= hidden_field_tag :return_to, "calendar" %>
+        <%= hidden_field_tag :return_view, @calendar_view, id: nil %>
+        <%= hidden_field_tag :return_date, @current_date.iso8601, id: nil %>
+        <%= form.hidden_field :occurred_at, data: { calendar_quick_create_target: "noteOccurred" } %>
+
+        <div class="calendar-quick-field">
+          <%= form.label :content, "Заметка" %>
+          <%= form.text_area :content, rows: 6, placeholder: "Мысль, наблюдение или контекст — без лишней формы", required: true, data: { calendar_quick_create_target: "noteContent" } %>
+        </div>
+        <div class="calendar-quick-field">
+          <%= form.label :tags, "Теги" %>
+          <%= form.text_field :tags, placeholder: "echo, идея" %>
+        </div>
+
+        <footer class="calendar-quick-actions">
+          <button type="button" class="calendar-quick-secondary" data-action="calendar-quick-create#close">Отмена</button>
+          <%= form.submit "Сохранить заметку", class: "calendar-quick-submit" %>
+        </footer>
+      <% end %>
+    </section>
+  </div>
+</dialog>

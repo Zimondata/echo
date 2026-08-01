@@ -1,0 +1,46 @@
+<%= form_with url: task_time_block_path(task, time_block), method: :patch, class: "task-schedule-form", data: { reschedule_form: true } do |form| %>
+  <%= hidden_field_tag "task[lock_version]", task.lock_version, id: "reschedule_#{time_block.id}_task_lock_version" %>
+  <%= hidden_field_tag "time_block[lock_version]", time_block.lock_version, id: "reschedule_#{time_block.id}_lock_version" %>
+  <%= hidden_field_tag "time_block[timezone]", schedule_input[:timezone], id: "reschedule_#{time_block.id}_timezone" %>
+  <%= hidden_field_tag :view, "day", id: nil %>
+  <%= hidden_field_tag :date, schedule_input[:local_date], id: nil %>
+
+  <% if local_assigns[:schedule_conflict] %>
+    <div class="task-conflict" role="alert" data-reschedule-conflict>План изменился в другой вкладке. Проверь значения перед повтором.</div>
+  <% end %>
+  <% if local_assigns[:schedule_errors].present? %>
+    <div class="task-card-errors" role="alert" data-reschedule-errors>
+      <% schedule_errors.each do |message| %><div><%= message %></div><% end %>
+    </div>
+  <% end %>
+  <% if local_assigns[:overlap_warning] %>
+    <div class="task-overlap-warning" data-overlap-warning>Есть наложение. Сохрани только если оно осознанное.</div>
+    <%= hidden_field_tag "time_block[overlap_signature]", overlap_signature, id: "reschedule_#{time_block.id}_overlap_signature" %>
+  <% end %>
+
+  <div class="task-schedule-grid">
+    <label>
+      <span class="task-edit-label">Дата</span>
+      <%= date_field_tag "time_block[local_date]", schedule_input[:local_date], id: "reschedule_#{time_block.id}_local_date", class: "task-input task-input-compact", required: true %>
+    </label>
+    <label>
+      <span class="task-edit-label">Время</span>
+      <%= time_field_tag "time_block[local_time]", schedule_input[:local_time], id: "reschedule_#{time_block.id}_local_time", class: "task-input task-input-compact", required: true %>
+    </label>
+    <label>
+      <span class="task-edit-label">Длительность, мин</span>
+      <%= number_field_tag "time_block[duration_minutes]", schedule_input[:duration_minutes], id: "reschedule_#{time_block.id}_duration_minutes", class: "task-input task-input-compact", min: 5, max: 720, step: 5, required: true %>
+    </label>
+    <label class="task-schedule-lock">
+      <%= check_box_tag "time_block[locked]", "1", schedule_input[:locked] == "1", id: "reschedule_#{time_block.id}_locked" %>
+      Зафиксировать время
+    </label>
+  </div>
+  <div class="task-schedule-zone">Часовой пояс: <%= schedule_input[:timezone] %></div>
+
+  <% if local_assigns.fetch(:can_retry, true) %>
+    <%= form.submit(local_assigns[:overlap_warning] ? "Сохранить с наложением" : "Сохранить перенос", class: "task-card-primary") %>
+  <% else %>
+    <div class="task-conflict" role="alert">Этот блок уже недоступен. Вернись в календарь и открой свежий план.</div>
+  <% end %>
+<% end %>

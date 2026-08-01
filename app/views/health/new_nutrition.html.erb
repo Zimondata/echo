@@ -1,0 +1,44 @@
+<% content_for :title, "Добавить питание — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Здоровье → питание</p>
+      <h1 class="echo-title">Добавить питание</h1>
+      <p class="echo-subtitle">Ручная локальная запись. Никакого анализа и внешней отправки.</p>
+    </div>
+    <%= link_to "Назад к здоровью", health_path, class: "echo-button" %>
+  </header>
+
+  <section class="echo-surface echo-surface--accent">
+    <div class="echo-surface__header">
+      <h2 class="echo-section-heading">Что было записано</h2>
+      <p class="echo-section-copy">Макросы нужны текущей модели данных; неизвестное не подменяем догадкой.</p>
+    </div>
+    <div class="echo-surface__body">
+      <%= form_with model: @nutrition_entry, url: health_nutrition_path, class: "grid gap-4" do |form| %>
+        <% if @nutrition_entry.errors.any? %>
+          <div class="echo-warning"><%= @nutrition_entry.errors.full_messages.join(" · ") %></div>
+        <% end %>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="grid gap-2"><span class="echo-label">Приём пищи</span><%= form.select :meal_type, [["Завтрак", "breakfast"], ["Обед", "lunch"], ["Ужин", "dinner"], ["Перекус", "snack"]], {}, class: "echo-select" %></label>
+          <label class="grid gap-2"><span class="echo-label">Дата и время</span><%= form.datetime_local_field :recorded_at, value: @nutrition_entry.recorded_at&.in_time_zone(current_user.timezone)&.strftime("%Y-%m-%dT%H:%M"), class: "echo-input", required: true %></label>
+        </div>
+
+        <label class="grid gap-2"><span class="echo-label">Описание</span><%= form.text_field :meal_description, class: "echo-input", placeholder: "Например, омлет и кофе" %></label>
+        <label class="grid gap-2"><span class="echo-label">Продукты</span><%= form.text_field :food_items, class: "echo-input", placeholder: "Через запятую, необязательно" %></label>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="grid gap-2"><span class="echo-label">Ккал</span><%= form.number_field :calories, min: 0, step: 0.1, class: "echo-input", required: true %></label>
+          <label class="grid gap-2"><span class="echo-label">Белки, г</span><%= form.number_field :protein, min: 0, step: 0.1, class: "echo-input", required: true %></label>
+          <label class="grid gap-2"><span class="echo-label">Жиры, г</span><%= form.number_field :fat, min: 0, step: 0.1, class: "echo-input", required: true %></label>
+          <label class="grid gap-2"><span class="echo-label">Углеводы, г</span><%= form.number_field :carbs, min: 0, step: 0.1, class: "echo-input", required: true %></label>
+        </div>
+
+        <%= form.submit "Сохранить питание", class: "echo-button echo-button--primary" %>
+      <% end %>
+    </div>
+  </section>
+</div>

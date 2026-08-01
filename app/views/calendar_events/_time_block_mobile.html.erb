@@ -1,0 +1,7 @@
+<%= link_to edit_task_time_block_path(time_block.task, time_block),
+            class: "calendar-week-event calendar-time-block-mobile",
+            data: { time_block_id: time_block.id },
+            aria: { label: "Изменить задачу #{time_block.task.title}" } do %>
+  <div class="calendar-week-event-time"><%= time_block_time(time_block, current_user.timezone) %> · задача</div>
+  <div class="calendar-week-event-title"><%= time_block.task.title %></div>
+<% end %>

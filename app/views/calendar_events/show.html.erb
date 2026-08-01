@@ -1,0 +1,13 @@
+<% content_for :title, "Событие — Echo" %>
+<%= render "shared/unified_header" %>
+<div class="min-h-[calc(100vh-64px)] bg-[#0b0b10] px-4 py-10 text-zinc-100">
+  <div class="mx-auto max-w-2xl rounded-2xl bg-[#111116] p-7 shadow-[0_0_0_1px_rgba(255,255,255,.065),0_20px_50px_rgba(0,0,0,.22)]">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-violet-400"><%= calendar_event_time(@calendar_event, current_user.timezone) %></div>
+    <h1 class="text-3xl font-semibold tracking-tight"><%= @calendar_event.title %></h1>
+    <% if @calendar_event.description.present? %><p class="mt-4 leading-7 text-zinc-400"><%= @calendar_event.description %></p><% end %>
+    <div class="mt-7 flex gap-3">
+      <%= link_to "Редактировать", edit_calendar_event_path(@calendar_event), class: "rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white no-underline" %>
+      <%= link_to "К календарю", calendar_events_path(date: @calendar_event.start_time.in_time_zone(current_user.timezone).to_date.iso8601, view: "day"), class: "rounded-lg bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 no-underline" %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+<% content_for :title, "Агенты — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Objective · work · evidence</p>
+      <h1 class="echo-title">Ассистент и агенты</h1>
+      <p class="echo-subtitle">Что делается, где нужен ты и чем подтверждён результат — без театра активности.</p>
+    </div>
+  </header>
+
+  <div class="echo-grid">
+    <main class="echo-stack">
+      <section class="echo-surface">
+        <div class="echo-surface__header flex items-center justify-between gap-4"><div><p class="echo-label echo-label--accent">Live work</p><h2 class="echo-section-heading mt-1">В работе</h2></div><span class="echo-badge echo-badge--accent"><%= @active_runs.count %></span></div>
+        <div class="echo-surface__body grid gap-3">
+          <% @active_runs.each do |run| %>
+            <article class="echo-surface echo-surface--raised">
+              <div class="echo-surface__body">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div><span class="echo-badge echo-badge--accent"><%= run.status.humanize %> · <%= run.executor %></span><h3 class="mt-3 text-lg font-semibold tracking-[-.025em]" style="color:var(--ink)"><%= run.objective %></h3></div>
+                  <span class="text-xs" style="color:var(--ink-muted)">обновлено <%= time_ago_in_words(run.updated_at) %> назад</span>
+                </div>
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div class="rounded-xl p-3" style="background:var(--surface-inset)"><p class="echo-label">Definition of Done</p><p class="mt-2 text-sm leading-6" style="color:var(--ink-secondary)"><%= run.definition_of_done %></p></div>
+                  <div class="rounded-xl p-3" style="background:var(--surface-inset)"><p class="echo-label">Доказательства</p><p class="mt-2 text-sm leading-6" style="color:var(--ink-secondary)"><%= run.evidence_receipts.verified.count %> проверено · <%= run.evidence_receipts.count %> всего</p></div>
+                </div>
+                <% if run.error_message.present? %><p class="mt-3 rounded-xl p-3 text-sm" style="background:var(--danger-soft);color:var(--danger)"><%= run.error_message %></p><% end %>
+              </div>
+            </article>
+          <% end %>
+          <% if @active_runs.empty? %><div class="echo-empty">Активных запусков нет. Echo остаётся полезным и без подключённого ассистента.</div><% end %>
+        </div>
+      </section>
+
+      <section class="echo-surface">
+        <div class="echo-surface__header"><p class="echo-label">Receipts</p><h2 class="echo-section-heading mt-1">Недавние результаты</h2></div>
+        <div class="echo-surface__body grid gap-2">
+          <% @finished_runs.each do |run| %>
+            <article class="echo-row">
+              <span class="echo-row__marker <%= 'echo-row__marker--fixed' if run.status == 'failed' %>" aria-hidden="true"></span>
+              <div class="min-w-0 flex-1"><p class="echo-row__title"><%= run.objective %></p><p class="echo-row__meta"><%= run.finished_at ? l(run.finished_at, format: :short) : l(run.updated_at, format: :short) %> · <%= run.evidence_receipts.verified.count %> evidence</p></div>
+              <span class="echo-badge <%= run.status == 'succeeded' ? 'echo-badge--success' : run.status == 'failed' ? 'echo-badge--danger' : '' %>"><%= run.status.humanize %></span>
+            </article>
+          <% end %>
+          <% if @finished_runs.empty? %><p class="echo-section-copy">Истории запусков пока нет.</p><% end %>
+        </div>
+      </section>
+    </main>
+
+    <aside class="echo-sidebar">
+      <section class="echo-surface echo-surface--fixed">
+        <div class="echo-surface__header flex items-center justify-between gap-3"><h2 class="echo-section-heading">Нужно решение</h2><span class="echo-badge echo-badge--fixed"><%= @pending_approvals.count %></span></div>
+        <div class="echo-surface__body grid gap-2">
+          <% @pending_approvals.each do |approval| %>
+            <%= link_to inbox_path(anchor: "gary-control"), class: "echo-row no-underline" do %><span class="echo-row__marker echo-row__marker--fixed" aria-hidden="true"></span><div><p class="echo-row__title"><%= approval.agent_run.objective %></p><p class="echo-row__meta"><%= approval.risk_reason %></p></div><% end %>
+          <% end %>
+          <% if @pending_approvals.empty? %><p class="echo-section-copy">Ничего не ждёт разрешения.</p><% end %>
+        </div>
+      </section>
+
+      <section class="echo-surface">
+        <div class="echo-surface__body"><p class="echo-label">Граница контроля</p><p class="mt-3 text-sm leading-6" style="color:var(--ink-secondary)">Подготовка и исследование могут идти автономно. Публикация, сообщения людям и широкие внешние изменения требуют отдельного разрешения.</p></div>
+      </section>
+    </aside>
+  </div>
+</div>

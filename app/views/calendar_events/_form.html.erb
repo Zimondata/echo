@@ -1,0 +1,124 @@
+<style>
+  .calendar-form-page { min-height: calc(100vh - 64px); padding: 28px 18px 48px; background: #0b0b10; color: #f5f5f7; }
+  .calendar-form-shell { max-width: 900px; margin: 0 auto; }
+  .calendar-form-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 18px; color: #8a8a95; text-decoration: none; font-size: 12px; font-weight: 600; }
+  .calendar-form-back:hover { color: #fff; }
+  .calendar-form-card { overflow: hidden; border-radius: 18px; background: #111116; box-shadow: 0 0 0 1px rgba(255,255,255,.065), 0 20px 50px rgba(0,0,0,.22); }
+  .calendar-form-header { padding: 24px 26px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .calendar-form-kicker { color: #8b5cf6; font-size: 10px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+  .calendar-form-title { margin: 7px 0 0; font-size: 27px; font-weight: 650; letter-spacing: -.035em; }
+  .calendar-form-body { padding: 24px 26px 26px; }
+  .calendar-form-errors { margin-bottom: 18px; padding: 13px 15px; border-radius: 11px; color: #fecaca; background: rgba(239,68,68,.09); box-shadow: inset 0 0 0 1px rgba(239,68,68,.18); font-size: 12px; }
+  .calendar-form-errors ul { margin: 7px 0 0 18px; padding: 0; }
+  .calendar-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 17px; }
+  .calendar-form-field.full { grid-column: 1 / -1; }
+  .calendar-form-label { display: block; margin-bottom: 7px; color: #a2a2ac; font-size: 11px; font-weight: 650; }
+  .calendar-form-input, .calendar-form-select, .calendar-form-textarea { width: 100%; border: 0; border-radius: 10px; color: #ededf0; background: #191920; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); outline: none; font: inherit; font-size: 13px; transition: box-shadow .15s ease, background .15s ease; }
+  .calendar-form-input, .calendar-form-select { min-height: 44px; padding: 0 12px; }
+  .calendar-form-textarea { min-height: 112px; padding: 12px; resize: vertical; line-height: 1.5; }
+  .calendar-form-input:focus, .calendar-form-select:focus, .calendar-form-textarea:focus { background: #1d1d25; box-shadow: inset 0 0 0 1px #8b5cf6, 0 0 0 3px rgba(139,92,246,.1); }
+  .calendar-form-checks { display: flex; flex-wrap: wrap; gap: 10px; }
+  .calendar-form-check { display: inline-flex; min-height: 42px; align-items: center; gap: 9px; padding: 0 12px; border-radius: 10px; color: #b7b7c0; background: #191920; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); font-size: 12px; }
+  .calendar-form-check input { width: 16px; height: 16px; accent-color: #7c3aed; }
+  .calendar-form-help { margin-top: 6px; color: #62626d; font-size: 10px; line-height: 1.45; }
+  .calendar-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
+  .calendar-form-actions-main { display: flex; align-items: center; gap: 9px; }
+  .calendar-form-submit, .calendar-form-cancel, .calendar-form-delete { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; border: 0; border-radius: 10px; padding: 0 16px; text-decoration: none; cursor: pointer; font-size: 12px; font-weight: 650; }
+  .calendar-form-submit { color: #fff; background: #7c3aed; box-shadow: 0 7px 20px rgba(124,58,237,.22); }
+  .calendar-form-submit:hover { background: #8b5cf6; }
+  .calendar-form-cancel { color: #aaaab3; background: #1a1a21; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .calendar-form-delete { color: #fca5a5; background: transparent; }
+  .calendar-form-delete:hover { background: rgba(239,68,68,.08); }
+  @media (max-width: 640px) {
+    .calendar-form-page { padding: 16px 10px 28px; }
+    .calendar-form-card { border-radius: 14px; }
+    .calendar-form-header, .calendar-form-body { padding-left: 16px; padding-right: 16px; }
+    .calendar-form-grid { grid-template-columns: 1fr; }
+    .calendar-form-field.full { grid-column: auto; }
+    .calendar-form-title { font-size: 23px; }
+    .calendar-form-actions { align-items: stretch; flex-direction: column-reverse; }
+    .calendar-form-actions-main { display: grid; grid-template-columns: 1fr 1fr; }
+    .calendar-form-submit, .calendar-form-cancel { width: 100%; }
+  }
+</style>
+
+<div class="calendar-form-page">
+  <div class="calendar-form-shell">
+    <%= link_to "← Вернуться в календарь", calendar_events_path(date: (@calendar_event.start_time || Time.current).to_date.iso8601, view: "day"), class: "calendar-form-back" %>
+    <section class="calendar-form-card">
+      <header class="calendar-form-header">
+        <div class="calendar-form-kicker"><%= @calendar_event.persisted? ? "Редактирование" : "Новое событие" %></div>
+        <h1 class="calendar-form-title"><%= @calendar_event.persisted? ? @calendar_event.title : "Забронировать время" %></h1>
+      </header>
+
+      <%= form_with model: @calendar_event, class: "calendar-form-body" do |form| %>
+        <%= form.hidden_field :lock_version if @calendar_event.persisted? %>
+        <% if @calendar_event.errors.any? %>
+          <div class="calendar-form-errors" data-form-errors>
+            <strong>Проверь поля:</strong>
+            <ul><% @calendar_event.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul>
+          </div>
+        <% end %>
+
+        <div class="calendar-form-grid">
+          <div class="calendar-form-field full">
+            <%= form.label :title, "Название", class: "calendar-form-label" %>
+            <%= form.text_field :title, class: "calendar-form-input", placeholder: "Например, глубокая работа над Echo", autofocus: true, required: true %>
+          </div>
+
+          <div class="calendar-form-field">
+            <%= form.label :start_time, "Начало", class: "calendar-form-label" %>
+            <%= form.datetime_local_field :start_time, value: @calendar_event.start_time&.in_time_zone(current_user.timezone)&.strftime("%Y-%m-%dT%H:%M"), class: "calendar-form-input", required: true %>
+          </div>
+          <div class="calendar-form-field">
+            <%= form.label :end_time, "Окончание", class: "calendar-form-label" %>
+            <%= form.datetime_local_field :end_time, value: @calendar_event.end_time&.in_time_zone(current_user.timezone)&.strftime("%Y-%m-%dT%H:%M"), class: "calendar-form-input" %>
+          </div>
+
+          <div class="calendar-form-field">
+            <%= form.label :event_type, "Тип", class: "calendar-form-label" %>
+            <%= form.select :event_type, CalendarEvent::CATEGORIES.map { |value, info| [info[:label], value] }, {}, class: "calendar-form-select" %>
+          </div>
+          <div class="calendar-form-field">
+            <%= form.label :life_category, "Сфера", class: "calendar-form-label" %>
+            <%= form.select :life_category, CalendarEvent::LIFE_CATEGORIES.map { |value, info| [info[:label], value] }, {}, class: "calendar-form-select" %>
+          </div>
+
+          <div class="calendar-form-field">
+            <%= form.label :priority, "Приоритет", class: "calendar-form-label" %>
+            <%= form.select :priority, [["Низкий", "low"], ["Обычный", "medium"], ["Высокий", "high"], ["Срочный", "urgent"]], {}, class: "calendar-form-select" %>
+          </div>
+          <div class="calendar-form-field">
+            <%= form.label :reminder_minutes, "Напомнить", class: "calendar-form-label" %>
+            <%= form.select :reminder_minutes, [["Без напоминания", nil], ["За 10 минут", 10], ["За 30 минут", 30], ["За час", 60], ["За день", 1440]], {}, class: "calendar-form-select" %>
+          </div>
+
+          <div class="calendar-form-field full">
+            <%= form.label :description, "Заметка", class: "calendar-form-label" %>
+            <%= form.text_area :description, class: "calendar-form-textarea", placeholder: "Контекст, ссылка, ожидаемый результат…" %>
+          </div>
+
+          <div class="calendar-form-field full">
+            <div class="calendar-form-checks">
+              <label class="calendar-form-check"><%= form.check_box :all_day %><span>Весь день</span></label>
+              <label class="calendar-form-check"><%= form.check_box :done %><span>Выполнено</span></label>
+            </div>
+            <div class="calendar-form-help">Время отображается в часовом поясе <%= current_user.timezone %>.</div>
+          </div>
+        </div>
+
+        <div class="calendar-form-actions">
+          <div>
+            <% if @calendar_event.persisted? %>
+              <%= link_to "Удалить", calendar_event_path(@calendar_event), data: { turbo_method: :delete, turbo_confirm: "Удалить событие?" }, class: "calendar-form-delete" %>
+            <% end %>
+          </div>
+          <div class="calendar-form-actions-main">
+            <%= link_to "Отмена", calendar_events_path(date: (@calendar_event.start_time || Time.current).to_date.iso8601, view: "day"), class: "calendar-form-cancel" %>
+            <%= form.submit(@calendar_event.persisted? ? "Сохранить" : "Создать", class: "calendar-form-submit") %>
+          </div>
+        </div>
+      <% end %>
+    </section>
+  </div>
+</div>

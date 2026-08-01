@@ -11,6 +11,8 @@ class LandingController < ApplicationController
   end
 
   def showcase
+    return redirect_to dashboard_path if logged_in?
+
     render layout: 'landing_showcase', template: 'landing/showcase'
   end
 end

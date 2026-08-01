@@ -4,60 +4,32 @@ class DashboardController < ApplicationController
   
   def index
     @user = current_user
-    redirect_to login_path, alert: 'Пожалуйста, войдите в систему' unless @user
+    return redirect_to login_path, alert: "Пожалуйста, войдите в систему" unless @user
 
-    # Используем часовой пояс пользователя
-    user_tz = ActiveSupport::TimeZone.new(@user.timezone || 'UTC')
+    @zone = ActiveSupport::TimeZone[@user.timezone] || Time.zone
+    @selected_date = params[:date].present? ? Date.iso8601(params[:date]) : Time.current.in_time_zone(@zone).to_date
+    day_range = @zone.local(@selected_date.year, @selected_date.month, @selected_date.day).all_day
 
-    # Получаем выбранную дату или сегодня
-    @selected_date = params[:date] ? Date.parse(params[:date]) : Time.current.in_time_zone(user_tz).to_date
+    @today_events = @user.calendar_events.active.for_date_range(day_range.begin, day_range.end).order(:start_time)
+    @today_blocks = TimeBlock.active.joins(:task).merge(@user.tasks.active).where(starts_at: day_range).includes(:task).order(:starts_at)
+    @timeline_items = (@today_events.to_a + @today_blocks.to_a).sort_by { |item| timeline_start(item) }
+    @now_item = @user.tasks.active.where(status: %w[next scheduled]).order(Arel.sql("CASE WHEN due_on IS NULL THEN 1 ELSE 0 END"), :due_on, :created_at).first
+    @needs_me = @user.tasks.active.where(status: %w[inbox waiting]).order(:created_at).limit(2)
 
-    # Получаем "сегодня" и "завтра" в часовом поясе пользователя
-    today_in_tz = @selected_date
-    tomorrow_in_tz = today_in_tz + 1.day
-    
-    # Конвертируем в UTC для запроса к базе
-    # ВАЖНО: beginning_of_day уже возвращает время в нужном часовом поясе
-    # Нужно правильно конвертировать начало дня в TZ в UTC
-    today_start = user_tz.parse(today_in_tz.to_s).beginning_of_day.utc
-    today_end = user_tz.parse(today_in_tz.to_s).end_of_day.utc
-    tomorrow_start = user_tz.parse(tomorrow_in_tz.to_s).beginning_of_day.utc
-    tomorrow_end = user_tz.parse(tomorrow_in_tz.to_s).end_of_day.utc
-    
-    # События на сегодня
-    @today_events = @user.calendar_events.active
-                         .where('start_time >= ? AND start_time <= ?', today_start, today_end)
-                         .order(:start_time)
+    reference_time = @selected_date == Time.current.in_time_zone(@zone).to_date ? Time.current : day_range.begin
+    @next_timed_event = @today_events.reject(&:all_day?).find { |event| timeline_end(event) > reference_time }
 
-    # События на завтра
-    @tomorrow_events = @user.calendar_events.active
-                            .where('start_time >= ? AND start_time <= ?', tomorrow_start, tomorrow_end)
-                            .order(:start_time)
+    @nutrition_entries = @user.nutrition_entries.active.where(recorded_at: day_range)
+    @activity_entries = @user.activity_entries.active.where(activity_date: day_range)
+    @nutrition_calories = @nutrition_entries.sum(:calories) if @nutrition_entries.any?
+    @latest_activity = @activity_entries.order(activity_date: :desc).first
 
-    # Привычки (события без времени или с пометкой is_habit)
-    @habits = @user.calendar_events.active
-                   .where(is_habit: true)
-                   .where('DATE(start_time) = ?', today_in_tz)
-                   .order(:start_time)
-
-    # Задачи на весь день (all_day = true, но не привычки)
-    @all_day_tasks = @user.calendar_events.active
-                          .where(all_day: true, is_habit: false)
-                          .where('DATE(start_time) = ?', today_in_tz)
-                          .order(:start_time)
-
-    # Задачи с временем (для timeline)
-    @timed_tasks = @today_events.where(all_day: false, is_habit: false).order(:start_time)
-
-    # Последние записи
-    @recent_entries = @user.entries.order(created_at: :desc).limit(4)
-
-    # Питание за сегодня
-    @nutrition_totals = @user ? NutritionEntry.daily_totals(@user, today_in_tz) : { calories: 0, protein: 0, fat: 0, carbs: 0, meals_count: 0 }
-
-    # Планы на сегодня и выполненные
-    @today_tasks_count = @today_events.count
-    @completed_today_count = @today_events.where(done: true).count
+    @rhythms = @user.rhythms.active.ordered.includes(:rhythm_checkins)
+    @rhythm_today = @rhythms.to_h do |rhythm|
+      [ rhythm.id, rhythm.rhythm_checkins.find { |checkin| checkin.local_date == @selected_date } ]
+    end
+  rescue Date::Error
+    redirect_to dashboard_path, alert: "Некорректная дата"
   end
 
   def nutrition_stats
@@ -84,6 +56,16 @@ class DashboardController < ApplicationController
 
 
   private
+
+  def timeline_start(item)
+    item.is_a?(TimeBlock) ? item.starts_at : item.start_time
+  end
+
+  def timeline_end(item)
+    return item.ends_at if item.is_a?(TimeBlock)
+
+    item.end_time || item.start_time + 1.hour
+  end
 
   def generate_ai_insights
     # Анализ активности за последнюю неделю

@@ -1,0 +1,55 @@
+<% content_for :title, "Здоровье — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Только фактически записанное</p>
+      <h1 class="echo-title">Здоровье</h1>
+      <p class="echo-subtitle"><%= russian_date(@today) %> · <%= current_user.timezone %>. Неизвестное остаётся неизвестным.</p>
+    </div>
+    <div class="echo-actions">
+      <%= link_to "Добавить питание", new_health_nutrition_path, class: "echo-button echo-button--primary" %>
+      <%= link_to "Добавить активность", new_health_activity_path, class: "echo-button" %>
+    </div>
+  </header>
+
+  <div class="grid gap-5 md:grid-cols-2">
+    <section class="echo-surface">
+      <div class="echo-surface__header"><p class="echo-label">Питание сегодня</p><h2 class="echo-section-heading mt-1">Записанные приёмы пищи</h2></div>
+      <div class="echo-surface__body">
+        <% if @nutrition_totals %>
+          <div class="echo-metric"><%= @nutrition_totals[:calories].to_i %> ккал</div>
+          <p class="echo-section-copy">Белки <%= @nutrition_totals[:protein].to_f.round(1) %> г · Жиры <%= @nutrition_totals[:fat].to_f.round(1) %> г · Углеводы <%= @nutrition_totals[:carbs].to_f.round(1) %> г</p>
+          <div class="mt-4 grid gap-2">
+            <% @nutrition_entries.each do |entry| %>
+              <div class="echo-row"><span class="echo-row__marker"></span><div><p class="echo-row__title"><%= entry.meal_description.presence || entry.meal_type_display %></p><p class="echo-row__meta"><%= entry.calories.to_i %> ккал · <%= entry.recorded_at.in_time_zone(current_user.timezone).strftime("%H:%M") %></p></div></div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="echo-empty" data-health-empty>Нет данных</div>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="echo-surface">
+      <div class="echo-surface__header"><p class="echo-label">Активность сегодня</p><h2 class="echo-section-heading mt-1">Записанное движение</h2></div>
+      <div class="echo-surface__body">
+        <% if @activity_totals %>
+          <div class="echo-metric"><%= @activity_totals[:duration] %> мин</div>
+          <dl class="mt-4 grid grid-cols-2 gap-3">
+            <div class="echo-row"><div><dt class="echo-row__meta">Дистанция</dt><dd class="echo-row__title" data-activity-distance><%= @activity_totals[:distance] ? "#{@activity_totals[:distance].to_f.round(2)} км" : "Нет данных" %></dd></div></div>
+            <div class="echo-row"><div><dt class="echo-row__meta">Энергия</dt><dd class="echo-row__title" data-activity-calories><%= @activity_totals[:calories] ? "#{@activity_totals[:calories]} ккал" : "Нет данных" %></dd></div></div>
+          </dl>
+          <div class="mt-4 grid gap-2">
+            <% @activity_entries.each do |entry| %>
+              <div class="echo-row"><span class="echo-row__marker"></span><div><p class="echo-row__title"><%= entry.notes.presence || entry.activity_name %></p><p class="echo-row__meta"><%= entry.activity_name %> · <%= entry.duration_minutes %> мин · <%= entry.activity_date.in_time_zone(current_user.timezone).strftime("%H:%M") %></p></div></div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="echo-empty" data-health-empty>Нет данных</div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<%= render "calendar_events/task_lane_styles" %>
+
+<div class="task-fallback-page">
+  <div class="task-fallback-shell">
+    <%= link_to "← Вернуться в календарь", calendar_events_path(view: @calendar_view, date: @calendar_date), class: "task-fallback-back" %>
+    <%= turbo_frame_tag dom_id(@server_task) do %>
+      <%= render "tasks/task_card",
+                 task: @submitted_task,
+                 server_task: @server_task,
+                 schedule_input: @schedule_input,
+                 schedule_errors: @schedule_errors,
+                 schedule_conflict: @schedule_conflict,
+                 overlap_warning: @overlap_warning,
+                 overlap_signature: @overlap_signature,
+                 open_action: :schedule,
+                 disable_drag: true,
+                 calendar_view: @calendar_view,
+                 calendar_date: @calendar_date %>
+    <% end %>
+  </div>
+</div>

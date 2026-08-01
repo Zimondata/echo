@@ -4,7 +4,7 @@ Rails.application.routes.draw do
 
   # Activity Entries
   resources :activity_entries, only: [:index, :show, :new, :create, :edit, :update, :destroy]
-  # Root path - Landing page (showcase version)
+  # The landing action routes signed-in/local-owner traffic into the alpha Home.
   root "landing#showcase"
   get "old", to: "landing#index"
   get "video", to: "landing#video"
@@ -29,11 +29,23 @@ Rails.application.routes.draw do
 
   # Dashboard (protected)
   get "dashboard", to: "dashboard#index"
+  get "today", to: "dashboard#index", as: :today
+  get "inbox", to: "inbox#index"
+  patch "inbox/intent_proposals/:id/review", to: "inbox#review_proposal"
+  patch "inbox/approval_requests/:id/resolve", to: "inbox#resolve_approval"
+  get "agents", to: "agents#index"
+  get "reviews", to: "reviews#index"
+  resource :settings, only: %i[show update]
   get "dashboard/nutrition_stats", to: "dashboard#nutrition_stats"
+  get "health", to: "health#show", as: :health
+  get "health/nutrition/new", to: "health#new_nutrition", as: :new_health_nutrition
+  post "health/nutrition", to: "health#create_nutrition", as: :health_nutrition
+  get "health/activity/new", to: "health#new_activity", as: :new_health_activity
+  post "health/activity", to: "health#create_activity", as: :health_activity
 
 
   # Entries (Diary, Ideas, Plans)
-  resources :entries, only: [:index, :show, :update, :destroy] do
+  resources :entries, only: [:index, :show, :create, :update, :destroy] do
     collection do
       get :diary
       get :ideas
@@ -52,8 +64,27 @@ Rails.application.routes.draw do
   # Calendar Events
   resources :calendar_events, only: [:index, :show, :new, :create, :edit, :update, :destroy]
 
+  # Tasks waiting for a slot on the calendar
+  resources :tasks, only: [ :index, :create, :update ] do
+    member do
+      patch :complete
+      patch :drop
+    end
+    resources :time_blocks, only: %i[create edit update destroy] do
+      post :undo_reschedule, on: :member
+    end
+  end
+
+  # Rhythms are persisted depth inside Plan, not a permanent destination.
+  resources :rhythms, only: %i[index create update] do
+    member do
+      post :checkin
+      post :return_to_rhythm, path: :return, as: :return
+    end
+  end
+
   # Reminders
-  resources :reminders, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+  resources :reminders, only: [ :index, :create, :destroy ] do
     member do
       post :snooze
     end
@@ -100,15 +131,21 @@ Rails.application.routes.draw do
     get 'calendar/upcoming', to: 'calendar#upcoming'
     get 'calendar/stats', to: 'calendar#stats'
 
-    # Reminders API (manual send)
-    post 'reminders/:id/send_now', to: 'reminders#send_now'
-
     namespace :v1 do
       # Dashboard
       get 'dashboard/overview', to: 'dashboard#overview'
       get 'dashboard/inbox', to: 'dashboard#inbox'
       get 'dashboard/needs_attention', to: 'dashboard#needs_attention'
 
+      # Trusted capture ledger
+      resources :captures, only: [:index, :show, :create]
+      resources :agent_runs, only: [:index, :show, :create] do
+        member do
+          patch :transition
+        end
+        resources :evidence_receipts, only: :create
+      end
+      patch 'evidence_receipts/:id/verify', to: 'evidence_verifications#update'
       # Entries
       resources :entries, only: [:index, :show, :create, :update, :destroy] do
         member do

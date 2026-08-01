@@ -1,0 +1,14 @@
+<%= turbo_frame_tag dom_id(@server_task) do %>
+  <%= render "tasks/task_card",
+             task: @submitted_task,
+             server_task: @server_task,
+             conflict: @conflict,
+             drop_reason: @drop_reason,
+             schedule_input: @schedule_input,
+             schedule_errors: @schedule_errors,
+             schedule_conflict: @schedule_conflict,
+             overlap_warning: @overlap_warning,
+             open_action: @open_action,
+             calendar_view: @calendar_view,
+             calendar_date: @calendar_date %>
+<% end %>

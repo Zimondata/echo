@@ -1,0 +1,115 @@
+<style>
+  /* Manual Planner: shared by the calendar and the full-page validation fallback. */
+  .calendar-tasks { display: block; min-width: 0; }
+  .task-lane, .task-lane * { box-sizing: border-box; }
+  .task-lane { background: #111116; border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.065), 0 16px 40px rgba(0,0,0,.18); overflow: hidden; }
+  .task-lane-summary { display: flex; align-items: center; gap: 9px; padding: 16px 17px; color: #f2f2f4; font-size: 13px; font-weight: 650; cursor: pointer; list-style: none; }
+  .task-lane-summary::-webkit-details-marker { display: none; }
+  .task-lane-summary:focus-visible { outline: 2px solid #f5b544; outline-offset: -2px; }
+  .task-lane-heading { flex: 1; min-width: 0; }
+  .task-lane-count { color: #f5b544; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .task-lane-chevron { color: #6a6a75; font-size: 10px; transition: transform .15s ease; }
+  .task-lane[open] .task-lane-chevron { transform: rotate(180deg); }
+  .task-lane-body { padding: 0 17px 17px; }
+  .task-form { display: grid; gap: 7px; margin-bottom: 15px; }
+  .task-form-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; }
+  .task-optional-grid { display: grid; grid-template-columns: 88px minmax(0,1fr); gap: 6px; }
+  .task-form-hint { margin: 2px 0 0; color: #5f5f6a; font-size: 10px; line-height: 1.4; }
+  .task-form-errors, .task-form-notice { margin-bottom: 9px; padding: 9px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5; }
+  .task-form-errors { color: #ffb0b0; background: rgba(220,38,38,.12); box-shadow: inset 0 0 0 1px rgba(220,38,38,.28); }
+  .task-form-notice { color: #bff4ce; background: rgba(34,197,94,.12); box-shadow: inset 0 0 0 1px rgba(34,197,94,.25); }
+  .task-input { width: 100%; min-height: 38px; padding: 0 11px; border: 0; border-radius: 9px; color: #ededf0; background: #17171e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); font-family: inherit; font-size: 12px; }
+  .task-input::placeholder { color: #5c5c66; }
+  .task-input:focus-visible { outline: 2px solid #f5b544; outline-offset: 1px; }
+  .task-input-compact { min-height: 32px; font-size: 11px; }
+  .task-submit { min-height: 38px; padding: 0 14px; border: 0; border-radius: 9px; color: #1c1405; background: #f5b544; font-family: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+  .task-submit:hover { background: #ffc65f; }
+  .task-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+  .task-card-shell, .task-card-shell turbo-frame { display: block; min-width: 0; }
+  .task-card { display: grid; grid-template-columns: 3px minmax(0,1fr); gap: 10px; padding: 10px; border-radius: 10px; background: #17171e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.045); }
+  .task-card-heading { display: flex; min-width: 0; align-items: flex-start; gap: 8px; }
+  .task-card-heading .task-card-title { flex: 1; min-width: 0; }
+  .task-drag-handle { display: inline-flex; width: 28px; min-width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 7px; color: #9f91c7; background: rgba(124,58,237,.13); font-size: 13px; letter-spacing: -3px; cursor: grab; user-select: none; }
+  .task-drag-handle[hidden] { display: none; }
+  .task-drag-handle:active { cursor: grabbing; }
+  .task-drag-handle.is-dragging { opacity: .42; }
+  .task-drag-hint { margin: -5px 0 12px; color: #85858f; font-size: 10px; line-height: 1.45; }
+  .task-drag-hint strong { color: #d9ccff; font-weight: 650; }
+  .task-card-mark { border-radius: 99px; background: repeating-linear-gradient(to bottom, #f5b544 0 4px, transparent 4px 9px); }
+  .task-card-content { min-width: 0; }
+  .task-card-title { color: #e7e7eb; font-size: 12px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+  .task-card-next { margin-top: 4px; color: #92929c; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+  .task-card-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 5px; color: #757580; font-size: 10px; }
+  .task-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 9px; min-width: 0; }
+  .task-card-editor, .task-card-dropper, .task-card-scheduler { min-width: 0; }
+  .task-card-editor[open], .task-card-dropper[open], .task-card-scheduler[open] { flex: 1 0 100%; order: 5; }
+  .task-card-editor > summary::-webkit-details-marker, .task-card-dropper > summary::-webkit-details-marker, .task-card-scheduler > summary::-webkit-details-marker { display: none; }
+  .task-card-action { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; margin: 0; padding: 0 9px; border: 0; border-radius: 8px; color: #aaaab4; background: #202028; font: inherit; font-size: 10px; font-weight: 650; line-height: 1; text-decoration: none; cursor: pointer; list-style: none; }
+  .task-card-action:hover { color: #f1f1f4; background: #292932; }
+  .task-card-complete { color: #bff4ce; background: rgba(34,197,94,.12); }
+  .task-card-schedule { color: #d9ccff; background: rgba(124,58,237,.16); }
+  .task-card-drop { color: #d2b3b3; }
+  .task-edit-form, .task-drop-form, .task-schedule-form { display: grid; gap: 7px; margin-top: 8px; padding: 10px; border-radius: 9px; background: #111116; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .task-schedule-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; }
+  .task-schedule-grid label { display: grid; gap: 5px; }
+  .task-schedule-grid .task-schedule-lock { display: flex; min-height: 32px; align-items: center; gap: 7px; color: #aaaab4; font-size: 10px; }
+  .task-schedule-lock input { width: 16px; height: 16px; margin: 0; }
+  .task-schedule-zone { color: #70707b; font-size: 9px; }
+  .task-overlap-warning { padding: 8px 9px; border-radius: 8px; color: #ffe0a3; background: rgba(245,181,68,.1); box-shadow: inset 0 0 0 1px rgba(245,181,68,.24); font-size: 10px; line-height: 1.4; }
+  .task-edit-label { color: #83838e; font-size: 10px; }
+  .task-card-primary, .task-card-danger { min-height: 34px; border: 0; border-radius: 8px; font-family: inherit; font-size: 11px; font-weight: 650; cursor: pointer; }
+  .task-card-primary { color: #1c1405; background: #f5b544; }
+  .task-card-danger { color: #ffd6d6; background: rgba(220,38,38,.18); }
+  .task-card-errors, .task-conflict { display: grid; gap: 3px; margin-bottom: 9px; padding: 9px 10px; border-radius: 9px; font-size: 10px; line-height: 1.45; }
+  .task-card-errors { color: #ffb0b0; background: rgba(220,38,38,.12); box-shadow: inset 0 0 0 1px rgba(220,38,38,.28); }
+  .task-conflict { color: #ffe0a3; background: rgba(245,181,68,.1); box-shadow: inset 0 0 0 1px rgba(245,181,68,.24); }
+  .task-lane-empty { margin: 0; color: #777782; font-size: 12px; line-height: 1.5; }
+  .task-visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .task-fallback-page { min-height: calc(100vh - 65px); padding: 32px 20px; background: #09090d; }
+  .task-fallback-shell { width: min(420px, 100%); margin: 0 auto; }
+  .task-fallback-back { display: inline-flex; margin-bottom: 16px; color: #a78bfa; font-size: 13px; text-decoration: none; }
+  .task-fallback-back:hover { color: #c4b5fd; }
+
+  @media (max-width: 980px) {
+    .task-lane-summary { padding: 14px 15px; }
+    .task-lane-body { padding: 0 15px 15px; }
+  }
+
+  @media (max-width: 720px) {
+    .task-drag-hint, .task-drag-handle { display: none; }
+    .task-card-action, .task-card-primary, .task-card-danger { min-height: 44px; }
+    .task-card-action { padding-inline: 12px; }
+    .task-schedule-grid .task-schedule-lock { min-height: 44px; }
+  }
+  /* Native dark/light bridge for the Planner task lane. */
+  .task-lane { background: var(--surface); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
+  .task-lane-summary { color: var(--ink); }
+  .task-lane-summary:focus-visible, .task-input:focus-visible { outline-color: var(--focus); }
+  .task-lane-count { color: var(--fixed); }
+  .task-lane-chevron, .task-form-hint, .task-card-meta, .task-schedule-zone, .task-lane-empty { color: var(--ink-muted); }
+  .task-input { color: var(--ink); background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .task-input::placeholder { color: var(--ink-faint); }
+  .task-submit, .task-card-primary { color: var(--canvas); background: var(--fixed); }
+  .task-submit:hover { background: color-mix(in srgb, var(--fixed) 86%, white); }
+  .task-card { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--line); }
+  .task-drag-handle { color: var(--accent); background: var(--accent-soft); }
+  .task-drag-hint { color: var(--ink-muted); }
+  .task-drag-hint strong { color: var(--accent); }
+  .task-card-mark { background: repeating-linear-gradient(to bottom, var(--fixed) 0 4px, transparent 4px 9px); }
+  .task-card-title { color: var(--ink); }
+  .task-card-next, .task-edit-label { color: var(--ink-secondary); }
+  .task-card-action { color: var(--ink-secondary); background: var(--surface-inset); }
+  .task-card-action:hover { color: var(--ink); background: var(--surface-hover); }
+  .task-card-complete { color: var(--success); background: var(--success-soft); }
+  .task-card-schedule { color: var(--accent); background: var(--accent-soft); }
+  .task-card-drop { color: var(--danger); }
+  .task-edit-form, .task-drop-form, .task-schedule-form { background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
+  .task-schedule-grid .task-schedule-lock { color: var(--ink-secondary); }
+  .task-overlap-warning, .task-conflict { color: var(--fixed); background: var(--fixed-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fixed) 28%, var(--line)); }
+  .task-card-errors, .task-form-errors { color: var(--danger); background: var(--danger-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 28%, var(--line)); }
+  .task-form-notice { color: var(--success); background: var(--success-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 28%, var(--line)); }
+  .task-card-danger { color: var(--danger); background: var(--danger-soft); }
+  .task-fallback-page { background: var(--canvas); }
+  .task-fallback-back { color: var(--accent); }
+
+</style>

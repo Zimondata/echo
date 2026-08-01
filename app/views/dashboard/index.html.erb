@@ -1,1172 +1,141 @@
-<style>
-  /* === AURI DASHBOARD - Linear + Amie Style === */
-
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  /* === ANIMATED GRADIENT BACKGROUND === */
-  .animated-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    overflow: hidden;
-  }
-
-  .animated-bg::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background:
-      radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
-    animation: gradientMove 20s ease-in-out infinite;
-  }
-
-  @keyframes gradientMove {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    25% { transform: translate(2%, 2%) rotate(1deg); }
-    50% { transform: translate(-1%, 3%) rotate(-1deg); }
-    75% { transform: translate(3%, -2%) rotate(2deg); }
-  }
-
-  /* Glass Card Base */
-  .glass-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    backdrop-filter: blur(20px);
-    transition: all 0.2s ease;
-  }
-
-  .glass-card:hover {
-    border-color: var(--border-glow);
-    background: var(--bg-card-hover);
-  }
-
-  /* Glow Effects */
-  .glow-violet { box-shadow: 0 0 30px var(--violet-glow); }
-  .glow-amber { box-shadow: 0 0 30px var(--amber-glow); }
-  .glow-blue { box-shadow: 0 0 30px var(--blue-glow); }
-  .glow-green { box-shadow: 0 0 30px var(--green-glow); }
-
-  /* Gradient Text */
-  .gradient-text {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* === PROGRESS RING === */
-  .progress-ring {
-    transform: rotate(-90deg);
-  }
-
-  .progress-ring__circle {
-    transition: stroke-dashoffset 0.5s ease;
-    transform-origin: 50% 50%;
-  }
-
-  /* Task Item Styles */
-  .task-item {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 14px 16px;
-    transition: all 0.2s ease;
-    border-left: 3px solid var(--category-color, var(--violet-500));
-  }
-
-  .task-item:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: var(--border-glow);
-    transform: translateX(4px);
-  }
-
-  .task-item.completed {
-    opacity: 0.5;
-  }
-
-  .task-item.completed .task-text {
-    text-decoration: line-through;
-    color: var(--text-muted);
-  }
-
-  /* Custom Checkbox */
-  .custom-checkbox {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--text-muted);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .custom-checkbox:hover {
-    border-color: var(--violet-500);
-    background: var(--violet-glow);
-  }
-
-  .custom-checkbox.checked {
-    background: var(--green-500);
-    border-color: var(--green-500);
-  }
-
-  .custom-checkbox.checked svg {
-    opacity: 1;
-  }
-
-  /* Calendar Day */
-  .calendar-day {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-  }
-
-  .calendar-day:hover {
-    background: var(--violet-glow);
-    color: var(--text-primary);
-  }
-
-  .calendar-day.today {
-    background: linear-gradient(135deg, var(--violet-500), var(--violet-600));
-    color: white;
-    font-weight: 600;
-  }
-
-  .calendar-day.has-events::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--amber-500);
-  }
-
-  /* Quick Action Button */
-  .quick-action {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    width: 100%;
-  }
-
-  .quick-action:hover {
-    background: var(--violet-glow);
-    border-color: var(--border-glow);
-    color: var(--text-primary);
-  }
-
-  .quick-action:hover .action-icon {
-    color: var(--violet-500);
-  }
-
-  /* Stat Card */
-  .stat-card {
-    padding: 20px;
-    border-radius: 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--accent-color, var(--violet-500));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .stat-card:hover::before {
-    opacity: 1;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-glow);
-  }
-
-  /* Entry Card */
-  .entry-card {
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-subtle);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-
-  .entry-card:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: var(--border-glow);
-    transform: translateY(-2px);
-  }
-
-  /* Delete Button */
-  .delete-btn {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .task-item:hover .delete-btn {
-    opacity: 1;
-  }
-
-  /* Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  /* Nav Link */
-  .nav-link {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-  }
-
-  .nav-link:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .nav-link.active {
-    color: var(--text-primary);
-    background: var(--violet-glow);
-    box-shadow: 0 0 20px var(--violet-glow);
-  }
-
-  /* === FLOATING ACTION BUTTON === */
-  .fab {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--violet-500), var(--violet-600));
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    z-index: 100;
-  }
-
-  .fab:hover {
-    transform: scale(1.1);
-    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
-  }
-
-  .fab:active {
-    transform: scale(0.95);
-  }
-
-  .fab-menu {
-    position: fixed;
-    bottom: 100px;
-    right: 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.3s ease;
-    z-index: 99;
-  }
-
-  .fab-menu.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  .fab-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-
-  .fab-menu-item:hover {
-    background: var(--bg-card-hover);
-    border-color: var(--border-glow);
-    transform: translateX(-8px);
-  }
-
-  .fab-menu-item span {
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  /* === KEYBOARD HINT === */
-  .kbd {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-family: monospace;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    color: var(--text-muted);
-    margin-left: 8px;
-  }
-
-  /* Animations */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px var(--violet-glow); }
-    50% { box-shadow: 0 0 30px var(--violet-glow); }
-  }
-
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease forwards;
-  }
-
-  .animate-slide-in {
-    animation: slideIn 0.3s ease forwards;
-  }
-
-  .animate-bounce {
-    animation: bounce 2s ease-in-out infinite;
-  }
-
-  /* Empty state animations */
-  .empty-state-icon {
-    animation: bounce 3s ease-in-out infinite;
-  }
-</style>
-
-<!-- Animated Background -->
-<div class="animated-bg"></div>
-
-<%= render 'shared/unified_header' %>
-
-<div class="min-h-screen w-full relative">
-
-  <!-- === MAIN CONTENT === -->
-  <div class="w-full px-6 lg:px-8 py-8">
-
-    <!-- Stats Row -->
-    <%
-      total_tasks = @today_tasks_count || 0
-      completed_tasks = @completed_today_count || 0
-      progress_percent = total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round : 0
-      calories_goal = 2000
-      calories_current = @nutrition_totals&.dig(:calories)&.to_i || 0
-      calories_percent = [(calories_current.to_f / calories_goal * 100).round, 100].min
-    %>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
-
-      <!-- Stat 1: Tasks Today with Progress Ring -->
-      <div class="stat-card" style="--accent-color: var(--violet-500);">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-zinc-500 mb-1">Планов на сегодня</p>
-            <p id="totalEntriesCount" class="text-3xl font-bold text-white"><%= total_tasks %></p>
-          </div>
-          <div class="relative">
-            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
-              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
-              <circle class="progress-ring__circle text-violet-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
-                      stroke-dasharray="150.8"
-                      stroke-dashoffset="<%= 150.8 - (150.8 * progress_percent / 100) %>"
-                      stroke-linecap="round"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-xs font-bold text-violet-400"><%= progress_percent %>%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stat 2: Completed with Progress Ring -->
-      <div class="stat-card" style="--accent-color: var(--green-500);">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-zinc-500 mb-1">Выполнено</p>
-            <p id="completedTodayCount" class="text-3xl font-bold text-white"><%= completed_tasks %></p>
-            <p class="text-xs text-zinc-600 mt-1">из <%= total_tasks %> задач</p>
-          </div>
-          <div class="relative">
-            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
-              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
-              <circle class="progress-ring__circle text-green-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
-                      stroke-dasharray="150.8"
-                      stroke-dashoffset="<%= 150.8 - (150.8 * progress_percent / 100) %>"
-                      stroke-linecap="round"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stat 3: Macros with Mini Bars -->
-      <a href="/nutrition" class="stat-card block" style="--accent-color: var(--blue-500);">
-        <p class="text-sm text-zinc-500 mb-2">Б / Ж / У</p>
-        <div class="flex items-baseline gap-1 mb-3">
-          <span id="todayProtein" class="text-xl font-bold text-blue-400"><%= @nutrition_totals&.dig(:protein)&.round(0) || 0 %></span>
-          <span class="text-zinc-600">/</span>
-          <span id="todayFat" class="text-xl font-bold text-amber-400"><%= @nutrition_totals&.dig(:fat)&.round(0) || 0 %></span>
-          <span class="text-zinc-600">/</span>
-          <span id="todayCarbs" class="text-xl font-bold text-violet-400"><%= @nutrition_totals&.dig(:carbs)&.round(0) || 0 %></span>
-        </div>
-        <!-- Mini progress bars -->
-        <div class="flex gap-1">
-          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div class="h-full bg-blue-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:protein)&.to_f || 0) / 150 * 100, 100].min %>%"></div>
-          </div>
-          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div class="h-full bg-amber-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:fat)&.to_f || 0) / 65 * 100, 100].min %>%"></div>
-          </div>
-          <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div class="h-full bg-violet-500 rounded-full" style="width: <%= [(@nutrition_totals&.dig(:carbs)&.to_f || 0) / 250 * 100, 100].min %>%"></div>
-          </div>
-        </div>
-      </a>
-
-      <!-- Stat 4: Calories with Progress Ring -->
-      <a href="/nutrition" class="stat-card block" style="--accent-color: var(--amber-500);">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-zinc-500 mb-1">Калорий</p>
-            <p id="todayCaloriesCount" class="text-3xl font-bold text-white"><%= calories_current %></p>
-            <p class="text-xs text-zinc-600 mt-1">цель: <%= calories_goal %></p>
-          </div>
-          <div class="relative">
-            <svg class="progress-ring w-16 h-16" viewBox="0 0 60 60">
-              <circle class="text-white/10" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"/>
-              <circle class="progress-ring__circle text-amber-500" stroke="currentColor" stroke-width="6" fill="transparent" r="24" cx="30" cy="30"
-                      stroke-dasharray="150.8"
-                      stroke-dashoffset="<%= 150.8 - (150.8 * calories_percent / 100) %>"
-                      stroke-linecap="round"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-xs font-bold text-amber-400"><%= calories_percent %>%</span>
-            </div>
-          </div>
-        </div>
-      </a>
+<% content_for :title, "Сегодня — Echo" %>
+<%= render "shared/unified_header" %>
+<% russian_days = %w[воскресенье понедельник вторник среда четверг пятница суббота] %>
+<% russian_months = %w[января февраля марта апреля мая июня июля августа сентября октября ноября декабря] %>
+<% date_label = "#{russian_days[@selected_date.wday]}, #{@selected_date.strftime('%d')} #{russian_months[@selected_date.month - 1]}" %>
+
+<div class="echo-command" data-command-dashboard>
+  <% if flash[:notice] || flash[:task_notice] %>
+    <div class="echo-notice"><%= flash[:notice] || flash[:task_notice] %></div>
+  <% end %>
+
+  <header class="command-masthead">
+    <div>
+      <p class="command-overline">Сейчас</p>
+      <h1><%= date_label.capitalize %></h1>
     </div>
-
-    <!-- Main Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- === LEFT SIDEBAR === -->
-      <div class="lg:col-span-3 space-y-6">
-
-        <!-- Mini Calendar -->
-        <div class="glass-card p-5">
-          <div class="flex items-center gap-3 mb-5">
-            <div class="p-2 rounded-lg bg-violet-500/10">
-              <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <h3 class="font-semibold text-white">Календарь</h3>
-          </div>
-
-          <!-- Week Days -->
-          <div class="grid grid-cols-7 gap-1 mb-2">
-            <% %w[Пн Вт Ср Чт Пт Сб Вс].each do |day| %>
-              <div class="text-center text-xs text-zinc-600 font-medium py-1"><%= day %></div>
-            <% end %>
-          </div>
-
-          <!-- Calendar Days -->
-          <div class="grid grid-cols-7 gap-1">
-            <%
-              today = Date.current
-              start_date = today.beginning_of_week
-              (0..6).each do |i|
-                date = start_date + i.days
-                is_today = date == today
-                events_count = @user&.calendar_events&.where('DATE(start_time) = ?', date)&.count || 0
-            %>
-              <div class="calendar-day <%= 'today' if is_today %> <%= 'has-events' if events_count > 0 %>"
-                   onclick="loadDayEvents('<%= date.iso8601 %>')"
-                   data-date="<%= date.iso8601 %>">
-                <%= date.day %>
-              </div>
-            <% end %>
-          </div>
-        </div>
-
-        <!-- Add Task -->
-        <div class="glass-card p-5">
-          <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
-            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Добавить задачу
-            <span class="kbd">N</span>
-          </h3>
-
-          <div class="space-y-3">
-            <div class="flex gap-2">
-              <button id="todayBtn" onclick="setActiveSection('today')"
-                      class="flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all">
-                Сегодня
-              </button>
-              <button id="tomorrowBtn" onclick="setActiveSection('tomorrow')"
-                      class="flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all">
-                Завтра
-              </button>
-            </div>
-
-            <input type="text" id="newTaskInput" placeholder="Новая задача..."
-                   class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/5 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-violet-500/50 focus:bg-white/10 transition-all"
-                   onkeypress="if(event.key === 'Enter') addTask()">
-
-            <button onclick="addTask()"
-                    class="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 text-white text-sm font-medium hover:from-violet-500 hover:to-violet-400 transition-all flex items-center justify-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              Добавить
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="glass-card p-5">
-          <h3 class="font-semibold text-white mb-4">Быстрые действия</h3>
-
-          <div class="space-y-2">
-            <button onclick="quickAddReminder()" class="quick-action">
-              <div class="action-icon p-2 rounded-lg bg-amber-500/10">
-                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-              </div>
-              <span class="text-sm flex-1">Напоминание</span>
-              <span class="kbd">R</span>
-            </button>
-
-            <button onclick="quickAddIdea()" class="quick-action">
-              <div class="action-icon p-2 rounded-lg bg-green-500/10">
-                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                </svg>
-              </div>
-              <span class="text-sm flex-1">Новая идея</span>
-              <span class="kbd">I</span>
-            </button>
-
-            <button onclick="startVoiceNote()" class="quick-action">
-              <div class="action-icon p-2 rounded-lg bg-blue-500/10">
-                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-                </svg>
-              </div>
-              <span class="text-sm flex-1">Голосовая заметка</span>
-              <span class="kbd">V</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- === MAIN CONTENT === -->
-      <div class="lg:col-span-9 space-y-6">
-
-        <!-- Task Cards Grid -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-          <!-- TODAY -->
-          <div class="glass-card overflow-hidden glow-amber" style="animation: fadeIn 0.5s ease 0.1s forwards; opacity: 0;">
-            <div class="p-5 border-b border-white/5">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="p-2.5 rounded-xl bg-amber-500/20">
-                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
-                    </svg>
-                  </div>
-                  <h2 class="text-lg font-semibold text-white">Сегодня</h2>
-                </div>
-                <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-sm font-medium border border-amber-500/20">
-                  <%= @today_events&.count || 0 %>
-                </span>
-              </div>
-            </div>
-
-            <div class="p-4 max-h-[400px] overflow-y-auto custom-scrollbar" id="todayTasks">
-              <div class="space-y-2">
-                <% (@today_events || []).each do |event| %>
-                  <%
-                    category_key = event.life_category.presence || 'work'
-                    category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
-                  %>
-                  <div class="task-item <%= 'completed' if event.done? %>"
-                       data-event-id="<%= event.id %>"
-                       style="--category-color: <%= category_info[:color] %>">
-                    <div class="flex items-center gap-3">
-                      <div class="custom-checkbox <%= 'checked' if event.done? %>" onclick="toggleTask(<%= event.id %>)">
-                        <svg class="w-3 h-3 text-white <%= event.done? ? 'opacity-100' : 'opacity-0' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                      </div>
-
-                      <div class="p-1.5 rounded-lg" style="background: <%= category_info[:color] %>20;">
-                        <svg class="w-4 h-4" style="color: <%= category_info[:color] %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                          <% case category_info[:icon] %>
-                          <% when 'briefcase' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                          <% when 'heart' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                          <% when 'home' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                          <% when 'lightbulb' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                          <% when 'rocket' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                          <% else %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                          <% end %>
-                        </svg>
-                      </div>
-
-                      <div class="flex-1 min-w-0">
-                        <p class="task-text text-sm text-zinc-200 truncate">
-                          <%= event.title %>
-                        </p>
-                      </div>
-
-                      <% if event.start_time && !event.all_day? %>
-                        <span class="text-xs text-zinc-500 flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          <%= event.time_display(@user.timezone) %>
-                        </span>
-                      <% end %>
-
-                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
-                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                <% end %>
-
-                <% if @today_events.nil? || @today_events.empty? %>
-                  <div class="text-center py-12">
-                    <div class="empty-state-icon mb-4 flex justify-center">
-                      <% greetings = ["Свободный день!", "Чистый лист!", "Время творить!"] %>
-                      <svg class="w-16 h-16 text-amber-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                      </svg>
-                    </div>
-                    <p class="text-white font-medium mb-1"><%= greetings.sample %></p>
-                    <p class="text-zinc-500 text-sm">Нажми <span class="kbd">N</span> чтобы добавить задачу</p>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-
-          <!-- TOMORROW -->
-          <div class="glass-card overflow-hidden glow-blue" style="animation: fadeIn 0.5s ease 0.2s forwards; opacity: 0;">
-            <div class="p-5 border-b border-white/5">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="p-2.5 rounded-xl bg-blue-500/20">
-                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                  </div>
-                  <h2 class="text-lg font-semibold text-white">Завтра</h2>
-                </div>
-                <span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20">
-                  <%= @tomorrow_events&.count || 0 %>
-                </span>
-              </div>
-            </div>
-
-            <div class="p-4 max-h-[400px] overflow-y-auto custom-scrollbar" id="tomorrowTasks">
-              <div class="space-y-2">
-                <% (@tomorrow_events || []).each do |event| %>
-                  <%
-                    category_key = event.life_category.presence || 'work'
-                    category_info = CalendarEvent::LIFE_CATEGORIES[category_key] || CalendarEvent::LIFE_CATEGORIES['work']
-                  %>
-                  <div class="task-item <%= 'completed' if event.done? %>"
-                       data-event-id="<%= event.id %>"
-                       style="--category-color: <%= category_info[:color] %>">
-                    <div class="flex items-center gap-3">
-                      <div class="custom-checkbox <%= 'checked' if event.done? %>" onclick="toggleTask(<%= event.id %>)">
-                        <svg class="w-3 h-3 text-white <%= event.done? ? 'opacity-100' : 'opacity-0' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                      </div>
-
-                      <div class="p-1.5 rounded-lg" style="background: <%= category_info[:color] %>20;">
-                        <svg class="w-4 h-4" style="color: <%= category_info[:color] %>;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                          <% case category_info[:icon] %>
-                          <% when 'briefcase' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                          <% when 'heart' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                          <% when 'home' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                          <% when 'lightbulb' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                          <% when 'rocket' %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                          <% else %>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                          <% end %>
-                        </svg>
-                      </div>
-
-                      <div class="flex-1 min-w-0">
-                        <p class="task-text text-sm text-zinc-200 truncate">
-                          <%= event.title %>
-                        </p>
-                      </div>
-
-                      <% if event.start_time && !event.all_day? %>
-                        <span class="text-xs text-zinc-500 flex items-center gap-1">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          <%= event.time_display(@user.timezone) %>
-                        </span>
-                      <% end %>
-
-                      <button onclick="deleteTask(<%= event.id %>)" class="delete-btn p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
-                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                <% end %>
-
-                <% if @tomorrow_events.nil? || @tomorrow_events.empty? %>
-                  <div class="text-center py-12">
-                    <div class="empty-state-icon mb-4 flex justify-center">
-                      <svg class="w-16 h-16 text-blue-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                      </svg>
-                    </div>
-                    <p class="text-white font-medium mb-1">Завтра пока свободно</p>
-                    <p class="text-zinc-500 text-sm">Спланируй завтрашний день заранее</p>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Entries -->
-        <div class="glass-card p-5" style="animation: fadeIn 0.5s ease 0.3s forwards; opacity: 0;">
-          <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Последние записи
-          </h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <% (@recent_entries || []).first(4).each do |entry| %>
-              <%
-                type_colors = {
-                  'diary' => { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-                  'idea' => { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
-                  'plan' => { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20' }
-                }
-                colors = type_colors[entry.entry_type] || { bg: 'bg-zinc-500/10', text: 'text-zinc-400', border: 'border-zinc-500/20' }
-              %>
-              <div class="entry-card">
-                <div class="flex items-start gap-3">
-                  <div class="p-2 rounded-lg <%= colors[:bg] %>">
-                    <% if entry.entry_type == 'idea' %>
-                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                      </svg>
-                    <% elsif entry.entry_type == 'diary' %>
-                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                      </svg>
-                    <% else %>
-                      <svg class="w-4 h-4 <%= colors[:text] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                      </svg>
-                    <% end %>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm text-zinc-200 line-clamp-2 mb-1">
-                      <%= entry.content.truncate(60) %>
-                    </p>
-                    <p class="text-xs text-zinc-600">
-                      <%= time_ago_in_words(entry.created_at) %> назад
-                    </p>
-                  </div>
-                </div>
-              </div>
-            <% end %>
-
-            <% if @recent_entries.nil? || @recent_entries.empty? %>
-              <div class="col-span-2 text-center py-8">
-                <div class="mb-3 flex justify-center">
-                  <svg class="w-12 h-12 text-zinc-400/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                  </svg>
-                </div>
-                <p class="text-zinc-400 text-sm">Отправь сообщение в Telegram бот</p>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      </div>
+    <div class="command-masthead__meta">
+      <span><%= @user.timezone %></span>
+      <span class="command-meta-dot" aria-hidden="true"></span>
+      <%= link_to "Неделя", calendar_events_path(view: "week", date: @selected_date), class: "command-text-link" %>
     </div>
-  </div>
+  </header>
+
+  <section class="command-stage">
+    <article class="command-focus" data-command-focus data-now-item>
+      <div class="command-focus__glow" aria-hidden="true"></div>
+      <div class="command-focus__topline">
+        <span class="command-signal"><i></i> Следующий ход</span>
+        <span class="command-counter"><%= @today_events.size + @today_blocks.size %> в линии дня</span>
+      </div>
+
+      <div class="command-focus__content">
+        <% if @now_item %>
+          <h2><%= @now_item.title %></h2>
+          <p><%= @now_item.next_action.presence || "Выбери первый физический шаг" %></p>
+        <% else %>
+          <h2>Выбери одно действие</h2>
+          <p>Не заполняй день. Определи один ход, который сдвинет его вперёд.</p>
+        <% end %>
+      </div>
+
+      <div class="command-focus__actions">
+        <%= link_to calendar_events_path(view: "week", anchor: "task-lane"), class: "command-primary-action", data: { primary_action: true } do %>
+          <span>Открыть План</span>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
+        <% end %>
+        <span class="command-hint">Один следующий шаг. Не весь проект.</span>
+      </div>
+    </article>
+
+    <aside class="command-rail">
+      <section class="command-rail__section command-rail__section--fixed" data-next-timed-event>
+        <div class="command-rail__heading"><span>Ближайшее по времени</span><i aria-hidden="true"></i></div>
+        <% if @next_timed_event %>
+          <time><%= @next_timed_event.start_time.in_time_zone(@zone).strftime("%H:%M") %></time>
+          <h3><%= @next_timed_event.title %></h3>
+          <p>Фиксированное событие</p>
+        <% else %>
+          <strong>Свободное окно</strong>
+          <p>До следующего жёсткого события пространство свободно.</p>
+        <% end %>
+      </section>
+
+      <section class="command-rail__section">
+        <div class="command-rail__heading"><span>Требует решения</span><b><%= @needs_me.size %></b></div>
+        <div class="command-decisions">
+          <% @needs_me.each do |task| %>
+            <%= link_to calendar_events_path(view: "week", anchor: "task-lane"), class: "command-decision", data: { needs_me_item: true } do %>
+              <i aria-hidden="true"></i>
+              <span><strong><%= task.title %></strong><small><%= task.status == "waiting" ? "ожидает решения" : "нужен следующий шаг" %></small></span>
+            <% end %>
+          <% end %>
+          <% if @needs_me.empty? %><p class="command-quiet">Ничего не висит на твоём решении.</p><% end %>
+        </div>
+      </section>
+    </aside>
+  </section>
+
+  <section class="command-dayline" data-command-dayline>
+    <header>
+      <div><span class="command-section-index">01</span><h2>Линия дня</h2></div>
+      <%= link_to "Править день", calendar_events_path(view: "day", date: @selected_date), class: "command-text-link" %>
+    </header>
+
+    <% if @timeline_items.any? %>
+      <div class="command-timeline">
+        <% @timeline_items.each do |item| %>
+          <% starts = item.is_a?(TimeBlock) ? item.starts_at : item.start_time %>
+          <article class="command-timeline__item" data-timeline-kind="<%= item.is_a?(TimeBlock) ? 'time-block' : 'calendar-event' %>">
+            <time><%= starts.in_time_zone(@zone).strftime("%H:%M") %></time>
+            <span class="command-timeline__node <%= 'command-timeline__node--fixed' unless item.is_a?(TimeBlock) %>" aria-hidden="true"></span>
+            <h3><%= item.is_a?(TimeBlock) ? item.task.title : item.title %></h3>
+            <p><%= item.is_a?(TimeBlock) ? "гибкий блок" : "фиксировано" %></p>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="command-empty-line">
+        <div class="command-empty-line__track" aria-hidden="true"><span></span></div>
+        <p><strong>День пока открыт.</strong> Добавь только то, чему действительно нужно место.</p>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="command-glance">
+    <header><span class="command-section-index">02</span><h2>Фон, не центр</h2><p>Состояние без лишнего шума</p></header>
+
+    <div class="command-glance__grid">
+      <article class="command-glance__item" data-health-pulse>
+        <div class="command-glance__icon command-glance__icon--health" aria-hidden="true">+</div>
+        <div>
+          <span>Здоровье</span>
+          <% if @nutrition_calories.nil? && @latest_activity.nil? %>
+            <strong>Нет данных</strong>
+            <small>Можно оставить как есть</small>
+          <% else %>
+            <strong><%= @nutrition_calories ? "#{@nutrition_calories.to_i} ккал" : "Есть активность" %></strong>
+            <small><%= @latest_activity ? "#{@latest_activity.activity_name}, #{@latest_activity.duration_minutes} мин" : "Питание записано" %></small>
+          <% end %>
+        </div>
+        <%= link_to "Открыть", health_path, class: "command-text-link" %>
+      </article>
+
+      <article class="command-glance__item" data-rhythm-home>
+        <div class="command-glance__icon" aria-hidden="true">↺</div>
+        <div>
+          <span>Ритмы</span>
+          <% if @rhythms.any? %>
+            <% rhythm = @rhythms.first %><% checkin = @rhythm_today[rhythm.id] %>
+            <strong><%= rhythm.name %></strong>
+            <small><%= checkin ? "Сегодня: #{rhythm_state_label(checkin.state)}" : "Ещё не отмечен" %></small>
+          <% else %>
+            <strong>Чистый лист</strong>
+            <small>Ритмов пока нет</small>
+          <% end %>
+        </div>
+        <%= link_to "Открыть", rhythms_path, class: "command-text-link" %>
+      </article>
+    </div>
+  </section>
 </div>
-
-<!-- === FLOATING ACTION BUTTON === -->
-<button class="fab" id="fabBtn" onclick="toggleFabMenu()">
-  <svg class="w-7 h-7 text-white transition-transform" id="fabIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-  </svg>
-</button>
-
-<div class="fab-menu" id="fabMenu">
-  <div class="fab-menu-item" onclick="quickAddTask()">
-    <div class="p-2 rounded-lg bg-violet-500/20">
-      <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-      </svg>
-    </div>
-    <span>Новая задача</span>
-    <span class="kbd">N</span>
-  </div>
-  <div class="fab-menu-item" onclick="quickAddIdea()">
-    <div class="p-2 rounded-lg bg-green-500/20">
-      <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-      </svg>
-    </div>
-    <span>Идея</span>
-    <span class="kbd">I</span>
-  </div>
-  <div class="fab-menu-item" onclick="quickAddReminder()">
-    <div class="p-2 rounded-lg bg-amber-500/20">
-      <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-      </svg>
-    </div>
-    <span>Напоминание</span>
-    <span class="kbd">R</span>
-  </div>
-</div>
-
-<script>
-let activeSection = 'today';
-let fabOpen = false;
-
-// === KEYBOARD SHORTCUTS ===
-document.addEventListener('keydown', (e) => {
-  // Ignore if typing in input
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-  switch(e.key.toLowerCase()) {
-    case 'n':
-      e.preventDefault();
-      quickAddTask();
-      break;
-    case 'i':
-      e.preventDefault();
-      quickAddIdea();
-      break;
-    case 'r':
-      e.preventDefault();
-      quickAddReminder();
-      break;
-    case 'v':
-      e.preventDefault();
-      startVoiceNote();
-      break;
-    case '/':
-      e.preventDefault();
-      document.getElementById('newTaskInput').focus();
-      break;
-    case 'escape':
-      closeFabMenu();
-      break;
-  }
-});
-
-// === FAB MENU ===
-function toggleFabMenu() {
-  fabOpen = !fabOpen;
-  const menu = document.getElementById('fabMenu');
-  const icon = document.getElementById('fabIcon');
-
-  if (fabOpen) {
-    menu.classList.add('open');
-    icon.style.transform = 'rotate(45deg)';
-  } else {
-    menu.classList.remove('open');
-    icon.style.transform = 'rotate(0deg)';
-  }
-}
-
-function closeFabMenu() {
-  fabOpen = false;
-  document.getElementById('fabMenu').classList.remove('open');
-  document.getElementById('fabIcon').style.transform = 'rotate(0deg)';
-}
-
-function quickAddTask() {
-  closeFabMenu();
-  document.getElementById('newTaskInput').focus();
-}
-
-function setActiveSection(section) {
-  activeSection = section;
-  const todayBtn = document.getElementById('todayBtn');
-  const tomorrowBtn = document.getElementById('tomorrowBtn');
-
-  if (section === 'today') {
-    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all';
-    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all';
-  } else {
-    tomorrowBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-violet-500/20 text-violet-300 text-sm font-medium border border-violet-500/30 transition-all';
-    todayBtn.className = 'flex-1 px-3 py-2 rounded-lg bg-white/5 text-zinc-400 text-sm font-medium border border-white/5 hover:bg-white/10 transition-all';
-  }
-}
-
-function toggleTask(eventId) {
-  const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
-  const checkbox = taskElement.querySelector('.custom-checkbox');
-
-  fetch(`/api/v1/calendar_events/${eventId}/toggle`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.data.completed) {
-      taskElement.classList.add('completed');
-      checkbox.classList.add('checked');
-      checkbox.querySelector('svg').classList.remove('opacity-0');
-      checkbox.querySelector('svg').classList.add('opacity-100');
-    } else {
-      taskElement.classList.remove('completed');
-      checkbox.classList.remove('checked');
-      checkbox.querySelector('svg').classList.add('opacity-0');
-      checkbox.querySelector('svg').classList.remove('opacity-100');
-    }
-    updateCounters();
-  });
-}
-
-function deleteTask(eventId) {
-  if (!confirm('Удалить задачу?')) return;
-
-  fetch(`/api/v1/calendar_events/${eventId}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    }
-  })
-  .then(() => {
-    const taskElement = document.querySelector(`[data-event-id="${eventId}"]`);
-    taskElement.style.transform = 'translateX(-100%)';
-    taskElement.style.opacity = '0';
-    setTimeout(() => {
-      taskElement.remove();
-      updateCounters();
-    }, 200);
-  });
-}
-
-function addTask() {
-  const input = document.getElementById('newTaskInput');
-  const taskText = input.value.trim();
-
-  if (!taskText) return;
-
-  let targetDate = new Date();
-  if (activeSection === 'tomorrow') {
-    targetDate.setDate(targetDate.getDate() + 1);
-  }
-  targetDate.setHours(9, 0, 0, 0);
-
-  fetch('/api/v1/calendar_events', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    },
-    body: JSON.stringify({
-      title: taskText,
-      start_time: targetDate.toISOString(),
-      all_day: true
-    })
-  })
-  .then(() => location.reload());
-
-  input.value = '';
-}
-
-function loadDayEvents(date) {
-  document.querySelectorAll('.calendar-day').forEach(day => {
-    day.classList.remove('today');
-  });
-  event.currentTarget.classList.add('today');
-}
-
-function updateCounters() {
-  const todayCompleted = document.querySelectorAll('#todayTasks .task-item.completed').length;
-  const todayTotal = document.querySelectorAll('#todayTasks .task-item').length;
-
-  document.getElementById('completedTodayCount').textContent = todayCompleted;
-  document.getElementById('totalEntriesCount').textContent = todayTotal;
-}
-
-function quickAddReminder() {
-  closeFabMenu();
-  const reminder = prompt('О чём напомнить?');
-  if (!reminder) return;
-
-  let remindTime = new Date();
-  remindTime.setTime(remindTime.getTime() + 60 * 60 * 1000);
-
-  fetch('/api/v1/reminders', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    },
-    body: JSON.stringify({
-      message: reminder,
-      remind_at: remindTime.toISOString()
-    })
-  })
-  .then(() => {
-    alert('Напоминание создано!');
-    location.reload();
-  });
-}
-
-function quickAddIdea() {
-  closeFabMenu();
-  const idea = prompt('Опишите идею:');
-  if (!idea) return;
-
-  fetch('/api/v1/entries', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-    },
-    body: JSON.stringify({
-      content: idea,
-      entry_type: 'idea'
-    })
-  })
-  .then(() => {
-    alert('Идея сохранена!');
-    location.reload();
-  });
-}
-
-function startVoiceNote() {
-  closeFabMenu();
-  alert('Функция будет доступна в следующей версии');
-}
-
-// Close FAB menu when clicking outside
-document.addEventListener('click', (e) => {
-  if (fabOpen && !e.target.closest('.fab') && !e.target.closest('.fab-menu')) {
-    closeFabMenu();
-  }
-});
-</script>

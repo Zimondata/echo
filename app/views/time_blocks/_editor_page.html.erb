@@ -1,0 +1,21 @@
+<%= render "calendar_events/task_lane_styles" %>
+<div class="task-fallback-page">
+  <div class="task-fallback-shell">
+    <%= link_to "← Назад в календарь", calendar_events_path(view: "day", date: schedule_input[:local_date]), class: "task-fallback-back" %>
+    <section class="task-lane" data-time-block-editor>
+      <div class="task-lane-body" style="padding-top: 17px;">
+        <div class="task-card-title"><%= task.title %></div>
+        <div class="task-card-next">Перенеси существующий блок без возврата задачи в очередь.</div>
+        <%= render "time_blocks/form",
+                   task: task,
+                   time_block: time_block,
+                   schedule_input: schedule_input,
+                   schedule_errors: local_assigns[:schedule_errors],
+                   schedule_conflict: local_assigns[:schedule_conflict],
+                   overlap_warning: local_assigns[:overlap_warning],
+                   overlap_signature: local_assigns[:overlap_signature],
+                   can_retry: local_assigns.fetch(:can_retry, true) %>
+      </div>
+    </section>
+  </div>
+</div>

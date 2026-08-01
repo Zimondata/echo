@@ -1,0 +1,247 @@
+<% content_for :title, "Входящие - Echo" %>
+
+<style>
+  :root {
+    --inbox-bg: #0b0d12;
+    --inbox-panel: #12151d;
+    --inbox-panel-soft: #171b25;
+    --inbox-border: rgba(255,255,255,.09);
+    --inbox-muted: #8f96a8;
+    --inbox-text: #f4f5f7;
+    --inbox-accent: #8b7cf6;
+    --inbox-green: #46c790;
+    --inbox-amber: #f0b35a;
+    --inbox-red: #f07178;
+  }
+  body { background: var(--inbox-bg); color: var(--inbox-text); }
+  .inbox-shell { max-width: 1380px; margin: 0 auto; padding: 32px 28px 80px; }
+  .inbox-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin: 18px 0 26px; }
+  .inbox-kicker { color:var(--inbox-accent); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+  .inbox-head h1 { margin:5px 0 6px; font-size:34px; line-height:1.05; letter-spacing:-.04em; }
+  .inbox-head p { margin:0; color:var(--inbox-muted); }
+  .summary-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .summary-pill { border:1px solid var(--inbox-border); background:var(--inbox-panel); border-radius:999px; padding:8px 12px; color:var(--inbox-muted); font-size:13px; white-space:nowrap; }
+  .summary-pill strong { color:var(--inbox-text); margin-right:5px; }
+  .inbox-grid { display:grid; grid-template-columns:minmax(0, 1.75fr) minmax(300px, .75fr); gap:22px; align-items:start; }
+  .section-label { display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; color:var(--inbox-muted); font-size:13px; }
+  .section-label strong { color:var(--inbox-text); font-size:15px; }
+  .capture-list, .side-stack { display:grid; gap:14px; }
+  .capture-card, .side-card { background:linear-gradient(180deg, rgba(255,255,255,.025), transparent), var(--inbox-panel); border:1px solid var(--inbox-border); border-radius:18px; overflow:hidden; }
+  .capture-meta { display:flex; justify-content:space-between; gap:16px; padding:16px 18px 12px; color:var(--inbox-muted); font-size:12px; }
+  .source-badge { display:inline-flex; align-items:center; gap:7px; color:#c9c5ff; font-weight:600; }
+  .source-dot { width:7px; height:7px; border-radius:50%; background:var(--inbox-accent); box-shadow:0 0 0 4px rgba(139,124,246,.12); }
+  .transcript { margin:0 18px 16px; padding:14px 16px; border-radius:13px; background:#0e1118; border:1px solid rgba(255,255,255,.06); color:#dfe2ea; line-height:1.55; }
+  .transcript-label { display:block; margin-bottom:6px; color:var(--inbox-muted); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .proposal-list { border-top:1px solid var(--inbox-border); }
+  .proposal { padding:15px 18px; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:13px; align-items:center; border-bottom:1px solid rgba(255,255,255,.06); transition:.18s ease; }
+  .proposal:last-child { border-bottom:0; }
+  .proposal.is-reviewed { opacity:.62; }
+  .owner { min-width:55px; text-align:center; padding:6px 8px; border-radius:9px; font-size:11px; font-weight:800; letter-spacing:.03em; }
+  .owner-user { color:#b9d7ff; background:rgba(80,145,220,.14); }
+  .owner-gary { color:#cfc7ff; background:rgba(139,124,246,.16); }
+  .owner-external { color:#ffe0ac; background:rgba(240,179,90,.14); }
+  .owner-system { color:#b8f0d6; background:rgba(70,199,144,.13); }
+  .proposal-title { font-weight:650; line-height:1.35; }
+  .proposal-facts { display:flex; gap:8px; flex-wrap:wrap; margin-top:5px; color:var(--inbox-muted); font-size:11px; }
+  .fact { padding:3px 7px; border-radius:7px; background:rgba(255,255,255,.045); }
+  .risk-confirm { color:#ffd18d; }
+  .review-actions { display:flex; gap:7px; }
+  .review-button { appearance:none; border:1px solid var(--inbox-border); background:transparent; color:var(--inbox-muted); border-radius:9px; padding:8px 10px; font-size:12px; cursor:pointer; transition:.15s ease; }
+  .review-button:hover { color:white; border-color:rgba(255,255,255,.22); }
+  .review-button.accept { background:rgba(70,199,144,.12); color:#9ee6c4; border-color:rgba(70,199,144,.25); }
+  .review-button.reject:hover { color:#ffabb0; border-color:rgba(240,113,120,.35); }
+  .review-button:disabled { cursor:default; opacity:.5; }
+  .empty-state { padding:36px 24px; text-align:center; color:var(--inbox-muted); }
+  .side-card { padding:17px; }
+  .side-card h2 { margin:0 0 4px; font-size:14px; }
+  .side-card p { margin:0; color:var(--inbox-muted); font-size:12px; line-height:1.5; }
+  .run { margin-top:14px; padding:12px; background:var(--inbox-panel-soft); border-radius:12px; border:1px solid rgba(255,255,255,.06); }
+  .run-top { display:flex; justify-content:space-between; gap:10px; align-items:center; }
+  .run-status { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#c7c2ff; }
+  .approval { border-color:rgba(240,179,90,.25); }
+  .approval-actions { display:flex; gap:8px; margin-top:12px; }
+  .toast { position:fixed; right:24px; bottom:24px; background:#202431; color:white; border:1px solid var(--inbox-border); border-radius:12px; padding:12px 15px; opacity:0; transform:translateY(10px); pointer-events:none; transition:.2s; z-index:50; }
+  .toast.visible { opacity:1; transform:translateY(0); }
+  .mobile-nav { display:none; }
+  @media (max-width: 900px) {
+    .inbox-shell { padding:22px 16px 104px; }
+    .inbox-head { align-items:flex-start; flex-direction:column; }
+    .inbox-grid { grid-template-columns:1fr; }
+    .proposal { grid-template-columns:auto minmax(0,1fr); }
+    .review-actions { grid-column:1 / -1; padding-left:68px; }
+    .toast { bottom:82px; left:16px; right:16px; text-align:center; }
+    .mobile-nav { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); position:fixed; left:10px; right:10px; bottom:10px; z-index:40; padding:7px; background:rgba(18,21,29,.94); backdrop-filter:blur(20px); border:1px solid var(--inbox-border); border-radius:17px; box-shadow:0 14px 40px rgba(0,0,0,.5); }
+    .mobile-nav a { display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; color:var(--inbox-muted); font-size:10px; text-decoration:none; border-radius:11px; }
+    .mobile-nav a.active { color:white; background:rgba(139,124,246,.18); }
+    .mobile-nav-mark { font-size:15px; line-height:1; }
+  }
+  @media (max-width: 520px) {
+    .inbox-head h1 { font-size:30px; }
+    .proposal { padding:14px; gap:10px; }
+    .owner { min-width:49px; }
+    .review-actions { padding-left:59px; }
+    .review-button { flex:1; }
+  }
+</style>
+
+<%= render 'shared/unified_header' %>
+
+<div class="inbox-shell">
+  <header class="inbox-head">
+    <div>
+      <div class="inbox-kicker">Capture → Review → Action</div>
+      <h1>Входящие</h1>
+      <p>Echo показывает, что понял. Ты решаешь, что станет действием.</p>
+    </div>
+    <div class="summary-row">
+      <span class="summary-pill"><strong><%= @captures.sum { |capture| capture.intent_proposals.count { |proposal| proposal.status == 'proposed' } } %></strong> на разбор</span>
+      <span class="summary-pill"><strong><%= @active_runs.count %></strong> делает Gary</span>
+      <span class="summary-pill"><strong><%= @pending_approvals.count %></strong> ждёт решения</span>
+    </div>
+  </header>
+
+  <div class="inbox-grid">
+    <section>
+      <div class="section-label"><strong>Неразобранное</strong><span><%= @captures.count %> capture</span></div>
+      <div class="capture-list">
+        <% if @captures.any? %>
+          <% @captures.each do |capture| %>
+            <article class="capture-card" data-capture-id="<%= capture.id %>">
+              <div class="capture-meta">
+                <span class="source-badge"><span class="source-dot"></span><%= capture.source_type.humanize %></span>
+                <span><%= l(capture.occurred_at, format: :short) %> · <%= capture.status.humanize %></span>
+              </div>
+              <div class="transcript" data-capture-transcript>
+                <span class="transcript-label">Исходник сохранён без изменений</span>
+                <%= capture.transcript.presence || capture.raw_text %>
+              </div>
+              <div class="proposal-list">
+                <% capture.intent_proposals.each do |proposal| %>
+                  <% owner_label = { 'user' => 'Мне', 'gary' => 'Gary', 'external' => 'Другому', 'system' => 'System' }.fetch(proposal.owner_type, proposal.owner_type) %>
+                  <div class="proposal <%= 'is-reviewed' unless proposal.status == 'proposed' %>" data-proposal-id="<%= proposal.id %>">
+                    <span class="owner owner-<%= proposal.owner_type %>" data-owner="<%= proposal.owner_type %>"><%= owner_label %></span>
+                    <div>
+                      <div class="proposal-title"><%= proposal.title %></div>
+                      <div class="proposal-facts">
+                        <span class="fact"><%= proposal.intent_type.humanize %></span>
+                        <span class="fact"><%= ((proposal.confidence || 0) * 100).round %>%</span>
+                        <span class="fact risk-<%= proposal.risk_level %>"><%= proposal.risk_level %></span>
+                        <span class="fact">source <%= proposal.source_span['start'] || proposal.source_span['start_ms'] %>–<%= proposal.source_span['end'] || proposal.source_span['end_ms'] %></span>
+                      </div>
+                    </div>
+                    <div class="review-actions">
+                      <% if proposal.status == 'proposed' %>
+                        <button class="review-button reject" data-review-decision="reject" data-proposal-id="<%= proposal.id %>">Не надо</button>
+                        <button class="review-button accept" data-review-decision="accept" data-proposal-id="<%= proposal.id %>">Принять</button>
+                      <% else %>
+                        <span class="fact"><%= proposal.status.humanize %></span>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </article>
+          <% end %>
+        <% else %>
+          <div class="capture-card empty-state">Входящие разобраны. Ничего не потерялось.</div>
+        <% end %>
+      </div>
+    </section>
+
+    <aside class="side-stack" id="gary-control">
+      <div class="section-label"><strong>Контроль</strong><span>Gary отдельно от задач</span></div>
+
+      <% @pending_approvals.each do |approval| %>
+        <div class="side-card approval" data-approval-id="<%= approval.id %>">
+          <h2>Ждёт твоего решения</h2>
+          <p><%= approval.agent_run.objective %></p>
+          <div class="run"><%= approval.risk_reason %></div>
+          <div class="approval-actions">
+            <button class="review-button reject" data-approval-decision="reject" data-approval-id="<%= approval.id %>">Отклонить</button>
+            <button class="review-button accept" data-approval-decision="approve" data-approval-id="<%= approval.id %>">Разрешить</button>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="side-card">
+        <h2>Gary делает</h2>
+        <p>Это не твои чекбоксы. Здесь только реальные запуски с Definition of Done.</p>
+        <% if @active_runs.any? %>
+          <% @active_runs.each do |run| %>
+            <div class="run">
+              <div class="run-top"><strong><%= run.objective %></strong><span class="run-status"><%= run.status.humanize %></span></div>
+              <p><%= run.definition_of_done %></p>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="run"><p>Активных запусков нет.</p></div>
+        <% end %>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<nav class="mobile-nav" aria-label="Основная навигация">
+  <%= link_to dashboard_path do %><span class="mobile-nav-mark">◉</span><span>Сейчас</span><% end %>
+  <%= link_to inbox_path, class: 'active' do %><span class="mobile-nav-mark">▣</span><span>Входящие</span><% end %>
+  <%= link_to calendar_events_path do %><span class="mobile-nav-mark">□</span><span>Календарь</span><% end %>
+  <a href="#gary-control"><span class="mobile-nav-mark">◇</span><span>Gary</span></a>
+  <%= link_to reminders_path do %><span class="mobile-nav-mark">•••</span><span>Ещё</span><% end %>
+</nav>
+
+<div class="toast" id="inbox-toast"></div>
+
+<script>
+  (() => {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const toast = document.getElementById('inbox-toast');
+    const showToast = (message) => {
+      toast.textContent = message;
+      toast.classList.add('visible');
+      window.setTimeout(() => toast.classList.remove('visible'), 2200);
+    };
+    const request = async (url, payload) => {
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error((await response.json()).error || 'Ошибка запроса');
+      return response.json();
+    };
+
+    document.querySelectorAll('[data-review-decision]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const row = button.closest('.proposal');
+        row.querySelectorAll('button').forEach((item) => item.disabled = true);
+        try {
+          await request(`/inbox/intent_proposals/${button.dataset.proposalId}/review`, { decision: button.dataset.reviewDecision });
+          row.classList.add('is-reviewed');
+          const status = document.createElement('span');
+          status.className = 'fact';
+          status.textContent = button.dataset.reviewDecision === 'accept' ? 'Accepted' : 'Rejected';
+          row.querySelector('.review-actions').replaceChildren(status);
+          showToast(button.dataset.reviewDecision === 'accept' ? 'Принято' : 'Отклонено');
+        } catch (error) {
+          row.querySelectorAll('button').forEach((item) => item.disabled = false);
+          showToast(error.message);
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-approval-decision]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const card = button.closest('.approval');
+        card.querySelectorAll('button').forEach((item) => item.disabled = true);
+        try {
+          await request(`/inbox/approval_requests/${button.dataset.approvalId}/resolve`, { decision: button.dataset.approvalDecision });
+          card.remove();
+          showToast(button.dataset.approvalDecision === 'approve' ? 'Gary получил разрешение' : 'Запуск отменён');
+        } catch (error) {
+          card.querySelectorAll('button').forEach((item) => item.disabled = false);
+          showToast(error.message);
+        }
+      });
+    });
+  })();
+</script>

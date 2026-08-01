@@ -12,12 +12,12 @@ class DailyMorningSummaryJob < ApplicationJob
 
   def send_morning_summary_to_user(user)
     # Получаем текущий день в timezone пользователя
-    user_timezone = user.timezone || 'UTC'
-    current_day = Date.current.in_time_zone(user_timezone)
+    user_timezone = ActiveSupport::TimeZone[user.timezone] || Time.zone
+    current_day = Time.current.in_time_zone(user_timezone).to_date
     
     # Получаем события на сегодня
-    day_start = current_day.beginning_of_day.in_time_zone(user_timezone)
-    day_end = current_day.end_of_day.in_time_zone(user_timezone)
+    day_start = user_timezone.local(current_day.year, current_day.month, current_day.day).beginning_of_day
+    day_end = day_start.end_of_day
     
     today_events = user.calendar_events
                       .active
@@ -34,12 +34,13 @@ class DailyMorningSummaryJob < ApplicationJob
     message = build_morning_message(user, current_day, today_events, today_reminders)
     
     # Отправляем сообщение
-    Telegram::BotService.instance.send_message(
+    delivered = Telegram::BotService.send_message(
       chat_id: user.telegram_id,
       text: message,
       parse_mode: 'Markdown'
     )
-    
+    raise "Telegram rejected morning summary" unless delivered == true
+
     Rails.logger.info "Morning summary sent to user #{user.id} (#{user.full_name})"
   rescue StandardError => e
     Rails.logger.error "Failed to send morning summary to user #{user.id}: #{e.message}"

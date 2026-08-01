@@ -1,0 +1,41 @@
+<% content_for :title, "Добавить активность — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Здоровье → активность</p>
+      <h1 class="echo-title">Добавить активность</h1>
+      <p class="echo-subtitle">Только фактические значения. Дистанцию и калории можно не указывать.</p>
+    </div>
+    <%= link_to "Назад к здоровью", health_path, class: "echo-button" %>
+  </header>
+
+  <section class="echo-surface echo-surface--accent">
+    <div class="echo-surface__header">
+      <h2 class="echo-section-heading">Записанное движение</h2>
+      <p class="echo-section-copy">Сохраняется локально и возвращает в безопасный обзор.</p>
+    </div>
+    <div class="echo-surface__body">
+      <%= form_with model: @activity_entry, url: health_activity_path, class: "grid gap-4" do |form| %>
+        <% if @activity_entry.errors.any? %>
+          <div class="echo-warning"><%= @activity_entry.errors.full_messages.join(" · ") %></div>
+        <% end %>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="grid gap-2"><span class="echo-label">Тип активности</span><%= form.select :activity_type, [["Бег", "running"], ["Велосипед", "cycling"], ["Силовая", "strength"], ["Плавание", "swimming"], ["Ходьба", "walking"], ["Пеший туризм", "hiking"], ["Йога", "yoga"], ["Другое", "other"]], {}, class: "echo-select" %></label>
+          <label class="grid gap-2"><span class="echo-label">Дата и время</span><%= form.datetime_local_field :activity_date, value: @activity_entry.activity_date&.in_time_zone(current_user.timezone)&.strftime("%Y-%m-%dT%H:%M"), class: "echo-input", required: true %></label>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+          <label class="grid gap-2"><span class="echo-label">Минуты</span><%= form.number_field :duration_minutes, min: 1, step: 1, class: "echo-input", required: true %></label>
+          <label class="grid gap-2"><span class="echo-label">Километры</span><%= form.number_field :distance_km, min: 0, step: 0.1, class: "echo-input", placeholder: "Неизвестно" %></label>
+          <label class="grid gap-2"><span class="echo-label">Ккал</span><%= form.number_field :calories_burned, min: 1, step: 1, class: "echo-input", placeholder: "Неизвестно" %></label>
+        </div>
+
+        <label class="grid gap-2"><span class="echo-label">Заметка</span><%= form.text_area :notes, rows: 4, class: "echo-textarea", placeholder: "Что важно сохранить" %></label>
+        <%= form.submit "Сохранить активность", class: "echo-button echo-button--primary" %>
+      <% end %>
+    </div>
+  </section>
+</div>

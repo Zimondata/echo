@@ -60,9 +60,13 @@ class TimezoneService
   
   # Определение timezone по геолокации (упрощенная версия)
   def self.detect_timezone(latitude, longitude)
-    # Простая логика на основе долготы для основных зон
-    # В продакшене лучше использовать API вроде TimeZoneDB или Google Maps
-    
+    return nil unless latitude.is_a?(Numeric) && longitude.is_a?(Numeric)
+    return nil unless latitude.between?(-90, 90) && longitude.between?(-180, 180)
+
+    # Coarse offline fallback for the locations Echo supports today.
+    # Order matters: mainland Spain extends west of Greenwich.
+    return "Europe/Madrid" if latitude.between?(35, 45) && longitude.between?(-10, 5)
+
     case longitude
     when -15..0  # Великобритания
       'Europe/London'
@@ -107,6 +111,8 @@ class TimezoneService
   
   # Парсинг пользовательского ввода
   def self.parse_timezone_input(input)
+    return nil if input.blank?
+
     normalized_input = input.strip.downcase
     
     # Проверяем прямое соответствие timezone

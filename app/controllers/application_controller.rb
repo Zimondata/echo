@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  LOCAL_DEVELOPMENT_HOSTS = %w[localhost 127.0.0.1 ::1].freeze
+
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
   
@@ -8,7 +10,27 @@ class ApplicationController < ActionController::Base
   private
   
   def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+    return @current_user if defined?(@current_user)
+
+    @current_user = if session[:user_id]
+      User.find_by(id: session[:user_id])
+    else
+      local_development_user
+    end
+  end
+
+  def local_development_user
+    return unless local_development_access?
+
+    User.active.find_by(id: ENV["ECHO_LOCAL_USER_ID"])
+  end
+
+  def local_development_access?
+    Rails.env.development? &&
+      ENV["ECHO_LOCAL_AUTH_BYPASS"] == "1" &&
+      ENV["ECHO_LOCAL_USER_ID"].present? &&
+      request.local? &&
+      LOCAL_DEVELOPMENT_HOSTS.include?(request.host)
   end
   
   def logged_in?

@@ -1,0 +1,70 @@
+<% content_for :title, "Ритмы — План — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div><p class="echo-kicker">План → Ритмы</p><h1 class="echo-title">Ритмы</h1><p class="echo-subtitle">Полная или минимальная версия, честный пропуск и явное возвращение. Без счёта и обнуления.</p></div>
+    <%= link_to "Назад к неделе", calendar_events_path(view: "week"), class: "echo-button" %>
+  </header>
+
+  <% if notice.present? || alert.present? %><div class="echo-notice"><%= notice || alert %></div><% end %>
+
+  <% if @rhythms.active.size < Rhythm::MAX_ACTIVE_PER_USER %>
+    <section class="echo-surface echo-surface--accent mb-5">
+      <div class="echo-surface__header"><h2 class="echo-section-heading">Новый ритм</h2><p class="echo-section-copy">Например: назови практику и опиши её достаточную и самую маленькую версии.</p></div>
+      <div class="echo-surface__body">
+        <%= form_with model: @rhythm, url: rhythms_path, class: "grid gap-3" do |form| %>
+          <%= form.text_field :name, placeholder: "Название", required: true, class: "echo-input" %>
+          <%= form.text_area :full_version, placeholder: "Полная версия", required: true, rows: 2, class: "echo-textarea" %>
+          <%= form.text_area :minimum_version, placeholder: "Минимальная версия", required: true, rows: 2, class: "echo-textarea" %>
+          <%= form.submit "Сохранить ритм", class: "echo-button echo-button--primary" %>
+          <% if @rhythm.errors.any? %><p class="echo-section-copy" style="color:var(--danger)"><%= @rhythm.errors.full_messages.to_sentence %></p><% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <div class="grid gap-4">
+    <% @rhythms.each do |rhythm| %>
+      <% today_checkin = rhythm.rhythm_checkins.find { |item| item.local_date == @today } %>
+      <% return_source = @return_sources[rhythm.id] %>
+      <article class="echo-surface" id="rhythm-<%= rhythm.id %>" data-rhythm-id="<%= rhythm.id %>">
+        <div class="echo-surface__header flex items-start justify-between gap-4">
+          <div><h2 class="echo-section-heading"><%= rhythm.name %></h2><p class="echo-section-copy">Полностью: <%= rhythm.full_version %><br>Минимум: <%= rhythm.minimum_version %></p></div>
+          <span class="echo-badge"><%= rhythm.active? ? "активен" : "в архиве" %></span>
+        </div>
+        <div class="echo-surface__body">
+          <% if rhythm.active? %>
+            <% if return_source %>
+              <p class="echo-section-copy mb-3" data-rhythm-checkin="skipped"><%= return_source.local_date == @today ? "Сегодня был пропуск." : "Был пропуск #{return_source.local_date.strftime('%d.%m')}." %> Можно вернуться без обнуления.</p>
+              <%= button_to "Вернулся", return_rhythm_path(rhythm), method: :post, class: "echo-button echo-button--primary" %>
+            <% elsif today_checkin %>
+              <p class="echo-section-copy" data-rhythm-checkin="<%= today_checkin.state %>">Сегодня: <%= rhythm_state_label(today_checkin.state) %></p>
+            <% else %>
+              <div class="flex flex-wrap gap-2">
+                <%= button_to "Полностью", checkin_rhythm_path(rhythm), method: :post, params: { state: "full" }, class: "echo-button echo-button--primary" %>
+                <%= button_to "Минимум", checkin_rhythm_path(rhythm), method: :post, params: { state: "minimum" }, class: "echo-button" %>
+                <%= button_to "Пропуск", checkin_rhythm_path(rhythm), method: :post, params: { state: "skipped" }, class: "echo-button" %>
+              </div>
+            <% end %>
+          <% end %>
+
+          <details class="mt-5">
+            <summary class="echo-button echo-button--quiet">Изменить</summary>
+            <%= form_with model: rhythm, class: "mt-3 grid gap-3" do |form| %>
+              <%= form.text_field :name, class: "echo-input" %>
+              <%= form.text_area :full_version, rows: 2, class: "echo-textarea" %>
+              <%= form.text_area :minimum_version, rows: 2, class: "echo-textarea" %>
+              <label class="echo-section-copy"><%= form.check_box :active %> Активен</label>
+              <%= form.submit "Сохранить", class: "echo-button" %>
+            <% end %>
+          </details>
+
+          <% history = rhythm.rhythm_checkins.sort_by(&:local_date).reverse.first(7) %>
+          <% if history.any? %><div class="mt-5 flex flex-wrap gap-2" aria-label="Последние семь отметок"><% history.each do |checkin| %><span class="echo-badge"><%= checkin.local_date.strftime("%d.%m") %> · <%= rhythm_state_label(checkin.state) %></span><% end %></div><% end %>
+        </div>
+      </article>
+    <% end %>
+    <% if @rhythms.empty? %><div class="echo-empty">Ритмов пока нет. Создай только тот, к которому хочется возвращаться.</div><% end %>
+  </div>
+</div>

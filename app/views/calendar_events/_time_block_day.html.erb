@@ -1,0 +1,25 @@
+<article class="calendar-agenda-event calendar-agenda-time-block" data-time-block-id="<%= time_block.id %>">
+  <div class="calendar-agenda-time"><%= time_block_time(time_block, current_user.timezone) %></div>
+  <div class="calendar-agenda-accent calendar-time-block-accent"></div>
+  <div>
+    <div class="calendar-agenda-title"><%= time_block.task.title %></div>
+    <div class="calendar-agenda-description">Запланированная задача · <%= time_block.locked? ? "время зафиксировано" : "можно двигать позже" %></div>
+  </div>
+  <div class="calendar-agenda-meta">
+    <span><%= time_block.duration_minutes %> мин</span>
+    <%= link_to "Изменить", edit_task_time_block_path(time_block.task, time_block), class: "calendar-time-block-edit", aria: { label: "Изменить #{time_block.task.title}" } %>
+    <% if flash[:time_block_reschedule_undo_id].to_i == time_block.id && flash[:time_block_reschedule_undo].present? %>
+      <%= form_with url: undo_reschedule_task_time_block_path(time_block.task, time_block), method: :post, data: { turbo_frame: "_top" }, class: "calendar-time-block-inline-action" do %>
+        <%= hidden_field_tag :undo_token, flash[:time_block_reschedule_undo], id: "undo_reschedule_#{time_block.id}_token" %>
+        <%= button_tag "Отменить перенос", type: "submit", class: "calendar-time-block-reschedule-undo", aria: { label: "Отменить перенос #{time_block.task.title}" } %>
+      <% end %>
+    <% end %>
+    <%= form_with url: task_time_block_path(time_block.task, time_block), method: :delete, data: { turbo_frame: "_top" }, class: "calendar-time-block-inline-action" do |form| %>
+      <%= hidden_field_tag "task[lock_version]", time_block.task.lock_version, id: "time_block_#{time_block.id}_task_lock_version" %>
+      <%= hidden_field_tag "time_block[lock_version]", time_block.lock_version, id: "time_block_#{time_block.id}_lock_version" %>
+      <%= hidden_field_tag :view, "day", id: nil %>
+      <%= hidden_field_tag :date, time_block.starts_at.in_time_zone(current_user.timezone).to_date.iso8601, id: nil %>
+      <%= form.submit "Вернуть в очередь", class: "calendar-time-block-undo" %>
+    <% end %>
+  </div>
+</article>

@@ -1,0 +1,70 @@
+<% content_for :title, "Задачи — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Работа, а не календарные квадраты</p>
+      <h1 class="echo-title">Задачи</h1>
+      <p class="echo-subtitle">Здесь живёт намерение. Планер хранит только выбранное время.</p>
+    </div>
+    <div class="echo-actions"><%= link_to "Открыть планер", calendar_events_path(view: "week"), class: "echo-button" %></div>
+  </header>
+
+  <% if flash[:task_notice] %><div class="echo-notice"><%= flash[:task_notice] %></div><% end %>
+
+  <section id="quick-add" class="echo-surface echo-surface--accent mb-5">
+    <div class="echo-surface__header">
+      <p class="echo-label echo-label--accent">Quick add</p>
+      <h2 class="echo-section-heading mt-1">Зафиксировать и продолжить день</h2>
+    </div>
+    <div class="echo-surface__body">
+      <%= form_with model: @new_task, url: tasks_path, class: "echo-form-grid" do |form| %>
+        <%= hidden_field_tag :return_to, "tasks" %>
+        <%= form.text_field :title, placeholder: "Что нужно сделать?", class: "echo-input", required: true, aria: { label: "Название задачи" } %>
+        <%= form.text_field :next_action, placeholder: "Первый физический шаг", class: "echo-input", aria: { label: "Следующий шаг" } %>
+        <%= form.number_field :estimate_minutes, placeholder: "Минуты", min: 1, class: "echo-input", aria: { label: "Оценка в минутах" } %>
+        <%= form.date_field :due_on, class: "echo-input", aria: { label: "Дедлайн" } %>
+        <%= form.submit "Добавить", class: "echo-button echo-button--primary" %>
+      <% end %>
+      <% if @new_task.errors.any? %><p class="mt-3 text-sm" style="color:var(--danger)"><%= @new_task.errors.full_messages.to_sentence %></p><% end %>
+    </div>
+  </section>
+
+  <nav class="echo-tabs mb-4" aria-label="Статусы задач">
+    <% labels = { "inbox" => "Входящие", "next" => "Следующие", "scheduled" => "Запланировано", "waiting" => "Жду", "someday" => "Когда-нибудь", "completed" => "Готово", "dropped" => "Убрано" } %>
+    <% labels.each do |status, label| %>
+      <% active = status == @status %>
+      <%= link_to tasks_path(status: status), class: "echo-tab", aria: (active ? { current: "page" } : {}) do %>
+        <%= label %><span class="echo-count"><%= @task_counts[status].to_i %></span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <section class="echo-surface">
+    <% @tasks.each do |task| %>
+      <article class="grid gap-4 border-b p-4 last:border-0 sm:p-5 lg:grid-cols-[minmax(0,1fr)_auto]" style="border-color:var(--line)" data-task-id="<%= task.id %>">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="m-0 text-[15px] font-semibold" style="color:var(--ink)"><%= task.title %></h2>
+            <span class="echo-badge"><%= task.owner_type %></span>
+          </div>
+          <p class="mt-1 text-sm leading-6" style="color:var(--ink-muted)"><%= task.next_action.presence || "Нет следующего физического шага — уточни перед планированием" %></p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <% if task.estimate_minutes %><span class="echo-badge"><%= task.estimate_minutes %> мин</span><% end %>
+            <% if task.due_on %><span class="echo-badge <%= task.due_on < Date.current ? 'echo-badge--fixed' : '' %>">дедлайн <%= l(task.due_on, format: :short) %></span><% end %>
+            <% if task.time_blocks.active.any? %><span class="echo-badge echo-badge--accent"><%= task.time_blocks.active.count %> в плане</span><% end %>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+          <% if Task::UNSCHEDULED_STATUSES.include?(task.status) %><%= link_to "Запланировать", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %><% end %>
+          <% unless %w[completed dropped].include?(task.status) %>
+            <%= button_to "Готово", complete_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: @status }, class: "echo-button echo-button--small", style: "color:var(--success);border-color:color-mix(in srgb,var(--success) 28%,var(--line));background:var(--success-soft)" %>
+            <%= button_to "Убрать", drop_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: @status }, class: "echo-button echo-button--quiet echo-button--small" %>
+          <% end %>
+        </div>
+      </article>
+    <% end %>
+    <% if @tasks.empty? %><div class="m-5 echo-empty"><p class="m-0 font-semibold" style="color:var(--ink-secondary)">Здесь пусто</p><p class="mt-2 text-sm">Хорошо. Пустая колонка не требует заполнения ради системы.</p></div><% end %>
+  </section>
+</div>
