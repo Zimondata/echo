@@ -36,6 +36,18 @@ final class PlanSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.items(on: day, calendar: calendar).map(\.id), ["today"])
     }
 
+    func testNilEndedTaskIsCurrentForBoundedPointWindow() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let snapshot = PlanSnapshot(
+            generatedAt: now,
+            timezoneIdentifier: "Europe/Madrid",
+            items: [PlanItem(id: "point", title: "Позвонить", startsAt: now, endsAt: nil, kind: .task)]
+        )
+
+        XCTAssertEqual(snapshot.focusItem(at: now)?.id, "point")
+        XCTAssertNil(snapshot.focusItem(at: now.addingTimeInterval(31 * 60)))
+    }
+
     func testFixtureIsAnHonestLocalPreview() {
         let snapshot = PlanSnapshot.preview(referenceDate: Date(timeIntervalSince1970: 1_800_000_000))
 

@@ -13,6 +13,8 @@ public enum PlanSource: String, Codable, Sendable {
 }
 
 public struct PlanItem: Identifiable, Codable, Equatable, Sendable {
+    public static let pointFocusDuration: TimeInterval = 30 * 60
+
     public let id: String
     public var title: String
     public var startsAt: Date?
@@ -28,8 +30,9 @@ public struct PlanItem: Identifiable, Codable, Equatable, Sendable {
     }
 
     public func isActive(at date: Date) -> Bool {
-        guard let startsAt, startsAt <= date, let endsAt else { return false }
-        return date < endsAt
+        guard let startsAt, startsAt <= date else { return false }
+        let effectiveEnd = endsAt ?? startsAt.addingTimeInterval(Self.pointFocusDuration)
+        return date < effectiveEnd
     }
 }
 

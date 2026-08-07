@@ -49,6 +49,10 @@ targets:
         embed: true
     entitlements:
       path: App/Echo.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.space.datapine.echo
     info:
       path: App/Info.plist
       properties:
@@ -74,6 +78,10 @@ targets:
       - target: EchoScreenTime
     entitlements:
       path: ShieldConfigurationExtension/ShieldConfiguration.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.space.datapine.echo
     info:
       path: ShieldConfigurationExtension/Info.plist
       properties:
@@ -94,6 +102,8 @@ targets:
       - ShieldActionExtension
     entitlements:
       path: ShieldActionExtension/ShieldAction.entitlements
+      properties:
+        com.apple.developer.family-controls: true
     info:
       path: ShieldActionExtension/Info.plist
       properties:
@@ -117,6 +127,10 @@ targets:
       - target: EchoScreenTime
     entitlements:
       path: DeviceActivityMonitorExtension/DeviceActivityMonitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - group.space.datapine.echo
     info:
       path: DeviceActivityMonitorExtension/Info.plist
       properties:

@@ -32,4 +32,9 @@ try expect(overnight.contains(minuteOfDay: 8 * 60) == false, "overnight focus mu
 try expect(DailyFocusWindow(startMinute: 10 * 60, endMinute: 12 * 60).isValid, "ordinary focus interval must be valid")
 try expect(DailyFocusWindow(startMinute: 10 * 60, endMinute: 10 * 60).isValid == false, "zero-length interval must be rejected")
 
-print("EchoCoreVerification: PASS (10 checks)")
+let pointTask = PlanItem(id: "point", title: "Позвонить", startsAt: now, endsAt: nil, kind: .task)
+let pointSnapshot = PlanSnapshot(generatedAt: now, timezoneIdentifier: "Europe/Madrid", items: [pointTask])
+try expect(pointSnapshot.focusItem(at: now)?.id == "point", "nil-ended task must be current at its start")
+try expect(pointSnapshot.focusItem(at: now.addingTimeInterval(31 * 60)) == nil, "nil-ended task must not remain current forever")
+
+print("EchoCoreVerification: PASS (12 checks)")

@@ -17,20 +17,46 @@ final class AppModel: ObservableObject {
     @Published var scheduleEnd: Date
     @Published var message: String?
 
+    private let appGroupDefaults: UserDefaults?
+    private let familySelectionStore: FamilySelectionStore?
+    private let planSnapshotStore: SharedPlanSnapshotStore?
+
     init() {
         let snapshot = PlanSnapshot.preview()
         let defaults = UserDefaults(suiteName: EchoAppGroup.identifier)
+        let selectionStore = try? FamilySelectionStore()
+        let snapshotStore = try? SharedPlanSnapshotStore()
         let startMinute = defaults?.object(forKey: EchoAppGroup.scheduleStartMinuteKey) as? Int ?? 9 * 60
         let endMinute = defaults?.object(forKey: EchoAppGroup.scheduleEndMinuteKey) as? Int ?? 20 * 60
 
+        self.appGroupDefaults = defaults
+        self.familySelectionStore = selectionStore
+        self.planSnapshotStore = snapshotStore
         self.plan = snapshot
-        self.selection = FamilySelectionStore()?.load() ?? FamilyActivitySelection()
+        self.selection = selectionStore?.load() ?? FamilyActivitySelection()
         self.authorizationStatus = AuthorizationCenter.shared.authorizationStatus
         self.focusEnabled = defaults?.bool(forKey: EchoAppGroup.focusEnabledKey) ?? false
         self.scheduleEnabled = defaults?.bool(forKey: EchoAppGroup.scheduleEnabledKey) ?? false
         self.scheduleStart = Self.date(minuteOfDay: startMinute)
         self.scheduleEnd = Self.date(minuteOfDay: endMinute)
-        try? SharedPlanSnapshotStore()?.save(snapshot)
+        self.message = nil
+
+        guard defaults != nil, selectionStore != nil, let snapshotStore else {
+            self.focusEnabled = false
+            self.scheduleEnabled = false
+            self.message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            ShieldController.clear()
+            return
+        }
+
+        do {
+            try snapshotStore.save(snapshot)
+        } catch {
+            self.focusEnabled = false
+            self.scheduleEnabled = false
+            self.message = error.localizedDescription
+            ShieldController.clear()
+        }
     }
 
     var selectedCount: Int {
@@ -52,34 +78,57 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func persistSelection() {
+    @discardableResult
+    func persistSelection() -> Bool {
+        guard let familySelectionStore, let planSnapshotStore else {
+            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            return false
+        }
+
         do {
-            try FamilySelectionStore()?.save(selection)
+            try familySelectionStore.save(selection)
+            try planSnapshotStore.save(plan)
             if focusEnabled || (scheduleEnabled && focusWindow.contains(minuteOfDay: minuteOfDay(.now))) {
                 ShieldController.apply(selection)
             }
             message = selectedCount == 0 ? "Сначала выбери приложения" : "Выбор сохранён приватно"
+            return true
         } catch {
             message = error.localizedDescription
+            return false
         }
     }
 
     func enableFocus() {
-        persistSelection()
         guard authorizationStatus == .approved else {
             message = "Сначала разреши Screen Time"
             return
         }
-        guard selectedCount > 0 else { return }
+        guard selectedCount > 0 else {
+            message = "Сначала выбери приложения"
+            return
+        }
+        guard let appGroupDefaults else {
+            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            return
+        }
+        guard persistSelection() else { return }
+
         ShieldController.apply(selection)
         focusEnabled = true
-        UserDefaults(suiteName: EchoAppGroup.identifier)?.set(true, forKey: EchoAppGroup.focusEnabledKey)
+        appGroupDefaults.set(true, forKey: EchoAppGroup.focusEnabledKey)
         message = "Выбранные приложения теперь показывают твой план"
     }
 
     func disableFocus() {
         focusEnabled = false
-        UserDefaults(suiteName: EchoAppGroup.identifier)?.set(false, forKey: EchoAppGroup.focusEnabledKey)
+        guard let appGroupDefaults else {
+            ShieldController.clear()
+            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            return
+        }
+
+        appGroupDefaults.set(false, forKey: EchoAppGroup.focusEnabledKey)
         if scheduleEnabled && focusWindow.contains(minuteOfDay: minuteOfDay(.now)) {
             ShieldController.apply(selection)
         } else {
@@ -105,9 +154,17 @@ final class AppModel: ObservableObject {
             return
         }
 
-        let defaults = UserDefaults(suiteName: EchoAppGroup.identifier)
+        guard let appGroupDefaults else {
+            scheduleEnabled = false
+            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            return
+        }
+
         if enabled {
-            persistSelection()
+            guard persistSelection() else {
+                scheduleEnabled = false
+                return
+            }
             let schedule = DeviceActivitySchedule(
                 intervalStart: DateComponents(hour: focusWindow.startMinute / 60, minute: focusWindow.startMinute % 60),
                 intervalEnd: DateComponents(hour: focusWindow.endMinute / 60, minute: focusWindow.endMinute % 60),
@@ -119,9 +176,9 @@ final class AppModel: ObservableObject {
                 if focusWindow.contains(minuteOfDay: minuteOfDay(.now)) {
                     ShieldController.apply(selection)
                 }
-                defaults?.set(true, forKey: EchoAppGroup.scheduleEnabledKey)
-                defaults?.set(focusWindow.startMinute, forKey: EchoAppGroup.scheduleStartMinuteKey)
-                defaults?.set(focusWindow.endMinute, forKey: EchoAppGroup.scheduleEndMinuteKey)
+                appGroupDefaults.set(true, forKey: EchoAppGroup.scheduleEnabledKey)
+                appGroupDefaults.set(focusWindow.startMinute, forKey: EchoAppGroup.scheduleStartMinuteKey)
+                appGroupDefaults.set(focusWindow.endMinute, forKey: EchoAppGroup.scheduleEndMinuteKey)
                 message = "Ежедневное расписание включено"
             } catch {
                 scheduleEnabled = false
@@ -130,7 +187,7 @@ final class AppModel: ObservableObject {
         } else {
             DeviceActivityCenter().stopMonitoring([.echoFocus])
             scheduleEnabled = false
-            defaults?.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
+            appGroupDefaults.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
             if !focusEnabled { ShieldController.clear() }
             message = "Расписание выключено"
         }
@@ -138,9 +195,18 @@ final class AppModel: ObservableObject {
 
     func refreshPreviewPlan() {
         let snapshot = PlanSnapshot.preview()
-        plan = snapshot
-        try? SharedPlanSnapshotStore()?.save(snapshot)
-        message = "Локальный план обновлён"
+        guard let planSnapshotStore else {
+            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+            return
+        }
+
+        do {
+            try planSnapshotStore.save(snapshot)
+            plan = snapshot
+            message = "Локальный план обновлён"
+        } catch {
+            message = error.localizedDescription
+        }
     }
 
     private func minuteOfDay(_ date: Date) -> Int {

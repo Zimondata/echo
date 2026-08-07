@@ -4,8 +4,10 @@ import Foundation
 public struct FamilySelectionStore {
     private let defaults: UserDefaults
 
-    public init?(suiteName: String = EchoAppGroup.identifier) {
-        guard let defaults = UserDefaults(suiteName: suiteName) else { return nil }
+    public init(suiteName: String = EchoAppGroup.identifier) throws {
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            throw EchoSharedStoreError.appGroupUnavailable(suiteName)
+        }
         self.defaults = defaults
     }
 

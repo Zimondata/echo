@@ -22,7 +22,12 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
     }
 
     private func makeConfiguration() -> ShieldConfiguration {
-        let snapshot = SharedPlanSnapshotStore()?.load() ?? PlanSnapshot.preview()
+        let snapshot = (try? SharedPlanSnapshotStore())?.load() ?? PlanSnapshot(
+            generatedAt: .now,
+            timezoneIdentifier: TimeZone.current.identifier,
+            items: [],
+            source: .preview
+        )
         let copy = InterventionPolicy.copy(for: snapshot)
 
         return ShieldConfiguration(
