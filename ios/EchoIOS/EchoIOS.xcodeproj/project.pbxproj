@@ -20,6 +20,7 @@
 		53AD4D8D27EC8EE8115DD5D6 /* FocusScheduleTransitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B4BF741B257A1492E5DFD4 /* FocusScheduleTransitionTests.swift */; };
 		55F0C08776EC93368D59DB95 /* libEchoScreenTime.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AD0A89002C52E29C738102B3 /* libEchoScreenTime.a */; };
 		592A69E58C1BB6BBD1985753 /* InterventionPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6779FEA2091E3BBE485AB331 /* InterventionPolicyTests.swift */; };
+		609B1EE3CFBC85E5D9CC9710 /* ScheduleSideEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = A95B2CEE05E41B67DD44DADD /* ScheduleSideEffects.swift */; };
 		65366A1E1DE53D35A299C10F /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753914CC9CC2FC1E1BCBD7F0 /* DeviceActivityMonitorExtension.swift */; };
 		83C9018CA43356A98CC08EE2 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C5FF71D02A2BAA4A3AE8F1 /* RootView.swift */; };
 		8BA1DBB7E4244C132C08E73A /* DailyFocusWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C995B729B17634A4AE09D6 /* DailyFocusWindow.swift */; };
@@ -37,6 +38,7 @@
 		E3FBCFD0CC0B6AF035D7043A /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605A9916CA09F8E701122F62 /* ShieldConfigurationExtension.swift */; };
 		E4E81BD03852AF88C92A23C6 /* ShieldController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBBE54AE13272FA2E3C481D0 /* ShieldController.swift */; };
 		EA79FB1839398E3690F22D8F /* libEchoCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FFB66240023E856B8016604B /* libEchoCore.a */; };
+		F4E5686DD980C06DAE0BFAC8 /* AppModelScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3DC2997A954977141216CA1 /* AppModelScheduleTests.swift */; };
 		F54CF1279610A7A17A93C462 /* InterventionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D121569E354EDEA329D56B4 /* InterventionPolicy.swift */; };
 		F7B5189114F40386C8ECBCFA /* ScreenTimeNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = F89BB18C1DD743720EFCDAB2 /* ScreenTimeNames.swift */; };
 		F9DBB1C95C4B9FCEF9B7CA5C /* libEchoCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FFB66240023E856B8016604B /* libEchoCore.a */; };
@@ -77,6 +79,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 74E5E05FE997B24A1FC265EA;
 			remoteInfo = EchoScreenTime;
+		};
+		822AE3302A8558B15FDFF7C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 89C0D3EF3FB166C589883239 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DE8F69BAA935CD70448C30A1;
+			remoteInfo = Echo;
 		};
 		91F02A4426583175842870D2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -161,8 +170,10 @@
 		87B4BF741B257A1492E5DFD4 /* FocusScheduleTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusScheduleTransitionTests.swift; sourceTree = "<group>"; };
 		8B2D0991689622EA06AA8021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8E47410CAE4EDB169F0DA73B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		93290382134BAF9E1EA66149 /* EchoAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = EchoAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		981BE3EFDD92537EBEACF614 /* EchoAppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoAppGroup.swift; sourceTree = "<group>"; };
 		9CB92A12FF4A722E9E401BEB /* FamilySelectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySelectionStore.swift; sourceTree = "<group>"; };
+		A95B2CEE05E41B67DD44DADD /* ScheduleSideEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleSideEffects.swift; sourceTree = "<group>"; };
 		AD0A89002C52E29C738102B3 /* libEchoScreenTime.a */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = archive.ar; path = libEchoScreenTime.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6D342580C4ED3A3466FAC99 /* FocusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusView.swift; sourceTree = "<group>"; };
 		C261128BB0C00AFC711BA3FE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -170,6 +181,7 @@
 		D5495E003649D5AEE6E183C2 /* EchoDeviceActivityMonitor.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = EchoDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB407FC1C7ED31DCDD4CD527 /* Echo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Echo.entitlements; sourceTree = "<group>"; };
 		DC00F558B6D880B700156CFF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E3DC2997A954977141216CA1 /* AppModelScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelScheduleTests.swift; sourceTree = "<group>"; };
 		E9BDC3F5C8E8BBD65CDE937D /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
 		F4F02E025E6EEA5DF60A07BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F51BF0FE321D8EC965C8EBCD /* EchoShieldAction.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = EchoShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -222,6 +234,7 @@
 			isa = PBXGroup;
 			children = (
 				1580C6693965DC2192A9AFC1 /* Echo.app */,
+				93290382134BAF9E1EA66149 /* EchoAppTests.xctest */,
 				29E90F95784CCD0E44EBBFF0 /* EchoCoreTests.xctest */,
 				D5495E003649D5AEE6E183C2 /* EchoDeviceActivityMonitor.appex */,
 				F51BF0FE321D8EC965C8EBCD /* EchoShieldAction.appex */,
@@ -254,6 +267,7 @@
 				8E47410CAE4EDB169F0DA73B /* Info.plist */,
 				E9BDC3F5C8E8BBD65CDE937D /* PlanView.swift */,
 				36C5FF71D02A2BAA4A3AE8F1 /* RootView.swift */,
+				A95B2CEE05E41B67DD44DADD /* ScheduleSideEffects.swift */,
 				C261128BB0C00AFC711BA3FE /* SettingsView.swift */,
 				BCF32C9DA78C7A54913913F0 /* Components */,
 			);
@@ -316,9 +330,18 @@
 		94F034FCD5F6EC288FAD95B6 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				A0D212770BD71EE5F7221D56 /* EchoAppTests */,
 				7ED75F0CC1CF628FEA46CF41 /* EchoCoreTests */,
 			);
 			path = Tests;
+			sourceTree = "<group>";
+		};
+		A0D212770BD71EE5F7221D56 /* EchoAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				E3DC2997A954977141216CA1 /* AppModelScheduleTests.swift */,
+			);
+			path = EchoAppTests;
 			sourceTree = "<group>";
 		};
 		B043211FA25BE0B1E7E8DD77 /* Shared */ = {
@@ -353,6 +376,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		344DD557BB76930E5A3AE036 /* EchoAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 003194AE31BD705B3044B6E4 /* Build configuration list for PBXNativeTarget "EchoAppTests" */;
+			buildPhases = (
+				796C644F464C125F19AB125B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7488E2F83AA943ED8BA7CCC7 /* PBXTargetDependency */,
+			);
+			name = EchoAppTests;
+			packageProductDependencies = (
+			);
+			productName = EchoAppTests;
+			productReference = 93290382134BAF9E1EA66149 /* EchoAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		5CDD8BE114622259BA877F18 /* EchoCore */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C555A6CB3EB68B9188386FDB /* Build configuration list for PBXNativeTarget "EchoCore" */;
@@ -500,6 +541,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					344DD557BB76930E5A3AE036 = {
+						ProvisioningStyle = Automatic;
+					};
 					5CDD8BE114622259BA877F18 = {
 						ProvisioningStyle = Automatic;
 					};
@@ -544,6 +588,7 @@
 				8F027DC03792CB57B18357AE /* EchoShieldAction */,
 				8588AC3975E42716FE325A59 /* EchoDeviceActivityMonitor */,
 				B9288E5315EEDBA394BD84B5 /* EchoCoreTests */,
+				344DD557BB76930E5A3AE036 /* EchoAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -625,6 +670,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		796C644F464C125F19AB125B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4E5686DD980C06DAE0BFAC8 /* AppModelScheduleTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		917FFAA0AF4D20C91A733824 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -662,6 +715,7 @@
 				2487E7B7F82E99720427CAB2 /* FocusView.swift in Sources */,
 				1AA4833C56F11CA7E3EE72E8 /* PlanView.swift in Sources */,
 				83C9018CA43356A98CC08EE2 /* RootView.swift in Sources */,
+				609B1EE3CFBC85E5D9CC9710 /* ScheduleSideEffects.swift in Sources */,
 				1CD27B99EE7841498ADC62AE /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -704,6 +758,11 @@
 			target = 74E5E05FE997B24A1FC265EA /* EchoScreenTime */;
 			targetProxy = 19A01DFF4F802CD67819AD2D /* PBXContainerItemProxy */;
 		};
+		7488E2F83AA943ED8BA7CCC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DE8F69BAA935CD70448C30A1 /* Echo */;
+			targetProxy = 822AE3302A8558B15FDFF7C3 /* PBXContainerItemProxy */;
+		};
 		76DFEC65EF573721512CDC5F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8F027DC03792CB57B18357AE /* EchoShieldAction */;
@@ -727,6 +786,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0DA354DE043B7078812F3DE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "space.datapine.echo.ios.app-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Echo.app/Echo";
+			};
+			name = Release;
+		};
 		126DD0435666B55951BEE2DB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -742,6 +817,22 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		12F5998883548F6989FBD031 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "space.datapine.echo.ios.app-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Echo.app/Echo";
 			};
 			name = Debug;
 		};
@@ -1121,6 +1212,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		003194AE31BD705B3044B6E4 /* Build configuration list for PBXNativeTarget "EchoAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				12F5998883548F6989FBD031 /* Debug */,
+				0DA354DE043B7078812F3DE1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		25EFD00110D678DC76B6E5B2 /* Build configuration list for PBXNativeTarget "EchoShieldConfiguration" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

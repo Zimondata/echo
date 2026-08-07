@@ -20,8 +20,9 @@ final class AppModel: ObservableObject {
     private let appGroupDefaults: UserDefaults?
     private let familySelectionStore: FamilySelectionStore?
     private let planSnapshotStore: SharedPlanSnapshotStore?
+    private let scheduleSideEffects: ScheduleSideEffects
 
-    init() {
+    init(scheduleSideEffects: ScheduleSideEffects = .live) {
         let snapshot = PlanSnapshot.preview()
         let defaults = UserDefaults(suiteName: EchoAppGroup.identifier)
         let selectionStore = try? FamilySelectionStore()
@@ -32,6 +33,7 @@ final class AppModel: ObservableObject {
         self.appGroupDefaults = defaults
         self.familySelectionStore = selectionStore
         self.planSnapshotStore = snapshotStore
+        self.scheduleSideEffects = scheduleSideEffects
         self.plan = snapshot
         self.selection = selectionStore?.load() ?? FamilyActivitySelection()
         self.authorizationStatus = AuthorizationCenter.shared.authorizationStatus
@@ -141,29 +143,29 @@ final class AppModel: ObservableObject {
         let transition = FocusScheduleTransition(requestedEnabled: enabled, window: focusWindow)
 
         if transition.shouldStopMonitoring {
-            DeviceActivityCenter().stopMonitoring([.echoFocus])
+            scheduleSideEffects.stopMonitoring()
             scheduleEnabled = false
-            if !focusEnabled { ShieldController.clear() }
+            if !focusEnabled { scheduleSideEffects.clearShields() }
 
-            guard let appGroupDefaults else {
-                message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
-                return
+            do {
+                try scheduleSideEffects.persistEnabled(false)
+                message = "Расписание выключено"
+            } catch {
+                message = error.localizedDescription
             }
-            appGroupDefaults.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
-            message = "Расписание выключено"
             return
         }
 
+        guard transition.canStartMonitoring else {
+            failSchedule("Начало и конец расписания должны отличаться")
+            return
+        }
         guard authorizationStatus == .approved else {
             failSchedule("Сначала разреши Screen Time")
             return
         }
         guard selectedCount > 0 else {
             failSchedule("Сначала выбери приложения")
-            return
-        }
-        guard transition.canStartMonitoring else {
-            failSchedule("Начало и конец расписания должны отличаться")
             return
         }
         guard let appGroupDefaults else {
@@ -181,12 +183,12 @@ final class AppModel: ObservableObject {
             repeats: true
         )
         do {
-            try DeviceActivityCenter().startMonitoring(.echoFocus, during: schedule)
+            try scheduleSideEffects.startMonitoring(schedule)
+            try scheduleSideEffects.persistEnabled(true)
             scheduleEnabled = true
             if focusWindow.contains(minuteOfDay: minuteOfDay(.now)) {
                 ShieldController.apply(selection)
             }
-            appGroupDefaults.set(true, forKey: EchoAppGroup.scheduleEnabledKey)
             appGroupDefaults.set(focusWindow.startMinute, forKey: EchoAppGroup.scheduleStartMinuteKey)
             appGroupDefaults.set(focusWindow.endMinute, forKey: EchoAppGroup.scheduleEndMinuteKey)
             message = "Ежедневное расписание включено"
@@ -196,11 +198,15 @@ final class AppModel: ObservableObject {
     }
 
     private func failSchedule(_ errorMessage: String) {
-        DeviceActivityCenter().stopMonitoring([.echoFocus])
+        scheduleSideEffects.stopMonitoring()
         scheduleEnabled = false
-        appGroupDefaults?.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
-        if !focusEnabled { ShieldController.clear() }
-        message = errorMessage
+        if !focusEnabled { scheduleSideEffects.clearShields() }
+        do {
+            try scheduleSideEffects.persistEnabled(false)
+            message = errorMessage
+        } catch {
+            message = "\(errorMessage) \(error.localizedDescription)"
+        }
     }
 
     func refreshPreviewPlan() {

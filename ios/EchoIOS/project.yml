@@ -155,13 +155,28 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.core-tests
 
+  EchoAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/EchoAppTests
+    dependencies:
+      - target: Echo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.app-tests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Echo.app/Echo
+        BUNDLE_LOADER: $(TEST_HOST)
+
 schemes:
   Echo:
     build:
       targets:
         Echo: all
         EchoCoreTests: [test]
+        EchoAppTests: [test]
     test:
       gatherCoverageData: true
       targets:
         - EchoCoreTests
+        - EchoAppTests

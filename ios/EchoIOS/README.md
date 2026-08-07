@@ -26,7 +26,8 @@ Native SwiftUI companion for Echo. The project lives inside the existing Echo re
 - `ShieldConfigurationExtension/` — content shown over blocked apps.
 - `ShieldActionExtension/` — system shield button handling.
 - `DeviceActivityMonitorExtension/` — recurring schedule boundaries.
-- `Tests/EchoCoreTests/` — Xcode unit tests.
+- `Tests/EchoCoreTests/` — portable Xcode unit tests.
+- `Tests/EchoAppTests/` — host-app schedule side-effect regression tests.
 - `Verification/` — CLI verification runnable without the iPhone SDK.
 
 ## Verified on this Mac
@@ -47,7 +48,8 @@ Also verified:
 
 - all Swift files parse with the installed Swift 6.2.4 compiler;
 - all entitlements and generated plist/project files pass `plutil`;
-- XcodeGen produces seven targets: app, two static libraries, three Screen Time extensions, and the unit-test bundle;
+- XcodeGen produces eight targets: app, two static libraries, three Screen Time extensions, portable core tests, and host-app schedule tests;
+- three host-app regression tests exercise real `AppModel.setSchedule` side effects with injected fakes; they are generated into the Xcode scheme but cannot execute until full Xcode/XCTest is installed;
 - the actual `PlanView` compiles and renders through macOS SwiftUI at `390×844`; visual review passed with no overflow or clipping.
 
 ## First Xcode run

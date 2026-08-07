@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "344DD557BB76930E5A3AE036"
+               BuildableName = "EchoAppTests.xctest"
+               BlueprintName = "EchoAppTests"
+               ReferencedContainer = "container:EchoIOS.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "B9288E5315EEDBA394BD84B5"
                BuildableName = "EchoCoreTests.xctest"
                BlueprintName = "EchoCoreTests"
@@ -62,6 +76,17 @@
                BlueprintIdentifier = "B9288E5315EEDBA394BD84B5"
                BuildableName = "EchoCoreTests.xctest"
                BlueprintName = "EchoCoreTests"
+               ReferencedContainer = "container:EchoIOS.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "344DD557BB76930E5A3AE036"
+               BuildableName = "EchoAppTests.xctest"
+               BlueprintName = "EchoAppTests"
                ReferencedContainer = "container:EchoIOS.xcodeproj">
             </BuildableReference>
          </TestableReference>
