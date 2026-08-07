@@ -12,6 +12,22 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://echo.datapine.space">
 
+    <!-- Home Screen entry must install Echo, even when added from the showcase. -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Echo">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#09090f">
+    <link rel="manifest" href="<%= pwa_manifest_path %>">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <script data-showcase-pwa-entry>
+      (() => {
+        const standalone = window.navigator.standalone === true ||
+          window.matchMedia("(display-mode: standalone)").matches
+        if (standalone) window.location.replace("<%= login_path %>")
+      })()
+    </script>
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
