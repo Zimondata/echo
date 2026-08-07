@@ -1,0 +1,153 @@
+name: EchoIOS
+options:
+  bundleIdPrefix: space.datapine.echo
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CODE_SIGN_STYLE: Automatic
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  EchoCore:
+    type: library.static
+    platform: iOS
+    sources:
+      - Shared/EchoCore
+
+  EchoScreenTime:
+    type: library.static
+    platform: iOS
+    sources:
+      - Shared/EchoScreenTime
+    dependencies:
+      - target: EchoCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.screentime
+
+  Echo:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    resources:
+      - App/Assets.xcassets
+    dependencies:
+      - target: EchoCore
+      - target: EchoScreenTime
+      - target: EchoShieldConfiguration
+        embed: true
+      - target: EchoShieldAction
+        embed: true
+      - target: EchoDeviceActivityMonitor
+        embed: true
+    entitlements:
+      path: App/Echo.entitlements
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Echo
+        UILaunchScreen: {}
+        NSFamilyControlsUsageDescription: Echo uses Screen Time access only to let you choose apps that should show your plan before opening.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios
+        PRODUCT_NAME: Echo
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+
+  EchoShieldConfiguration:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShieldConfigurationExtension
+    dependencies:
+      - target: EchoCore
+      - target: EchoScreenTime
+    entitlements:
+      path: ShieldConfigurationExtension/ShieldConfiguration.entitlements
+    info:
+      path: ShieldConfigurationExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Echo Shield UI
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldConfigurationExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.shield-configuration
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: NO
+
+  EchoShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShieldActionExtension
+    entitlements:
+      path: ShieldActionExtension/ShieldAction.entitlements
+    info:
+      path: ShieldActionExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Echo Shield Actions
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.shield-action
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: NO
+
+  EchoDeviceActivityMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - DeviceActivityMonitorExtension
+    dependencies:
+      - target: EchoCore
+      - target: EchoScreenTime
+    entitlements:
+      path: DeviceActivityMonitorExtension/DeviceActivityMonitor.entitlements
+    info:
+      path: DeviceActivityMonitorExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Echo Focus Schedule
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).DeviceActivityMonitorExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.device-activity
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: NO
+
+  EchoCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/EchoCoreTests
+    dependencies:
+      - target: EchoCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: space.datapine.echo.ios.core-tests
+
+schemes:
+  Echo:
+    build:
+      targets:
+        Echo: all
+        EchoCoreTests: [test]
+    test:
+      gatherCoverageData: true
+      targets:
+        - EchoCoreTests

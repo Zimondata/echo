@@ -45,6 +45,7 @@
 
 # Ignore development files
 /.devcontainer
+/ios
 
 # Ignore Docker-related files
 /.dockerignore
