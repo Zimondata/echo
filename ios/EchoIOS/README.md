@@ -40,14 +40,14 @@ swift run EchoCoreVerification
 Expected result:
 
 ```text
-EchoCoreVerification: PASS (10 checks)
+EchoCoreVerification: PASS (12 checks)
 ```
 
 Also verified:
 
 - all Swift files parse with the installed Swift 6.2.4 compiler;
 - all entitlements and generated plist/project files pass `plutil`;
-- XcodeGen produces six targets: app, two static libraries, three Screen Time extensions, plus the unit-test bundle;
+- XcodeGen produces seven targets: app, two static libraries, three Screen Time extensions, and the unit-test bundle;
 - the actual `PlanView` compiles and renders through macOS SwiftUI at `390×844`; visual review passed with no overflow or clipping.
 
 ## First Xcode run
@@ -70,6 +70,7 @@ Screen Time behavior must be proven on a physical device. Simulator-only evidenc
 ## Current hard blockers
 
 - Only about 23 GiB is free on the Mac. A full Xcode installation normally needs substantially more working space during download and expansion. No user files or caches were deleted automatically.
+- The unattended App Store install was attempted through `mas` but stopped at the macOS administrator-password prompt. Zhenya must approve/install Xcode interactively; Gary does not enter passwords.
 - A development Team/signing identity must be selected in Xcode. Local device installation cannot be completed without the user's Apple account/team and iPhone trust/Developer Mode prompts.
 - Distribution through TestFlight/App Store requires Apple approval for the Family Controls entitlement for the host app and each Screen Time extension.
 - Production Echo does not yet expose a secure native-client auth/token flow. The current build labels its data as local preview instead of pretending to sync.
