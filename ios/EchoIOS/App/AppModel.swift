@@ -138,59 +138,69 @@ final class AppModel: ObservableObject {
     }
 
     func setSchedule(enabled: Bool) {
-        guard !enabled || authorizationStatus == .approved else {
-            scheduleEnabled = false
-            message = "Сначала разреши Screen Time"
-            return
-        }
-        guard !enabled || selectedCount > 0 else {
-            scheduleEnabled = false
-            message = "Сначала выбери приложения"
-            return
-        }
-        guard focusWindow.isValid else {
-            scheduleEnabled = false
-            message = "Начало и конец расписания должны отличаться"
-            return
-        }
+        let transition = FocusScheduleTransition(requestedEnabled: enabled, window: focusWindow)
 
-        guard let appGroupDefaults else {
-            scheduleEnabled = false
-            message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
-            return
-        }
-
-        if enabled {
-            guard persistSelection() else {
-                scheduleEnabled = false
-                return
-            }
-            let schedule = DeviceActivitySchedule(
-                intervalStart: DateComponents(hour: focusWindow.startMinute / 60, minute: focusWindow.startMinute % 60),
-                intervalEnd: DateComponents(hour: focusWindow.endMinute / 60, minute: focusWindow.endMinute % 60),
-                repeats: true
-            )
-            do {
-                try DeviceActivityCenter().startMonitoring(.echoFocus, during: schedule)
-                scheduleEnabled = true
-                if focusWindow.contains(minuteOfDay: minuteOfDay(.now)) {
-                    ShieldController.apply(selection)
-                }
-                appGroupDefaults.set(true, forKey: EchoAppGroup.scheduleEnabledKey)
-                appGroupDefaults.set(focusWindow.startMinute, forKey: EchoAppGroup.scheduleStartMinuteKey)
-                appGroupDefaults.set(focusWindow.endMinute, forKey: EchoAppGroup.scheduleEndMinuteKey)
-                message = "Ежедневное расписание включено"
-            } catch {
-                scheduleEnabled = false
-                message = error.localizedDescription
-            }
-        } else {
+        if transition.shouldStopMonitoring {
             DeviceActivityCenter().stopMonitoring([.echoFocus])
             scheduleEnabled = false
-            appGroupDefaults.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
             if !focusEnabled { ShieldController.clear() }
+
+            guard let appGroupDefaults else {
+                message = EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription
+                return
+            }
+            appGroupDefaults.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
             message = "Расписание выключено"
+            return
         }
+
+        guard authorizationStatus == .approved else {
+            failSchedule("Сначала разреши Screen Time")
+            return
+        }
+        guard selectedCount > 0 else {
+            failSchedule("Сначала выбери приложения")
+            return
+        }
+        guard transition.canStartMonitoring else {
+            failSchedule("Начало и конец расписания должны отличаться")
+            return
+        }
+        guard let appGroupDefaults else {
+            failSchedule(EchoSharedStoreError.appGroupUnavailable(EchoAppGroup.identifier).localizedDescription)
+            return
+        }
+        guard persistSelection() else {
+            failSchedule(message ?? "Не удалось сохранить настройки расписания")
+            return
+        }
+
+        let schedule = DeviceActivitySchedule(
+            intervalStart: DateComponents(hour: focusWindow.startMinute / 60, minute: focusWindow.startMinute % 60),
+            intervalEnd: DateComponents(hour: focusWindow.endMinute / 60, minute: focusWindow.endMinute % 60),
+            repeats: true
+        )
+        do {
+            try DeviceActivityCenter().startMonitoring(.echoFocus, during: schedule)
+            scheduleEnabled = true
+            if focusWindow.contains(minuteOfDay: minuteOfDay(.now)) {
+                ShieldController.apply(selection)
+            }
+            appGroupDefaults.set(true, forKey: EchoAppGroup.scheduleEnabledKey)
+            appGroupDefaults.set(focusWindow.startMinute, forKey: EchoAppGroup.scheduleStartMinuteKey)
+            appGroupDefaults.set(focusWindow.endMinute, forKey: EchoAppGroup.scheduleEndMinuteKey)
+            message = "Ежедневное расписание включено"
+        } catch {
+            failSchedule(error.localizedDescription)
+        }
+    }
+
+    private func failSchedule(_ errorMessage: String) {
+        DeviceActivityCenter().stopMonitoring([.echoFocus])
+        scheduleEnabled = false
+        appGroupDefaults?.set(false, forKey: EchoAppGroup.scheduleEnabledKey)
+        if !focusEnabled { ShieldController.clear() }
+        message = errorMessage
     }
 
     func refreshPreviewPlan() {

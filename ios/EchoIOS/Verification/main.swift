@@ -37,4 +37,11 @@ let pointSnapshot = PlanSnapshot(generatedAt: now, timezoneIdentifier: "Europe/M
 try expect(pointSnapshot.focusItem(at: now)?.id == "point", "nil-ended task must be current at its start")
 try expect(pointSnapshot.focusItem(at: now.addingTimeInterval(31 * 60)) == nil, "nil-ended task must not remain current forever")
 
-print("EchoCoreVerification: PASS (12 checks)")
+let invalidSchedule = FocusScheduleTransition(
+    requestedEnabled: false,
+    window: DailyFocusWindow(startMinute: 10 * 60, endMinute: 10 * 60)
+)
+try expect(invalidSchedule.shouldStopMonitoring, "disabling must stop monitoring even after invalid time edits")
+try expect(invalidSchedule.canStartMonitoring == false, "invalid time window must never start monitoring")
+
+print("EchoCoreVerification: PASS (14 checks)")

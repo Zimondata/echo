@@ -40,7 +40,7 @@ swift run EchoCoreVerification
 Expected result:
 
 ```text
-EchoCoreVerification: PASS (12 checks)
+EchoCoreVerification: PASS (14 checks)
 ```
 
 Also verified:
