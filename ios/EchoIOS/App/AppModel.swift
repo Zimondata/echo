@@ -3,6 +3,7 @@ import FamilyControls
 import Foundation
 import SwiftUI
 import EchoCore
+import EchoScreenTime
 
 @MainActor
 final class AppModel: ObservableObject {

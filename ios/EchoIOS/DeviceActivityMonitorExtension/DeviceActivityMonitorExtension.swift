@@ -1,4 +1,5 @@
 import DeviceActivity
+import EchoScreenTime
 import Foundation
 
 final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
