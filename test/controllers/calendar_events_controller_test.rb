@@ -566,8 +566,10 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-planner-drag-kind='task'][data-planner-drag-task-id='#{task.id}'][data-planner-drag-duration='45'][draggable='true']"
     assert_select "[data-planner-drag-kind='time-block'][data-planner-drag-time-block-id='#{block.id}'][data-planner-drag-duration='60'][draggable='true']"
     assert_select "[data-planner-drag-kind='time-block'][data-planner-drag-time-block-id='#{locked_block.id}'][draggable='false']"
-    assert_select "[data-planner-drag-kind='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-duration='60'][draggable='true']"
+    assert_select "[data-planner-drag-kind='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-duration='60'][draggable='true'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart'][data-action*='pointermove->planner-drag#pointerMove'][data-action*='pointerup->planner-drag#pointerEnd']"
     assert_select "[data-planner-drag-target='day'][data-action*='drop->planner-drag#drop']", count: 7
+    assert_select ".calendar-week .calendar-week-day[data-planner-drag-target='day'][data-calendar-date]", count: 7
+    assert_select ".calendar-week .calendar-week-event[data-planner-drag-event-id='#{event.id}'][data-planner-drag-event-lock-version='#{event.lock_version}'][data-planner-drag-local-time='#{event.start_time.in_time_zone(@user.timezone).strftime("%H:%M")}'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart']", count: 1
     assert_select "[data-planner-drag-hint]", text: /Перетащи задачу/
   end
 

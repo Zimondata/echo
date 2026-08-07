@@ -1,3 +1,26 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">Echo app icon</title>
+  <defs>
+    <radialGradient id="bg" cx="38%" cy="48%" r="72%">
+      <stop offset="0" stop-color="#21104a"/>
+      <stop offset="0.52" stop-color="#100b29"/>
+      <stop offset="1" stop-color="#070710"/>
+    </radialGradient>
+    <linearGradient id="wave" x1="20%" y1="20%" x2="84%" y2="82%">
+      <stop offset="0" stop-color="#d8a4ff"/>
+      <stop offset="0.42" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4f2bea"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <g fill="none" stroke="url(#wave)" stroke-linecap="round" filter="url(#glow)">
+    <path d="M295 286C615 76 918 292 904 574C892 811 656 950 300 790" stroke-width="70"/>
+    <path d="M300 394C548 226 772 381 765 573C758 742 577 836 302 690" stroke-width="62"/>
+    <path d="M314 474C471 366 602 462 594 568C587 669 469 715 315 616" stroke-width="56"/>
+  </g>
+  <circle cx="322" cy="545" r="43" fill="#ffffff" filter="url(#glow)"/>
 </svg>

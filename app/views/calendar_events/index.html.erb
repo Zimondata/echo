@@ -94,6 +94,8 @@
   .calendar-week-event-timed:hover { z-index: 3; filter: brightness(1.13); }
   .calendar-week-event-timed[draggable="true"] { cursor: grab; }
   .calendar-week-event-timed[draggable="true"]:active { cursor: grabbing; }
+  [data-planner-touch-enabled="true"] { touch-action: none; -webkit-user-select: none; user-select: none; }
+  .is-pointer-dragging { z-index: 30 !important; opacity: .42 !important; pointer-events: none; }
   .calendar-week-event-timed.is-dragging { opacity: .38; }
   .calendar-week-time-block { position: absolute; z-index: 2; left: 5px; right: 5px; overflow: hidden; padding: 7px 7px 5px 9px; border-radius: 8px; color: #f4f4f6; background: rgba(124,58,237,.16); box-shadow: inset 3px 0 0 #a78bfa, inset 0 0 0 1px rgba(167,139,250,.2); text-decoration: none; }
   .calendar-time-block-mobile, .calendar-agenda-time-block { color: #f4f4f6; background: rgba(124,58,237,.09); box-shadow: inset 3px 0 0 #a78bfa, inset 0 0 0 1px rgba(167,139,250,.16); text-decoration: none; }
@@ -364,7 +366,8 @@
                                     planner_drag_duration: item.duration_minutes || 60,
                                     planner_drag_local_time: item.all_day? ? "00:00" : item.start_time.in_time_zone(current_user.timezone).strftime("%H:%M"),
                                     planner_drag_update_url: calendar_event_path(item),
-                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(item))
+                                    planner_touch_enabled: calendar_event_draggable?(item),
+                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(item))
                                   } do %>
                         <span class="calendar-event-accent" style="background: <%= calendar_event_color(item) %>"></span>
                         <span class="calendar-event-copy">
@@ -421,7 +424,8 @@
                                   planner_drag_event_lock_version: event.lock_version,
                                   planner_drag_duration: event.duration_minutes || 60,
                                   planner_drag_update_url: calendar_event_path(event),
-                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                  planner_touch_enabled: calendar_event_draggable?(event),
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
                                 } do %>
                       <div class="calendar-week-event-time"><%= calendar_event_time(event, current_user.timezone) %></div>
                       <div class="calendar-week-event-title"><%= event.title %></div>
@@ -437,14 +441,31 @@
             <% @calendar_days.each do |date| %>
               <% events = @events_by_date.fetch(date, []) %>
               <% blocks = @time_blocks_by_date.fetch(date, []) %>
-              <section class="calendar-week-day <%= 'today' if date == Time.current.in_time_zone(current_user.timezone).to_date %>" data-calendar-mobile-day="<%= date.iso8601 %>">
+              <section class="calendar-week-day <%= 'today' if date == Time.current.in_time_zone(current_user.timezone).to_date %>"
+                       data-calendar-mobile-day="<%= date.iso8601 %>"
+                       data-planner-drag-target="day"
+                       data-calendar-date="<%= date.iso8601 %>">
                 <%= link_to calendar_view_path("day", date), class: "calendar-week-day-head" do %>
                   <span class="calendar-week-day-name"><%= CalendarEventsHelper::SHORT_WEEKDAYS[date.cwday - 1] %></span>
                   <span class="calendar-week-day-number"><%= date.day %></span>
                 <% end %>
                 <div class="calendar-week-events">
                   <% events.each do |event| %>
-                    <%= link_to edit_calendar_event_path(event), class: "calendar-week-event", style: "--event-color: #{calendar_event_color(event)}", data: { event_title: event.title } do %>
+                    <%= link_to edit_calendar_event_path(event),
+                                class: "calendar-week-event",
+                                style: "--event-color: #{calendar_event_color(event)}",
+                                draggable: calendar_event_draggable?(event),
+                                data: {
+                                  event_title: event.title,
+                                  planner_drag_kind: "calendar-event",
+                                  planner_drag_event_id: event.id,
+                                  planner_drag_event_lock_version: event.lock_version,
+                                  planner_drag_local_time: event.start_time.in_time_zone(current_user.timezone).strftime("%H:%M"),
+                                  planner_drag_duration: event.duration_minutes || 60,
+                                  planner_drag_update_url: calendar_event_path(event),
+                                  planner_touch_enabled: calendar_event_draggable?(event),
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                } do %>
                       <div class="calendar-week-event-time"><%= calendar_event_time(event, current_user.timezone) %></div>
                       <div class="calendar-week-event-title"><%= event.title %></div>
                     <% end %>
@@ -527,7 +548,8 @@
                                   planner_drag_event_lock_version: event.lock_version,
                                   planner_drag_duration: event.duration_minutes || 60,
                                   planner_drag_update_url: calendar_event_path(event),
-                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                  planner_touch_enabled: calendar_event_draggable?(event),
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
                                 } do %>
                       <div class="calendar-week-event-time"><%= calendar_day_item_time(item) %></div>
                       <div class="calendar-week-event-title"><%= event.title %></div>

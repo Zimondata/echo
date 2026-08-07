@@ -14,6 +14,12 @@ class PlannerDragController extends Controller {
   connect() {
     this.dragged = null
     this.dragEndedAt = 0
+    this.pointerDrag = null
+    this.pointerDropTarget = null
+  }
+
+  disconnect() {
+    this.cancelPointerDrag()
   }
 
   start(event) {
@@ -48,7 +54,107 @@ class PlannerDragController extends Controller {
   }
 
   guardClick(event) {
-    if (Date.now() - this.dragEndedAt < 300) event.preventDefault()
+    if (Date.now() - this.dragEndedAt < 500) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
+  pointerStart(event) {
+    if (event.pointerType === "mouse" || event.button !== 0) return
+
+    const source = event.currentTarget
+    const payload = this.payloadFrom(source)
+    if (!payload || (payload.kind === "time-block" && payload.locked === "1")) return
+
+    this.cancelPointerDrag()
+    this.pointerDrag = {
+      pointerId: event.pointerId,
+      source,
+      payload,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false
+    }
+    source.setPointerCapture?.(event.pointerId)
+  }
+
+  pointerMove(event) {
+    const drag = this.pointerDrag
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    if (!drag.active) {
+      const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY)
+      if (distance < 8) return
+
+      drag.active = true
+      this.dragged = drag.payload
+      drag.source.classList.add("is-dragging", "is-pointer-dragging")
+      this.announce(drag.payload.kind === "task" ? "Веди задачу к нужному времени" : "Веди событие к новому времени")
+    }
+
+    event.preventDefault()
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-planner-drag-target='day']")
+    this.previewPointerTarget(target, event.clientY)
+  }
+
+  pointerEnd(event) {
+    const drag = this.pointerDrag
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    const active = drag.active
+    const target = this.pointerDropTarget
+    const payload = drag.payload
+    let date = null
+    let time = null
+
+    if (active && target) {
+      date = target.dataset.calendarDate || target.dataset.calendarDay
+      time = target.dataset.calendarDate ? (payload.localTime || "09:00") : target.dataset.plannerDropTime
+    }
+
+    if (active) {
+      event.preventDefault()
+      this.dragEndedAt = Date.now()
+    }
+
+    this.cancelPointerDrag()
+    if (active && target) this.submit(payload, date, time)
+  }
+
+  pointerCancel(event) {
+    if (this.pointerDrag?.pointerId !== event.pointerId) return
+
+    this.cancelPointerDrag()
+    this.announce("Перенос отменён")
+  }
+
+  previewPointerTarget(target, clientY) {
+    if (this.pointerDropTarget && this.pointerDropTarget !== target) this.resetDay(this.pointerDropTarget)
+    this.pointerDropTarget = target
+    if (!target) return
+
+    if (target.dataset.calendarDate) {
+      target.classList.add("is-month-drop-target")
+      return
+    }
+
+    const slot = this.slotFor(target, clientY)
+    target.classList.add("is-planner-drop-target")
+    target.style.setProperty("--planner-drop-y", `${slot.offsetPercent}%`)
+    target.dataset.plannerDropTime = slot.time
+  }
+
+  cancelPointerDrag() {
+    const drag = this.pointerDrag
+    if (drag) {
+      drag.source.classList.remove("is-dragging", "is-pointer-dragging")
+      if (drag.source.hasPointerCapture?.(drag.pointerId)) drag.source.releasePointerCapture(drag.pointerId)
+    }
+    if (this.pointerDropTarget) this.resetDay(this.pointerDropTarget)
+    this.pointerDrag = null
+    this.pointerDropTarget = null
+    this.dragged = null
   }
 
   over(event) {
