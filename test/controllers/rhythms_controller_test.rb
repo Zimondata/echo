@@ -58,13 +58,12 @@ class RhythmsControllerTest < ActionDispatch::IntegrationTest
     assert_empty foreign.rhythm_checkins
   end
 
-  test "plan and home expose persisted rhythm depth without a sixth destination" do
+  test "home exposes persisted rhythm depth while Plan stays calendar-first" do
     rhythm = @user.rhythms.create!(name: "Мой ритм", full_version: "Полная", minimum_version: "Минимум")
     rhythm.rhythm_checkins.create!(local_date: Time.current.in_time_zone(@user.timezone).to_date, state: "full")
 
     get calendar_events_path(view: "week")
-    assert_select "[data-rhythm-plan]", text: /Мой ритм.*полностью/m
-    assert_select "[data-rhythm-plan]", text: /Сегодня: full/, count: 0
+    assert_select "[data-rhythm-plan]", count: 0
     get dashboard_path
     assert_select "[data-rhythm-home]", text: /Мой ритм.*полностью/m
     assert_select "[data-rhythm-home]", text: /Сегодня: full/, count: 0

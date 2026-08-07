@@ -8,7 +8,7 @@ image: zimondata/echo
 servers:
   web:
     hosts:
-      - 46.62.211.95
+      - 46.62.195.71
     options:
       health-interval: 10s
       health-timeout: 5s
@@ -39,11 +39,15 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
-# Note: All application secrets (telegram bot token, OpenAI API key, database URL) are stored
-# in Rails credentials (config/credentials.yml.enc) and accessed via RAILS_MASTER_KEY.
+# Runtime secrets are injected from the local secure deployment environment.
 env:
   secret:
-    - RAILS_MASTER_KEY
+    - SECRET_KEY_BASE
+    - ECHO_OWNER_TELEGRAM_ID
+    - TELEGRAM_BOT_TOKEN
+    - TELEGRAM_BOT_USERNAME
+    - TELEGRAM_WEBHOOK_SECRET
+    - OPENAI_API_KEY
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
@@ -82,7 +86,7 @@ asset_path: /rails/public/assets
 
 # Configure the image builder.
 builder:
-  arch: arm64
+  arch: amd64
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server

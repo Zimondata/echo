@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "task_lane", class: "calendar-tasks" do %>
-  <details class="task-lane" data-controller="task-lane" open>
+  <details class="task-lane" data-controller="task-lane">
     <summary class="task-lane-summary">
       <span class="task-lane-heading">Задачи без времени</span>
       <span id="task_lane_count" class="task-lane-count"><%= tasks.size %></span>
@@ -40,7 +40,7 @@
         </div>
       <% end %>
 
-      <% if calendar_view == "week" && tasks.any? %>
+      <% if %w[day week].include?(calendar_view) && tasks.any? %>
         <p class="task-drag-hint" data-planner-drag-hint><strong>Перетащи задачу</strong> на нужный час. Кнопка «Запланировать» остаётся для точного ввода.</p>
       <% end %>
 

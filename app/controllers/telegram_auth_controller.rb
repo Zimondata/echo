@@ -12,15 +12,13 @@ class TelegramAuthController < ApplicationController
     render json: result, status: :created
   end
 
-  # GET /telegram_auth/:token/status
+  # POST /telegram_auth/status
   def status
-    token = params[:token]
-    Rails.logger.info "Auth status check for token: #{token}"
-    
+    token = params[:session_token]
     session = TelegramAuthSession.find_by(session_token: token)
-    
+
     if session.nil?
-      Rails.logger.warn "Auth session not found for token: #{token}"
+      Rails.logger.warn "Telegram auth status: session not found"
       render json: { 
         status: 'not_found',
         error: 'Session not found',
@@ -32,7 +30,7 @@ class TelegramAuthController < ApplicationController
     Rails.logger.info "Auth session found: #{session.status}, expires: #{session.expires_at}"
 
     if session.expired?
-      Rails.logger.warn "Auth session expired for token: #{token}"
+      Rails.logger.warn "Telegram auth status: session expired"
       session.expire!
       render json: { 
         status: 'expired', 
@@ -43,11 +41,11 @@ class TelegramAuthController < ApplicationController
       render json: {
         status: 'confirmed',
         user_id: session.user_id,
-        redirect_url: dashboard_path,
+        redirect_url: calendar_events_path(view: "month"),
         message: 'Авторизация успешна!'
       }
     elsif session.status == 'pending'
-      Rails.logger.info "Auth session pending for token: #{token}"
+      Rails.logger.info "Telegram auth status: pending"
       render json: { 
         status: 'pending',
         message: 'Ожидание подтверждения в Telegram'

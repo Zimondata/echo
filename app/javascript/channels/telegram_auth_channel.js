@@ -6,7 +6,7 @@ const TelegramAuthChannel = {
       { channel: "TelegramAuthChannel", session_token: sessionToken },
       {
         connected() {
-          console.log("✅ Connected to TelegramAuthChannel:", sessionToken)
+          console.log("✅ Connected to TelegramAuthChannel")
         },
 
         disconnected() {
@@ -18,7 +18,7 @@ const TelegramAuthChannel = {
 
           if (data.type === 'auth_confirmed') {
             console.log("✅ Auth confirmed! Redirecting to:", data.redirect_url)
-            window.location.href = `/sessions/complete_telegram_auth?session_token=${sessionToken}`
+            window.completeTelegramAuth(sessionToken)
           }
         }
       }

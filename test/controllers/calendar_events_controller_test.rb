@@ -128,20 +128,23 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "day view renders the selected date and an honest empty state" do
+  test "day view renders the selected date as an hourly timeline even when empty" do
     get calendar_events_url(date: "2026-08-12", view: "day")
 
     assert_response :success
     assert_select "[data-calendar-view='day']"
-    assert_select "[data-empty-day]", text: /свободен/i
-    assert_select "a[href='#{new_calendar_event_path(date: "2026-08-12")}']"
+    assert_select "[data-day-timeline][data-calendar-day='2026-08-12']", count: 1
+    assert_select ".calendar-day-time-label", count: 18
+    assert_select "[data-day-free-state]", text: /свободен/i
+    assert_select "button[data-quick-create-date='2026-08-12']"
   end
 
-  test "day view includes an event that started on a previous day" do
+  test "day view clips an event that started on a previous day" do
+    zone = Time.find_zone!(@user.timezone)
     @user.calendar_events.create!(
       title: "Выезд с ночёвкой",
-      start_time: Time.zone.parse("2026-08-11 18:00"),
-      end_time: Time.zone.parse("2026-08-12 10:00"),
+      start_time: zone.local(2026, 8, 11, 18),
+      end_time: zone.local(2026, 8, 12, 10),
       event_type: "meeting",
       priority: "medium",
       life_category: "personal"
@@ -150,7 +153,115 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     get calendar_events_url(date: "2026-08-12", view: "day")
 
     assert_response :success
-    assert_select ".calendar-agenda-title", text: "Выезд с ночёвкой"
+    assert_select "[data-day-timeline] [data-day-layout-item='calendar-event'][style*='top: 0px'][style*='height: 224px']" do
+      assert_select ".calendar-week-event-time", text: "↤ 06:00–10:00"
+      assert_select ".calendar-week-event-title", text: "Выезд с ночёвкой"
+    end
+  end
+
+  test "day view clips a multi-day event on its first and final visible dates" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(
+      title: "Длинный выезд",
+      start_time: zone.local(2026, 8, 11, 18),
+      end_time: zone.local(2026, 8, 13, 10),
+      event_type: "meeting",
+      priority: "medium",
+      life_category: "personal"
+    )
+
+    get calendar_events_url(date: "2026-08-11", view: "day")
+    assert_select "[data-day-layout-item='calendar-event'][style*='top: 672px'][style*='height: 336px']" do
+      assert_select ".calendar-week-event-time", text: "18:00–24:00 ↦"
+    end
+
+    get calendar_events_url(date: "2026-08-13", view: "day")
+    assert_select "[data-day-layout-item='calendar-event'][style*='top: 0px'][style*='height: 224px']" do
+      assert_select ".calendar-week-event-time", text: "↤ 06:00–10:00"
+    end
+  end
+
+  test "events wholly before the visible timeline stay accessible outside the grid" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(
+      title: "Ранний трансфер",
+      start_time: zone.local(2026, 8, 12, 1),
+      end_time: zone.local(2026, 8, 12, 5),
+      event_type: "meeting",
+      priority: "medium"
+    )
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    assert_select "[data-day-outside-grid]", text: /Ранний трансфер/
+    assert_select "[data-day-timeline] .calendar-week-event-title", text: "Ранний трансфер", count: 0
+  end
+
+  test "overnight events and tasks ending before six are clipped to the selected date" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(
+      title: "Ночной переезд",
+      start_time: zone.local(2026, 8, 11, 23),
+      end_time: zone.local(2026, 8, 12, 5),
+      event_type: "meeting",
+      priority: "medium"
+    )
+    task = @user.tasks.create!(title: "Ночная задача", status: "scheduled")
+    task.time_blocks.create!(
+      starts_at: zone.local(2026, 8, 11, 23, 30),
+      ends_at: zone.local(2026, 8, 12, 4, 30),
+      source: "manual",
+      previous_task_status: "next"
+    )
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    assert_select "[data-day-outside-grid] a", text: /↤ 00:00–05:00 · Ночной переезд/
+    assert_select "[data-day-outside-grid] a", text: /↤ 00:00–04:30 · Ночная задача/
+  end
+
+  test "an event ending at midnight is not duplicated onto the next day" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(
+      title: "До полуночи",
+      start_time: zone.local(2026, 8, 11, 20),
+      end_time: zone.local(2026, 8, 12, 0),
+      event_type: "meeting",
+      priority: "medium"
+    )
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    assert_select ".calendar-week-event-title", text: "До полуночи", count: 0
+  end
+
+  test "overlapping events and tasks receive separate visible lanes" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(title: "Параллель A", start_time: zone.local(2026, 8, 12, 10), end_time: zone.local(2026, 8, 12, 12), event_type: "meeting", priority: "medium")
+    @user.calendar_events.create!(title: "Параллель B", start_time: zone.local(2026, 8, 12, 10, 30), end_time: zone.local(2026, 8, 12, 11, 30), event_type: "meeting", priority: "medium")
+    task = @user.tasks.create!(title: "Параллельная задача", status: "scheduled")
+    task.time_blocks.create!(starts_at: zone.local(2026, 8, 12, 10, 45), ends_at: zone.local(2026, 8, 12, 11, 15), source: "manual", previous_task_status: "next")
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    styles = css_select("[data-day-layout-item]").filter_map { |node| node["style"] if node.text.match?(/Параллель/) }
+    assert_equal 3, styles.size
+    assert_equal 3, styles.uniq.size
+    assert styles.all? { |style| style.include?("width: calc(33.333") }
+  end
+
+  test "minimum-height adjacent items receive separate visible lanes" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(title: "Короткое событие", start_time: zone.local(2026, 8, 12, 10), end_time: zone.local(2026, 8, 12, 10, 5), event_type: "meeting", priority: "medium")
+    task = @user.tasks.create!(title: "Короткая задача", status: "scheduled")
+    task.time_blocks.create!(starts_at: zone.local(2026, 8, 12, 10, 10), ends_at: zone.local(2026, 8, 12, 10, 15), source: "manual", previous_task_status: "next")
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    styles = css_select("[data-day-layout-item]").filter_map { |node| node["style"] if node.text.match?(/Коротк/) }
+    assert_equal 2, styles.size
+    assert_equal 2, styles.uniq.size
+    assert styles.all? { |style| style.include?("width: calc(50.000") }
   end
 
   test "invalid date and view fall back without crashing" do
@@ -314,7 +425,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
       date: "2026-08-05"
     }
 
-    assert_response :conflict
+    assert_redirected_to calendar_events_path(date: "2026-08-05", view: "week")
+    assert_equal "Страница устарела. Обнови календарь и повтори перенос.", flash[:alert]
     assert_equal before, event.reload.attributes.slice("start_time", "end_time")
   end
 
@@ -334,7 +446,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :conflict
+    assert_redirected_to calendar_events_path(date: "2026-08-05", view: "week")
+    assert_equal "Событие изменилось или перенос устарел. Обнови календарь и повтори.", flash[:alert]
     assert_equal server_times, event.reload.attributes.slice("start_time", "end_time")
   end
 
@@ -360,7 +473,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :conflict
+    assert_redirected_to calendar_events_path(date: "2026-08-05", view: "week")
+    assert_equal "Новое время пересекается с другим блоком или событием.", flash[:alert]
     assert_equal before, event.reload.attributes.slice("start_time", "end_time")
   end
 
@@ -457,15 +571,62 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-planner-drag-hint]", text: /Перетащи задачу/
   end
 
-  test "non-week views keep the form path and do not advertise precision drag" do
-    task = @user.tasks.create!(title: "Только форма", status: "inbox")
+  test "day view exposes precision drag while month keeps the form path" do
+    task = @user.tasks.create!(title: "Поставить во время", status: "inbox")
 
     get calendar_events_url(date: "2026-08-03", view: "day")
 
     assert_response :success
-    assert_select "[data-controller~='planner-drag']", count: 0
+    assert_select "[data-controller~='planner-drag'][data-planner-drag-view-value='day']", count: 1
+    assert_select "[data-day-timeline][data-planner-drag-target='day'][data-action*='drop->planner-drag#drop']", count: 1
+    assert_select "[data-planner-drag-task-id='#{task.id}'][draggable='true']"
+    assert_select "[data-planner-drag-hint]", text: /Перетащи задачу/
+
+    get calendar_events_url(date: "2026-08-03", view: "month")
+
+    assert_response :success
     assert_select "[data-planner-drag-task-id='#{task.id}'][draggable='false']"
     assert_select "summary", text: "Запланировать"
+  end
+
+  test "successful event drag remains in day view" do
+    zone = Time.find_zone!(@user.timezone)
+    event = @user.calendar_events.create!(title: "Перенос внутри дня", start_time: zone.local(2026, 8, 20, 9), end_time: zone.local(2026, 8, 20, 10), event_type: "plan", priority: "medium")
+
+    patch calendar_event_url(event), params: {
+      calendar_event: {
+        local_date: "2026-08-20",
+        local_time: "11:00",
+        duration_minutes: "60",
+        timezone: @user.timezone,
+        lock_version: event.lock_version
+      },
+      view: "day",
+      date: "2026-08-20"
+    }
+
+    assert_redirected_to calendar_events_path(date: "2026-08-20", view: "day")
+  end
+
+  test "all-day and longer-than-twelve-hour events are not advertised as draggable" do
+    zone = Time.find_zone!(@user.timezone)
+    all_day = @user.calendar_events.create!(title: "Весь день", start_time: zone.local(2026, 8, 20), end_time: zone.local(2026, 8, 20, 23, 59), all_day: true, event_type: "plan", priority: "medium")
+    long = @user.calendar_events.create!(title: "Длинный переезд", start_time: zone.local(2026, 8, 21, 6), end_time: zone.local(2026, 8, 21, 20), event_type: "meeting", priority: "medium")
+
+    get calendar_events_url(date: "2026-08-01", view: "month")
+
+    assert_select "a[href='#{edit_calendar_event_path(all_day)}'][draggable='false']", count: 1
+    assert_select "a[href='#{edit_calendar_event_path(long)}'][draggable='false']", count: 1
+  end
+
+  test "Plan keeps the calendar primary and task lane collapsed without side rails" do
+    get calendar_events_url(date: "2026-08-03", view: "month")
+
+    assert_response :success
+    assert_select ".calendar-workspace > .calendar-surface", count: 1
+    assert_select ".task-lane[open]", count: 0
+    assert_select ".calendar-sidebar", count: 0
+    assert_select "[data-rhythm-plan]", count: 0
   end
 
   test "task lane shows an honest empty state when nothing waits for time" do

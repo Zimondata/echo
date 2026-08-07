@@ -56,6 +56,104 @@ module CalendarEventsHelper
     remainder.zero? ? "#{hours} ч" : "#{hours} ч #{remainder} мин"
   end
 
+  def calendar_event_draggable?(event)
+    duration = event.duration_minutes || 60
+    !event.all_day? && duration.between?(5, 720)
+  end
+
+  def calendar_day_interval(record, date, timezone)
+    calendar_bounded_interval(record, date, timezone, start_hour: 6, end_hour: 24)
+  end
+
+  def calendar_day_early_interval(record, date, timezone)
+    calendar_bounded_interval(record, date, timezone, start_hour: 0, end_hour: 6)
+  end
+
+  def calendar_bounded_interval(record, date, timezone, start_hour:, end_hour:)
+    zone = ActiveSupport::TimeZone[timezone] || Time.zone
+    day_start = if start_hour.zero?
+      zone.local(date.year, date.month, date.day)
+    else
+      zone.local(date.year, date.month, date.day, start_hour)
+    end
+    day_end = if end_hour == 24
+      next_date = date.next_day
+      zone.local(next_date.year, next_date.month, next_date.day)
+    else
+      zone.local(date.year, date.month, date.day, end_hour)
+    end
+    source_start = record.is_a?(TimeBlock) ? record.starts_at.in_time_zone(zone) : record.start_time.in_time_zone(zone)
+    source_end = if record.is_a?(TimeBlock)
+      record.ends_at.in_time_zone(zone)
+    else
+      (record.end_time || record.start_time + 1.hour).in_time_zone(zone)
+    end
+    visible_start = [ source_start, day_start ].max
+    visible_end = [ source_end, day_end ].min
+    return if visible_end <= visible_start
+
+    {
+      source_start: source_start,
+      source_end: source_end,
+      start: visible_start,
+      end: visible_end,
+      day_start: day_start,
+      day_end: day_end
+    }
+  end
+
+  def calendar_day_timeline_layout(events, time_blocks, date, timezone)
+    entries = (events.map { |record| [ "calendar-event", record ] } +
+      time_blocks.map { |record| [ "time-block", record ] }).filter_map do |kind, record|
+      interval = calendar_day_interval(record, date, timezone)
+      next unless interval
+
+      minimum_render_end = interval[:start] + (32.0 / 56.0).hours
+      interval.merge(kind: kind, record: record, render_end: [ interval[:end], minimum_render_end ].max)
+    end.sort_by { |entry| [ entry[:start], entry[:end] ] }
+
+    clusters = []
+    cluster = []
+    cluster_end = nil
+    entries.each do |entry|
+      if cluster.any? && entry[:start] >= cluster_end
+        clusters << cluster
+        cluster = []
+        cluster_end = nil
+      end
+      cluster << entry
+      cluster_end = [ cluster_end, entry[:render_end] ].compact.max
+    end
+    clusters << cluster if cluster.any?
+
+    clusters.flat_map do |items|
+      lane_ends = []
+      items.each do |item|
+        lane = lane_ends.index { |lane_end| lane_end <= item[:start] } || lane_ends.length
+        lane_ends[lane] = item[:render_end]
+        item[:lane] = lane
+      end
+      items.each { |item| item[:lanes] = lane_ends.length }
+    end
+  end
+
+  def calendar_day_item_style(item)
+    top = (((item[:start] - item[:day_start]) / 1.hour) * 56).round
+    height = [ (((item[:end] - item[:start]) / 1.hour) * 56).round, 32 ].max
+    lane_width = 100.0 / item[:lanes]
+    lane_left = lane_width * item[:lane]
+    color = item[:kind] == "calendar-event" ? "--event-color: #{calendar_event_color(item[:record])}; " : ""
+    "#{color}top: #{top}px; height: #{height}px; left: calc(#{format('%.3f', lane_left)}% + 4px); right: auto; width: calc(#{format('%.3f', lane_width)}% - 8px)"
+  end
+
+  def calendar_day_item_time(item)
+    starts_at = item[:start].strftime("%H:%M")
+    ends_at = item[:end] == item[:day_end] ? "24:00" : item[:end].strftime("%H:%M")
+    prefix = item[:source_start] < item[:day_start] ? "↤ " : ""
+    suffix = item[:source_end] > item[:day_end] ? " ↦" : ""
+    "#{prefix}#{starts_at}–#{ends_at}#{suffix}"
+  end
+
   def calendar_week_event_style(event, timezone)
     starts_at = event.start_time.in_time_zone(timezone)
     ends_at = (event.end_time || event.start_time + 1.hour).in_time_zone(timezone)

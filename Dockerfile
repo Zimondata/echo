@@ -55,9 +55,12 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-# Run and own only the runtime files as a non-root user for security
+# Keep application code root-owned but readable by the unprivileged runtime user.
+# Source files may have restrictive local modes (for example 0600), so normalize
+# read/traverse permissions inside the immutable image and only chown runtime paths.
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chmod -R a+rX /rails && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 

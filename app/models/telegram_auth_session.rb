@@ -11,6 +11,22 @@ class TelegramAuthSession < ApplicationRecord
 
   before_validation :set_defaults, on: :create
 
+  def self.consume_confirmed(session_token)
+    owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"].to_s
+    return if owner_id.blank?
+
+    now = Time.current
+    scope = where(
+      session_token: session_token,
+      status: "confirmed",
+      telegram_id: owner_id
+    ).where.not(user_id: nil).where("expires_at > ?", now)
+
+    return unless scope.update_all(status: "expired", updated_at: now) == 1
+
+    find_by(session_token: session_token)
+  end
+
   def expired?
     expires_at <= Time.current
   end

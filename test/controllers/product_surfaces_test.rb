@@ -11,8 +11,8 @@ class ProductSurfacesTest < ActionDispatch::IntegrationTest
 
   test "birthday product surfaces render for the signed-in user" do
     {
-      dashboard_path => "Сейчас",
-      calendar_events_path(view: "week") => "План",
+      calendar_events_path(view: "month") => "План",
+      tasks_path => "Задачи",
       diary_entries_path => "Дневник",
       reminders_path => "Напоминания",
       health_path => "Здоровье",
@@ -24,28 +24,31 @@ class ProductSurfacesTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "signed-in root opens owner Home without the external showcase" do
+  test "signed-in root opens the monthly Plan without the external showcase" do
     get root_path
 
-    assert_redirected_to dashboard_path
+    assert_redirected_to calendar_events_path(view: "month")
     follow_redirect!
     assert_response :success
-    assert_select "[data-primary-action]", count: 1
+    assert_select "[data-calendar-view='month']", count: 1
     assert_not_includes response.body, "fonts.googleapis.com"
     assert_not_includes response.body, "unpkg.com"
   end
 
   test "desktop and mobile permanent navigation share exactly five destinations" do
-    get dashboard_path
+    get calendar_events_path(view: "month")
 
-    expected = [ "Главная", "План", "Дневник", "Напоминания", "Здоровье" ]
+    expected = [ "План", "Задачи", "Дневник", "Напоминания", "Здоровье" ]
     assert_select "nav[aria-label='Основная навигация'] [data-permanent-destination]", count: 5 do |links|
       assert_equal expected, links.map { |link| link.text.strip }
     end
     assert_select "nav[aria-label='Мобильная навигация'] [data-permanent-destination]", count: 5 do |links|
       assert_equal expected, links.map { |link| link.text.strip }
     end
-    assert_select "[data-permanent-destination]", text: /Задачи|Входящие|Агенты|Обзоры|Настройки/, count: 0
+    assert_select "nav[aria-label='Основная навигация'] a[href='#{calendar_events_path(view: "month")}']", text: "План", count: 1
+    assert_select "nav[aria-label='Основная навигация'] a[href='#{tasks_path}']", text: "Задачи", count: 1
+    assert_select "a.echo-brand[href='#{calendar_events_path(view: "month")}']", count: 1
+    assert_select "[data-permanent-destination]", text: /Главная|Входящие|Агенты|Обзоры|Настройки/, count: 0
     assert_select "header a[href^='#{inbox_path}']", count: 0
   end
 

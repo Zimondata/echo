@@ -10,8 +10,7 @@ module Telegram
 
     def process
       Rails.logger.info "=== MESSAGE HANDLER PROCESS ==="
-      Rails.logger.info "User: #{user.id} (@#{user.username})"
-      Rails.logger.info "Message: #{message.text.inspect}"
+      Rails.logger.info "Processing owner Telegram message"
 
       # Send typing indicator
       BotService.send_typing(chat_id)
@@ -88,13 +87,12 @@ module Telegram
 
     def handle_start_command
       Rails.logger.info "=== HANDLE START COMMAND ==="
-      Rails.logger.info "Message text: #{message.text.inspect}"
 
       # Check for auth deep link parameter
       # Telegram sends: "/start auth_TOKEN" or "/start@botname auth_TOKEN"
       if message.text =~ /^\/start(?:@\w+)?\s+auth_(.+)$/
         session_token = $1.strip
-        Rails.logger.info "✅ Auth request detected! Token: #{session_token}"
+        Rails.logger.info "Auth request detected"
         handle_auth_request(session_token)
         return
       end
@@ -127,13 +125,12 @@ module Telegram
 
     def handle_auth_request(session_token)
       Rails.logger.info "=== HANDLE AUTH REQUEST ==="
-      Rails.logger.info "Session token: #{session_token}"
 
       # Verify session is valid
       session = TelegramAuthSession.active.find_by(session_token: session_token)
 
       unless session
-        Rails.logger.warn "❌ Auth session not found or expired: #{session_token}"
+        Rails.logger.warn "Auth session not found or expired"
         send_reply("❌ Ссылка для входа истекла или недействительна. Попробуйте снова.")
         return
       end

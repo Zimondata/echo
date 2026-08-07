@@ -6,12 +6,14 @@ module Telegram
       end
 
       def bot_token
-        Rails.application.credentials.dig(:telegram, Rails.env.to_sym, :bot_token) ||
+        ENV["TELEGRAM_BOT_TOKEN"].presence ||
+          Rails.application.credentials.dig(:telegram, Rails.env.to_sym, :bot_token) ||
           Rails.application.credentials.dig(:telegram, :bot_token)
       end
 
       def bot_username
-        Rails.application.credentials.dig(:telegram, Rails.env.to_sym, :bot_name) ||
+        ENV["TELEGRAM_BOT_USERNAME"].presence ||
+          Rails.application.credentials.dig(:telegram, Rails.env.to_sym, :bot_name) ||
           Rails.application.credentials.dig(:telegram, :bot_name)
       end
 
@@ -32,11 +34,6 @@ module Telegram
       def send_message_with_keyboard(chat_id:, text:, keyboard:, **options)
         return unless chat_id && text && keyboard
 
-        Rails.logger.info "=== SENDING MESSAGE WITH KEYBOARD ==="
-        Rails.logger.info "Chat ID: #{chat_id}"
-        Rails.logger.info "Text: #{text}"
-        Rails.logger.info "Keyboard: #{keyboard.inspect}"
-
         reply_markup = Telegram::Bot::Types::InlineKeyboardMarkup.new(
           inline_keyboard: keyboard
         )
@@ -49,11 +46,10 @@ module Telegram
           **options
         )
 
-        Rails.logger.info "✅ Message sent successfully!"
+        Rails.logger.info "Telegram keyboard message sent"
         result
       rescue StandardError => e
-        Rails.logger.error "❌ Failed to send Telegram message with keyboard: #{e.message}"
-        Rails.logger.error e.backtrace.join("\n")
+        Rails.logger.error "Failed to send Telegram keyboard message: #{e.class}"
         nil
       end
 

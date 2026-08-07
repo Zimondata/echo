@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] ||= "test"
+ENV["ECHO_OWNER_TELEGRAM_ID"] ||= "123456789"
 require_relative "../config/environment"
 require "rails/test_help"
 

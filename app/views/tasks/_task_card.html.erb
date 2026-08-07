@@ -3,7 +3,7 @@
 <% drop_open = local_assigns[:open_action] == :drop %>
 <% schedule_open = local_assigns[:open_action] == :schedule %>
 <% schedule_values = local_assigns[:schedule_input] || {} %>
-<% drag_enabled = calendar_view == "week" && !local_assigns[:disable_drag] %>
+<% drag_enabled = %w[day week].include?(calendar_view) && !local_assigns[:disable_drag] %>
 <% drag_duration = live_task.estimate_minutes.to_i.between?(5, 720) ? live_task.estimate_minutes.to_i : 30 %>
 
 <div class="task-card" data-task-card>

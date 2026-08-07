@@ -3,7 +3,7 @@ class SessionsController < ApplicationController
   layout false, only: [:new]
 
   def new
-    redirect_to dashboard_path if current_user
+    redirect_to calendar_events_path(view: "month") if current_user
 
     # Check if there's an active session in the last 10 minutes
     # This prevents creating a new session on every page refresh
@@ -48,7 +48,7 @@ class SessionsController < ApplicationController
              )
       
       session[:user_id] = user.id
-      redirect_to dashboard_path, notice: 'Успешно вошли в систему!'
+      redirect_to calendar_events_path(view: "month"), notice: "Успешно вошли в систему!"
     else
       redirect_to root_path, alert: 'Недоступно в продакшене'
     end
@@ -56,25 +56,16 @@ class SessionsController < ApplicationController
   
   def complete_telegram_auth
     token = params[:session_token]
-    auth_session = TelegramAuthSession.confirmed.find_by(session_token: token)
+    auth_session = TelegramAuthSession.consume_confirmed(token)
 
     if auth_session&.user
       session[:user_id] = auth_session.user.id
       # Clear pending auth token since we successfully logged in
       session.delete(:pending_auth_token)
-      
-      # Handle different request types
-      if request.post?
-        render json: { success: true, redirect_url: dashboard_path }
-      else
-        redirect_to dashboard_path, notice: 'Успешно вошли в систему через Telegram!'
-      end
+
+      render json: { success: true, redirect_url: calendar_events_path(view: "month") }
     else
-      if request.post?
-        render json: { error: 'Invalid or expired session' }, status: :unauthorized
-      else
-        redirect_to login_path, alert: 'Недействительная или истёкшая сессия авторизации'
-      end
+      render json: { error: 'Invalid or expired session' }, status: :unauthorized
     end
   end
   

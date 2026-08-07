@@ -437,6 +437,8 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
   test "invalid lane is scoped to the currently authenticated second user" do
     reset!
     other_user = users(:moscow_user)
+    previous_owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"]
+    ENV["ECHO_OWNER_TELEGRAM_ID"] = other_user.telegram_id.to_s
     auth_session = TelegramAuthSession.create!
     auth_session.confirm!(other_user)
     post "/sessions/complete_telegram_auth", params: { session_token: auth_session.session_token }
@@ -447,5 +449,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_select "[data-task-card]", text: /Чужая задача/
     assert_no_match "Собрать материалы для отчёта", response.body
+  ensure
+    ENV["ECHO_OWNER_TELEGRAM_ID"] = previous_owner_id
   end
 end

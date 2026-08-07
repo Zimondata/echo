@@ -15,11 +15,17 @@ class TelegramAuthService
   end
 
   def self.confirm_auth(session_token:, telegram_user:)
-    Rails.logger.info "Confirming auth for session: #{session_token}, telegram_user: #{telegram_user.id}"
+    Rails.logger.info "Confirming Telegram auth for telegram_user: #{telegram_user.id}"
+
+    owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"].to_s
+    unless owner_id.present? && ActiveSupport::SecurityUtils.secure_compare(owner_id, telegram_user.id.to_s)
+      Rails.logger.warn "Telegram auth rejected: non-owner user"
+      return { success: false, error: "Owner access only" }
+    end
     
     session = TelegramAuthSession.active.find_by(session_token: session_token)
     unless session
-      Rails.logger.warn "Auth confirmation failed: session not found or expired for token #{session_token}"
+      Rails.logger.warn "Auth confirmation failed: session not found or expired"
       return { success: false, error: 'Session not found or expired' }
     end
 
@@ -56,8 +62,7 @@ class TelegramAuthService
   end
 
   def self.generate_deep_link(session_token)
-    bot_username = Rails.application.credentials.dig(:telegram, Rails.env.to_sym, :bot_name) ||
-                   Rails.application.credentials.dig(:telegram, :bot_name)
+    bot_username = Telegram::BotService.bot_username
     "https://t.me/#{bot_username}?start=auth_#{session_token}"
   end
 

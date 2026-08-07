@@ -1,11 +1,14 @@
 Rails.application.routes.draw do
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest, defaults: { format: :json }
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
   # ActionCable endpoint for WebSocket connections
   mount ActionCable.server => '/cable'
 
   # Activity Entries
   resources :activity_entries, only: [:index, :show, :new, :create, :edit, :update, :destroy]
-  # The landing action routes signed-in/local-owner traffic into the alpha Home.
-  root "landing#showcase"
+  # The primary domain is the owner app. Public project material remains at /showcase.
+  root "sessions#new"
   get "old", to: "landing#index"
   get "video", to: "landing#video"
   get "showcase", to: "landing#showcase"
@@ -14,13 +17,12 @@ Rails.application.routes.draw do
   # Auth routes
   namespace :telegram_auth do
     post :initiate
-    get ':token/status', action: :status, as: :status
+    post :status
   end
 
   resources :sessions, only: [:new, :create, :destroy] do
     collection do
       post :complete_telegram_auth
-      get :complete_telegram_auth
     end
   end
 

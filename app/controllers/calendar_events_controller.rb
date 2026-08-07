@@ -46,10 +46,10 @@ class CalendarEventsController < ApplicationController
 
   def update
     if drag_move_params?
-      return render plain: "Страница устарела. Обнови календарь и повтори перенос.", status: :conflict unless drag_timezone_current?
+      return drag_failure_response("Страница устарела. Обнови календарь и повтори перенос.") unless drag_timezone_current?
 
       starts_at, ends_at = drag_interval
-      return render plain: "Новое время пересекается с другим блоком или событием.", status: :conflict if drag_conflict?(starts_at, ends_at)
+      return drag_failure_response("Новое время пересекается с другим блоком или событием.") if drag_conflict?(starts_at, ends_at)
 
       @calendar_event.lock_version = Integer(params.dig(:calendar_event, :lock_version), 10)
       @calendar_event.update!(start_time: starts_at, end_time: ends_at)
@@ -64,7 +64,7 @@ class CalendarEventsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   rescue ActiveRecord::StaleObjectError, ArgumentError, TypeError
-    render plain: "Событие изменилось или перенос устарел. Обнови календарь и повтори.", status: :conflict
+    drag_failure_response("Событие изменилось или перенос устарел. Обнови календарь и повтори.")
   end
 
   def destroy
@@ -110,7 +110,7 @@ class CalendarEventsController < ApplicationController
     @events_by_date = Hash.new { |hash, date| hash[date] = [] }
     @calendar_events.each do |event|
       event_start_date = event.start_time.in_time_zone(user_zone).to_date
-      event_end_date = (event.end_time || event.start_time).in_time_zone(user_zone).to_date
+      event_end_date = ((event.end_time || event.start_time) - 0.000001).in_time_zone(user_zone).to_date
       visible_start = [ event_start_date, @range_start ].max
       visible_end = [ event_end_date, @range_end ].min
       next if visible_start > visible_end
@@ -185,7 +185,13 @@ class CalendarEventsController < ApplicationController
   end
 
   def drag_return_view
-    %w[week month].include?(params[:view]) ? params[:view] : "week"
+    VIEWS.include?(params[:view]) ? params[:view] : "week"
+  end
+
+  def drag_failure_response(message)
+    date = parsed_date(params[:date]) || parsed_date(params.dig(:calendar_event, :local_date)) ||
+      @calendar_event.start_time.in_time_zone(user_zone).to_date
+    redirect_to calendar_events_path(date: date.iso8601, view: drag_return_view), alert: message, status: :see_other
   end
 
   def drag_move_params?

@@ -12,11 +12,25 @@ class ApplicationController < ActionController::Base
   def current_user
     return @current_user if defined?(@current_user)
 
-    @current_user = if session[:user_id]
+    candidate = if session[:user_id]
       User.find_by(id: session[:user_id])
     else
       local_development_user
     end
+
+    unless owner_user?(candidate)
+      session.delete(:user_id)
+      candidate = nil
+    end
+
+    @current_user = candidate
+  end
+
+  def owner_user?(user)
+    owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"].to_s
+
+    owner_id.present? && user&.telegram_id.present? &&
+      ActiveSupport::SecurityUtils.secure_compare(owner_id, user.telegram_id.to_s)
   end
 
   def local_development_user

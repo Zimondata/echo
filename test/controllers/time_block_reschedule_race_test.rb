@@ -5,6 +5,8 @@ class TimeBlockRescheduleRaceTest < ActionDispatch::IntegrationTest
 
   setup do
     @user = users(:utc_user)
+    @previous_owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"]
+    ENV["ECHO_OWNER_TELEGRAM_ID"] = @user.telegram_id.to_s
     @title = "QA reschedule task lock boundary"
     @user.tasks.where(title: @title).destroy_all
     @task = @user.tasks.create!(title: @title, owner_type: "user", status: "scheduled")
@@ -21,6 +23,7 @@ class TimeBlockRescheduleRaceTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
+    ENV["ECHO_OWNER_TELEGRAM_ID"] = @previous_owner_id
     ActiveSupport::Notifications.unsubscribe(@subscriber) if @subscriber
     @racer&.join(5)
     @user.tasks.where(title: @title).destroy_all

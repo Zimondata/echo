@@ -1,10 +1,11 @@
 <%= link_to edit_task_time_block_path(time_block.task, time_block),
             class: "calendar-week-time-block #{'is-locked' if time_block.locked?}",
-            style: calendar_week_time_block_style(time_block, current_user.timezone),
+            style: local_assigns[:timeline_style] || calendar_week_time_block_style(time_block, current_user.timezone),
             draggable: !time_block.locked?,
             title: (time_block.locked? ? "Время зафиксировано. Открой блок, чтобы изменить." : "Перетащи, чтобы изменить время"),
             data: {
               time_block_id: time_block.id,
+              day_layout_item: local_assigns[:day_layout_item],
               planner_drag_kind: "time-block",
               planner_drag_task_id: time_block.task_id,
               planner_drag_task_lock_version: time_block.task.lock_version,
@@ -16,6 +17,6 @@
               action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" unless time_block.locked?)
             },
             aria: { label: "Изменить задачу #{time_block.task.title}" } do %>
-  <div class="calendar-week-event-time"><%= time_block_time(time_block, current_user.timezone) %> · задача</div>
+  <div class="calendar-week-event-time"><%= local_assigns[:time_label] || time_block_time(time_block, current_user.timezone) %> · задача</div>
   <div class="calendar-week-event-title"><%= time_block.task.title %></div>
 <% end %>

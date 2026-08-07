@@ -14,11 +14,19 @@ class Api::BaseController < ActionController::API
   def authenticate_user
     # Legacy API remains session-bound. Request parameters are untrusted data and
     # must never select the authenticated user.
-    @current_user = User.find_by(id: session[:user_id])
+    candidate = User.find_by(id: session[:user_id])
+    @current_user = candidate if owner_user?(candidate)
 
     return if @current_user
 
     render json: { error: "Authentication required" }, status: :unauthorized
+  end
+
+  def owner_user?(user)
+    owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"].to_s
+
+    owner_id.present? && user&.telegram_id.present? &&
+      ActiveSupport::SecurityUtils.secure_compare(owner_id, user.telegram_id.to_s)
   end
 
   def set_current_user

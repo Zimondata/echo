@@ -3,7 +3,7 @@ class LandingController < ApplicationController
   layout 'landing'
 
   def index
-    redirect_to dashboard_path if logged_in?
+    redirect_to calendar_events_path(view: "month") if logged_in?
   end
 
   def video
@@ -11,7 +11,7 @@ class LandingController < ApplicationController
   end
 
   def showcase
-    return redirect_to dashboard_path if logged_in?
+    return redirect_to calendar_events_path(view: "month") if logged_in?
 
     render layout: 'landing_showcase', template: 'landing/showcase'
   end

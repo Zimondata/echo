@@ -8,7 +8,10 @@
       <h1 class="echo-title">Задачи</h1>
       <p class="echo-subtitle">Здесь живёт намерение. Планер хранит только выбранное время.</p>
     </div>
-    <div class="echo-actions"><%= link_to "Открыть планер", calendar_events_path(view: "week"), class: "echo-button" %></div>
+    <div class="echo-actions">
+      <%= link_to "Ритмы", rhythms_path, class: "echo-button echo-button--quiet" %>
+      <%= link_to "Открыть планер", calendar_events_path(view: "month"), class: "echo-button" %>
+    </div>
   </header>
 
   <% if flash[:task_notice] %><div class="echo-notice"><%= flash[:task_notice] %></div><% end %>

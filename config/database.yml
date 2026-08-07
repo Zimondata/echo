@@ -69,16 +69,16 @@ test:
 production:
   primary:
     <<: *default
-    database: <%= Rails.root.join("db/echo_production.sqlite3") %>
+    database: <%= Rails.root.join("storage/echo_production.sqlite3") %>
   cache:
     <<: *default
-    database: <%= Rails.root.join("db/echo_production_cache.sqlite3") %>
+    database: <%= Rails.root.join("storage/echo_production_cache.sqlite3") %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: <%= Rails.root.join("db/echo_production_queue.sqlite3") %>
+    database: <%= Rails.root.join("storage/echo_production_queue.sqlite3") %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
-    database: <%= Rails.root.join("db/echo_production_cable.sqlite3") %>
+    database: <%= Rails.root.join("storage/echo_production_cable.sqlite3") %>
     migrations_paths: db/cable_migrate

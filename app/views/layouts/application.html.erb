@@ -4,7 +4,10 @@
     <title><%= content_for(:title) || "Echo — личный центр исполнения" %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Echo">
     <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="<%= pwa_manifest_path %>">
+    <link rel="apple-touch-icon" href="/icon.png">
     <meta id="echo-theme-color" name="theme-color" content="#09090f">
     <script>
       (() => {

@@ -21,7 +21,7 @@
   .calendar-view-link.active { color: #fff; background: #2b2b35; box-shadow: 0 1px 4px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.06); }
   .calendar-primary-link { gap: 8px; min-height: 42px; padding: 0 16px; border-radius: 10px; color: #fff; background: #7c3aed; box-shadow: 0 7px 20px rgba(124,58,237,.22), inset 0 1px 0 rgba(255,255,255,.18); font-size: 13px; }
   .calendar-primary-link:hover { background: #8b5cf6; transform: translateY(-1px); }
-  .calendar-workspace { display: grid; grid-template-columns: 264px minmax(0,1fr) 278px; gap: 16px; align-items: start; }
+  .calendar-workspace { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; align-items: start; }
   .calendar-surface, .calendar-side-card { background: #111116; border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.065), 0 16px 40px rgba(0,0,0,.18); overflow: hidden; }
   .calendar-sidebar { display: grid; gap: 14px; }
   .calendar-side-card { padding: 17px; }
@@ -114,22 +114,37 @@
   .calendar-week-event:hover { filter: brightness(1.12); }
   .calendar-week-event-time { color: #aaaab2; font-size: 9px; }
   .calendar-week-event-title { margin-top: 3px; overflow: hidden; text-overflow: ellipsis; color: #ededf0; font-size: 10px; font-weight: 650; }
-  .calendar-day-view { min-height: 610px; padding: 24px; }
-  .calendar-day-header { display: flex; justify-content: space-between; gap: 18px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .calendar-day-view { min-height: 610px; }
+  .calendar-day-header { display: flex; justify-content: space-between; gap: 18px; padding: 20px 22px 17px; border-bottom: 1px solid rgba(255,255,255,.06); }
   .calendar-day-heading { margin: 0; color: #f4f4f5; font-size: 20px; letter-spacing: -.02em; }
   .calendar-day-summary { margin-top: 5px; color: #777782; font-size: 12px; }
-  .calendar-agenda { max-width: 880px; display: grid; gap: 9px; }
-  .calendar-agenda-event { display: grid; grid-template-columns: 92px 4px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 15px; border-radius: 12px; color: inherit; text-decoration: none; background: #17171e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.045); }
-  .calendar-agenda-event:hover { background: #1d1d26; }
-  .calendar-agenda-time { color: #a9a9b1; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .calendar-agenda-accent { align-self: stretch; border-radius: 99px; }
-  .calendar-agenda-title { color: #f1f1f3; font-size: 13px; font-weight: 650; }
-  .calendar-agenda-description { margin-top: 4px; color: #797984; font-size: 11px; }
-  .calendar-agenda-meta { color: #696974; font-size: 10px; white-space: nowrap; }
-  .calendar-empty-day { display: flex; min-height: 410px; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .calendar-empty-icon { display: flex; width: 52px; height: 52px; align-items: center; justify-content: center; border-radius: 15px; color: #8b5cf6; background: rgba(124,58,237,.12); }
-  .calendar-empty-title { margin-top: 16px; color: #e9e9ec; font-size: 15px; font-weight: 650; }
-  .calendar-empty-text { max-width: 320px; margin: 7px 0 17px; color: #73737e; font-size: 12px; line-height: 1.5; }
+  .calendar-day-all-day { display: grid; grid-template-columns: 72px minmax(0,1fr); min-height: 46px; border-bottom: 1px solid rgba(255,255,255,.06); background: #0f0f14; }
+  .calendar-day-all-day-label { padding: 14px 10px; border-right: 1px solid rgba(255,255,255,.055); color: #6f6f79; font-size: 9px; text-align: right; text-transform: uppercase; }
+  .calendar-day-all-day-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+  .calendar-day-all-day-item { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 8px; color: #f1f1f3; background: color-mix(in srgb, var(--event-color) 16%, #17171e); box-shadow: inset 3px 0 0 var(--event-color), inset 0 0 0 1px rgba(255,255,255,.045); font-size: 11px; font-weight: 650; text-decoration: none; }
+  .calendar-day-timeline-shell { position: relative; display: grid; grid-template-columns: 72px minmax(0,1fr); height: 1008px; background-color: var(--surface); background-image: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 52%, transparent) 27px, color-mix(in srgb, var(--line) 52%, transparent) 28px, transparent 28px, transparent 55px, var(--line) 55px, var(--line) 56px); background-size: 100% 56px; }
+  .calendar-day-times { position: relative; border-right: 1px solid rgba(255,255,255,.055); }
+  .calendar-day-time-label { position: absolute; right: 11px; transform: translateY(-6px); color: #52525c; font-size: 9px; font-variant-numeric: tabular-nums; }
+  .calendar-day-column { position: relative; min-width: 0; }
+  .calendar-day-column.today { background: rgba(124,58,237,.028); }
+  .calendar-day-column.is-planner-drop-target { background: rgba(124,58,237,.07); }
+  .calendar-day-column.is-planner-drop-target::after { content: ""; position: absolute; z-index: 6; left: 6px; right: 6px; top: var(--planner-drop-y); height: 2px; border-radius: 99px; background: #f5b544; box-shadow: 0 0 0 4px rgba(245,181,68,.12); pointer-events: none; }
+  .calendar-day-column.is-planner-drop-target::before { content: attr(data-planner-drop-time); position: absolute; z-index: 7; right: 8px; top: calc(var(--planner-drop-y) - 22px); padding: 3px 6px; border-radius: 6px; color: #1c1405; background: #f5b544; font-size: 9px; font-weight: 750; pointer-events: none; }
+  .calendar-day-timeline-shell .calendar-current-time-line { left: 72px; }
+  .calendar-day-column .calendar-week-event-timed, .calendar-day-column .calendar-week-time-block { left: 8px; right: 8px; }
+  .calendar-day-free-state { position: absolute; z-index: 1; top: 70px; left: 18px; right: 18px; padding: 13px 14px; border-radius: 10px; color: #777782; background: color-mix(in srgb, var(--surface-raised) 82%, transparent); box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; line-height: 1.45; white-space: normal; pointer-events: none; }
+  .calendar-day-controls { border-top: 1px solid var(--line); background: var(--surface-inset); }
+  .calendar-day-controls > summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 18px; color: var(--ink-secondary); font-size: 11px; font-weight: 700; cursor: pointer; list-style: none; }
+  .calendar-day-controls > summary::-webkit-details-marker { display: none; }
+  .calendar-day-controls > summary::after { content: "▾"; color: var(--ink-muted); transition: transform .15s ease; }
+  .calendar-day-controls[open] > summary::after { transform: rotate(180deg); }
+  .calendar-day-control-list { display: grid; gap: 7px; padding: 0 12px 12px; }
+  .calendar-day-control-list .calendar-agenda-event { display: grid; grid-template-columns: 84px 3px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px; border-radius: 10px; color: inherit; background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--line); }
+  .calendar-day-control-list .calendar-agenda-time { color: var(--ink-secondary); font-size: 10px; font-weight: 650; }
+  .calendar-day-control-list .calendar-agenda-accent { align-self: stretch; border-radius: 99px; }
+  .calendar-day-control-list .calendar-agenda-title { color: var(--ink); font-size: 11px; font-weight: 650; }
+  .calendar-day-control-list .calendar-agenda-description { margin-top: 3px; color: var(--ink-muted); font-size: 9px; }
+  .calendar-day-control-list .calendar-agenda-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; color: var(--ink-muted); font-size: 9px; }
   .calendar-mobile-only { display: none; }
   .calendar-flash { max-width: 1680px; margin: 12px auto 0; padding: 0 24px; }
   .calendar-flash-message { padding: 10px 13px; border-radius: 10px; color: #d8d8dd; background: #181820; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); font-size: 12px; }
@@ -166,29 +181,17 @@
   .calendar-quick-submit { color: var(--accent-ink); background: var(--accent); }
 
 
-  @media (max-width: 1280px) {
-    .calendar-workspace { grid-template-columns: minmax(0,1fr); }
-    .calendar-surface { order: 1; }
-    .calendar-tasks { order: 2; }
-    .calendar-sidebar { order: 3; }
-  }
-  @media (max-width: 980px) {
-    .calendar-workspace { grid-template-columns: minmax(0,1fr); }
-    .calendar-surface { order: 1; }
-    .calendar-tasks { order: 2; }
-    .calendar-sidebar { display: none; order: 3; }
-  }
-
   @media (max-width: 700px) {
-    .calendar-frame { padding: 16px 10px 24px; }
+    .calendar-frame { padding: 16px 10px calc(96px + env(safe-area-inset-bottom)); overflow-x: clip; }
     .calendar-toolbar { display: block; margin-bottom: 12px; }
-    .calendar-title-row { justify-content: space-between; }
+    .calendar-title-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; }
     .calendar-title { font-size: 25px; }
     .calendar-subtitle { display: none; }
-    .calendar-toolbar-actions { display: grid; grid-template-columns: auto 1fr auto; margin-top: 13px; gap: 7px; }
-    .calendar-view-switch { justify-content: center; }
+    .calendar-toolbar-actions { display: grid; grid-template-columns: auto minmax(0,1fr) auto; margin-top: 13px; gap: 7px; }
+    .calendar-today-link { grid-column: 1; grid-row: 1; }
+    .calendar-view-switch { grid-column: 1 / -1; grid-row: 2; width: 100%; justify-content: center; }
     .calendar-view-link { flex: 1; padding: 0 10px; }
-    .calendar-primary-link { width: 42px; padding: 0; }
+    .calendar-primary-link { grid-column: 3; grid-row: 1; width: 42px; padding: 0; }
     .calendar-primary-label { display: none; }
     .calendar-today-link { padding: 0 11px; }
     .calendar-surface { border-radius: 12px; }
@@ -199,8 +202,8 @@
     .calendar-day-link { width: 24px; height: 24px; border-radius: 7px; font-size: 10px; }
     .calendar-month-events { gap: 3px; margin-top: 4px; }
     .calendar-event-chip { display: block; padding: 4px; border-radius: 5px; background: #181820; box-shadow: inset 2px 0 0 var(--event-color); }
-    .calendar-event-accent, .calendar-event-title { display: none; }
-    .calendar-event-time { overflow: hidden; display: block; color: #aaaab2; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+    .calendar-event-accent, .calendar-event-time { display: none; }
+    .calendar-event-title { overflow: hidden; display: block; color: var(--ink-secondary); font-size: 8px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
     .calendar-more { margin-top: 3px; font-size: 8px; }
     .calendar-week-desktop { display: none; }
     .calendar-week { display: block; }
@@ -209,14 +212,16 @@
     .calendar-week-day-number { order: -1; margin-top: 0; }
     .calendar-week-events { grid-template-columns: 1fr; }
     .calendar-week-empty { color: #555560; font-size: 11px; }
-    .calendar-day-view { min-height: 520px; padding: 16px 12px; }
+    .calendar-day-view { min-height: 520px; }
     .calendar-day-header { align-items: flex-start; }
     .calendar-day-heading { font-size: 17px; }
-    .calendar-agenda-event { grid-template-columns: 72px 3px minmax(0,1fr); gap: 9px; padding: 12px 10px; }
-    .calendar-agenda-meta { display: none; }
-    .calendar-agenda-time-block .calendar-agenda-meta { display: flex; grid-column: 3; flex-wrap: wrap; align-items: center; gap: 8px; white-space: normal; }
-    .calendar-agenda-time-block .calendar-time-block-undo, .calendar-agenda-time-block .calendar-time-block-edit, .calendar-agenda-time-block .calendar-time-block-reschedule-undo { min-height: 44px; }
-    .calendar-agenda-time { font-size: 10px; }
+    .calendar-day-all-day, .calendar-day-timeline-shell { grid-template-columns: 52px minmax(0,1fr); }
+    .calendar-day-all-day-label { padding-inline: 4px; font-size: 8px; }
+    .calendar-day-time-label { right: 7px; font-size: 8px; }
+    .calendar-day-timeline-shell .calendar-current-time-line { left: 52px; }
+    .calendar-day-column .calendar-week-event-timed, .calendar-day-column .calendar-week-time-block { left: 5px; right: 5px; }
+    .calendar-day-control-list .calendar-agenda-event { grid-template-columns: 62px 3px minmax(0,1fr); }
+    .calendar-day-control-list .calendar-agenda-meta { grid-column: 3; justify-content: flex-start; }
     .calendar-mobile-only { display: inline-flex; }
     .calendar-quick-dialog { width: 100%; max-width: none; max-height: calc(100vh - 12px); margin: auto 0 0; border-radius: 20px 20px 0 0; }
     .calendar-quick-shell { padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
@@ -254,11 +259,11 @@
   .today .calendar-day-link, .calendar-week-head-day.today .calendar-week-head-number, .calendar-week-day.today .calendar-week-day-number { color: var(--accent-ink); background: var(--accent); }
   .calendar-more { color: var(--accent); }
   .calendar-time-block-chip, .calendar-week-time-block, .calendar-time-block-mobile, .calendar-agenda-time-block {
-    color: var(--ink); background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, var(--line));
+    color: var(--ink); background: var(--fixed-soft); box-shadow: inset 3px 0 0 var(--fixed), inset 0 0 0 1px color-mix(in srgb, var(--fixed) 28%, var(--line));
   }
-  .calendar-time-block-accent { background: repeating-linear-gradient(to bottom, var(--accent) 0 4px, transparent 4px 8px); }
+  .calendar-time-block-accent { background: repeating-linear-gradient(to bottom, var(--fixed) 0 4px, transparent 4px 8px); }
   .calendar-week-timeline { background-color: var(--surface); background-image: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 52%, transparent) 27px, color-mix(in srgb, var(--line) 52%, transparent) 28px, transparent 28px, transparent 55px, var(--line) 55px, var(--line) 56px); background-size: 100% 56px; }
-  .calendar-week-times, .calendar-week-column, .calendar-week-head-spacer, .calendar-week-head-day, .calendar-week-day, .calendar-day-header { border-color: var(--line); }
+  .calendar-week-times, .calendar-week-column, .calendar-week-head-spacer, .calendar-week-head-day, .calendar-week-day, .calendar-day-header, .calendar-day-times, .calendar-day-all-day, .calendar-day-all-day-label { border-color: var(--line); }
   .calendar-week-column.today, .calendar-week-head-day.today, .calendar-week-day.today { background: var(--accent-soft); }
   .calendar-week-column.is-planner-drop-target { background: var(--accent-soft); }
   .calendar-week-column.is-planner-drop-target::after { background: var(--fixed); box-shadow: 0 0 0 4px var(--fixed-soft); }
@@ -313,28 +318,11 @@
       </div>
     </header>
 
-    <section class="calendar-side-card mb-4" data-rhythm-plan>
-      <div class="calendar-side-heading"><span>Ритмы</span><%= link_to "Открыть", rhythms_path, class: "calendar-more" %></div>
-      <% if @rhythms.any? %>
-        <div class="calendar-upcoming">
-          <% @rhythms.each do |rhythm| %>
-            <% checkin = rhythm.rhythm_checkins.find { |item| item.local_date == @rhythm_today } %>
-            <%= link_to rhythms_path(anchor: "rhythm-#{rhythm.id}"), class: "calendar-upcoming-item" do %>
-              <span class="calendar-upcoming-line" style="background:var(--accent)"></span>
-              <span><span class="calendar-upcoming-title"><%= rhythm.name %></span><span class="calendar-upcoming-meta"><%= checkin ? "Сегодня: #{rhythm_state_label(checkin.state)}" : "Полностью · минимум · пропуск" %></span></span>
-            <% end %>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="calendar-empty-compact">Ритмов пока нет. Можно создать до трёх.</p>
-      <% end %>
-    </section>
-
     <div class="calendar-workspace"
-         data-controller="<%= "planner-drag" if %w[week month].include?(@calendar_view) %>"
+         data-controller="planner-drag"
          data-planner-drag-timezone-value="<%= current_user.timezone %>"
          data-planner-drag-view-value="<%= @calendar_view %>">
-      <% if %w[week month].include?(@calendar_view) %><div class="planner-drag-status" data-planner-drag-target="status" role="status" aria-live="polite"></div><% end %>
+      <div class="planner-drag-status" data-planner-drag-target="status" role="status" aria-live="polite"></div>
       <%= render "calendar_events/task_lane",
                  task: @task,
                  tasks: @unscheduled_tasks,
@@ -367,8 +355,8 @@
                       <%= link_to edit_calendar_event_path(item),
                                   class: "calendar-event-chip",
                                   style: "--event-color: #{calendar_event_color(item)}",
-                                  draggable: true,
-                                  title: "Перетащи на другой день",
+                                  draggable: calendar_event_draggable?(item),
+                                  title: (calendar_event_draggable?(item) ? "Перетащи на другой день" : "Открой событие, чтобы изменить дату"),
                                   data: {
                                     planner_drag_kind: "calendar-event",
                                     planner_drag_event_id: item.id,
@@ -376,7 +364,7 @@
                                     planner_drag_duration: item.duration_minutes || 60,
                                     planner_drag_local_time: item.all_day? ? "00:00" : item.start_time.in_time_zone(current_user.timezone).strftime("%H:%M"),
                                     planner_drag_update_url: calendar_event_path(item),
-                                    action: "dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick"
+                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(item))
                                   } do %>
                         <span class="calendar-event-accent" style="background: <%= calendar_event_color(item) %>"></span>
                         <span class="calendar-event-copy">
@@ -424,8 +412,8 @@
                     <%= link_to edit_calendar_event_path(event),
                                 class: "calendar-week-event-timed",
                                 style: calendar_week_event_style(event, current_user.timezone),
-                                draggable: true,
-                                title: "Перетащи, чтобы изменить время",
+                                draggable: calendar_event_draggable?(event),
+                                title: (calendar_event_draggable?(event) ? "Перетащи, чтобы изменить время" : "Открой событие, чтобы изменить время"),
                                 data: {
                                   event_title: event.title,
                                   planner_drag_kind: "calendar-event",
@@ -433,7 +421,7 @@
                                   planner_drag_event_lock_version: event.lock_version,
                                   planner_drag_duration: event.duration_minutes || 60,
                                   planner_drag_update_url: calendar_event_path(event),
-                                  action: "dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick"
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
                                 } do %>
                       <div class="calendar-week-event-time"><%= calendar_event_time(event, current_user.timezone) %></div>
                       <div class="calendar-week-event-title"><%= event.title %></div>
@@ -469,72 +457,105 @@
           </div>
         <% else %>
           <% events = @events_by_date.fetch(@current_date, []) %>
+          <% all_day_events = events.select(&:all_day?) %>
+          <% timed_events = events.reject(&:all_day?) %>
           <% blocks = @time_blocks_by_date.fetch(@current_date, []) %>
-          <% agenda_items = (events + blocks).sort_by { |item| item.is_a?(TimeBlock) ? item.starts_at : item.start_time } %>
+          <% timeline_layout = calendar_day_timeline_layout(timed_events, blocks, @current_date, current_user.timezone) %>
+          <% outside_timed_events = timed_events.filter_map { |event| interval = calendar_day_early_interval(event, @current_date, current_user.timezone); interval&.merge(record: event) } %>
+          <% outside_blocks = blocks.filter_map { |block| interval = calendar_day_early_interval(block, @current_date, current_user.timezone); interval&.merge(record: block) } %>
           <div class="calendar-day-view">
             <header class="calendar-day-header">
               <div>
                 <h2 class="calendar-day-heading"><%= calendar_day_heading(@current_date) %></h2>
-                <div class="calendar-day-summary"><%= agenda_items.empty? ? "День свободен" : "#{events.size} событий · #{blocks.size} задач" %></div>
+                <div class="calendar-day-summary"><%= events.empty? && blocks.empty? ? "День свободен" : "#{events.size} событий · #{blocks.size} задач во времени" %></div>
               </div>
               <button type="button" class="calendar-icon-link calendar-mobile-only" aria-label="Создать" data-action="calendar-quick-create#open" data-quick-create-date="<%= @current_date.iso8601 %>" data-quick-create-time="09:00">＋</button>
             </header>
-            <% if agenda_items.any? %>
-              <div class="calendar-agenda">
-                <% agenda_items.each do |item| %>
-                  <% if item.is_a?(TimeBlock) %>
-                    <%= render "calendar_events/time_block_day", time_block: item %>
-                  <% else %>
-                    <%= link_to edit_calendar_event_path(item), class: "calendar-agenda-event" do %>
-                      <div class="calendar-agenda-time"><%= calendar_event_time(item, current_user.timezone) %></div>
-                      <div class="calendar-agenda-accent" style="background: <%= calendar_event_color(item) %>"></div>
-                      <div>
-                        <div class="calendar-agenda-title"><%= item.title %></div>
-                        <% if item.description.present? %><div class="calendar-agenda-description"><%= item.description %></div><% end %>
-                      </div>
-                      <div class="calendar-agenda-meta"><%= item.life_category_info[:label] %> · <%= calendar_event_duration_label(item) %></div>
+
+            <% if all_day_events.any? %>
+              <div class="calendar-day-all-day">
+                <div class="calendar-day-all-day-label">Весь день</div>
+                <div class="calendar-day-all-day-items">
+                  <% all_day_events.each do |event| %>
+                    <%= link_to event.title, edit_calendar_event_path(event), class: "calendar-day-all-day-item", style: "--event-color: #{calendar_event_color(event)}" %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <% if outside_timed_events.any? || outside_blocks.any? %>
+              <div class="calendar-day-all-day calendar-day-outside-grid" data-day-outside-grid>
+                <div class="calendar-day-all-day-label">00:00–06:00</div>
+                <div class="calendar-day-all-day-items">
+                  <% outside_timed_events.each do |item| %>
+                    <% event = item[:record] %>
+                    <%= link_to "#{calendar_day_item_time(item)} · #{event.title}", edit_calendar_event_path(event), class: "calendar-day-all-day-item", style: "--event-color: #{calendar_event_color(event)}" %>
+                  <% end %>
+                  <% outside_blocks.each do |item| %>
+                    <% block = item[:record] %>
+                    <%= link_to "#{calendar_day_item_time(item)} · #{block.task.title}", edit_task_time_block_path(block.task, block), class: "calendar-day-all-day-item calendar-day-outside-task" %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="calendar-day-timeline-shell">
+              <div class="calendar-day-times">
+                <% (6..23).each do |hour| %><span class="calendar-day-time-label" style="top: <%= (hour - 6) * 56 %>px"><%= format("%02d:00", hour) %></span><% end %>
+              </div>
+              <% if @current_date == Time.current.in_time_zone(current_user.timezone).to_date %>
+                <div class="calendar-current-time-line" data-current-time-line style="top: <%= calendar_current_time_top(current_user.timezone) %>px" aria-label="Текущее время"></div>
+              <% end %>
+              <div class="calendar-day-column <%= 'today' if @current_date == Time.current.in_time_zone(current_user.timezone).to_date %>"
+                   data-day-timeline
+                   data-calendar-day="<%= @current_date.iso8601 %>"
+                   data-planner-drag-target="day"
+                   data-action="click->calendar-quick-create#openWeek dragover->planner-drag#over dragleave->planner-drag#leave drop->planner-drag#drop">
+                <% timeline_layout.each do |item| %>
+                  <% if item[:kind] == "calendar-event" %>
+                    <% event = item[:record] %>
+                    <%= link_to edit_calendar_event_path(event),
+                                class: "calendar-week-event-timed",
+                                style: calendar_day_item_style(item),
+                                draggable: calendar_event_draggable?(event),
+                                title: (calendar_event_draggable?(event) ? "Перетащи, чтобы изменить время" : "Открой событие, чтобы изменить время"),
+                                data: {
+                                  day_layout_item: "calendar-event",
+                                  event_title: event.title,
+                                  planner_drag_kind: "calendar-event",
+                                  planner_drag_event_id: event.id,
+                                  planner_drag_event_lock_version: event.lock_version,
+                                  planner_drag_duration: event.duration_minutes || 60,
+                                  planner_drag_update_url: calendar_event_path(event),
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                } do %>
+                      <div class="calendar-week-event-time"><%= calendar_day_item_time(item) %></div>
+                      <div class="calendar-week-event-title"><%= event.title %></div>
                     <% end %>
+                  <% else %>
+                    <%= render "calendar_events/time_block_week",
+                               time_block: item[:record],
+                               timeline_style: calendar_day_item_style(item),
+                               time_label: calendar_day_item_time(item),
+                               day_layout_item: "time-block" %>
                   <% end %>
                 <% end %>
+                <% if timeline_layout.empty? %>
+                  <div class="calendar-day-free-state" data-day-free-state>День свободен на шкале 06:00–24:00. Создай событие или перетащи сюда задачу.</div>
+                <% end %>
               </div>
-            <% else %>
-              <div class="calendar-empty-day" data-empty-day>
-                <div class="calendar-empty-icon" aria-hidden="true">✓</div>
-                <div class="calendar-empty-title">Этот день свободен</div>
-                <p class="calendar-empty-text">Оставь его пустым или добавь только то, для чего действительно нужно время.</p>
-                <button type="button" class="calendar-primary-link" data-action="calendar-quick-create#open" data-quick-create-date="<%= @current_date.iso8601 %>" data-quick-create-time="09:00">Создать</button>
-                <noscript><%= link_to "Создать событие", new_calendar_event_path(date: @current_date.iso8601), class: "calendar-primary-link" %></noscript>
-              </div>
+            </div>
+            <% if blocks.any? %>
+              <details class="calendar-day-controls" <%= "open" if flash[:time_block_reschedule_undo].present? %>>
+                <summary>Управление задачами во времени (<%= blocks.size %>)</summary>
+                <div class="calendar-day-control-list">
+                  <% blocks.each do |time_block| %><%= render "calendar_events/time_block_day", time_block: time_block %><% end %>
+                </div>
+              </details>
             <% end %>
           </div>
         <% end %>
       </main>
-
-      <aside class="calendar-sidebar" aria-label="Ближайшие события и категории">
-        <section class="calendar-side-card">
-          <div class="calendar-side-heading"><span>Ближайшее</span><span class="calendar-count"><%= @upcoming_events.size %></span></div>
-          <div class="calendar-upcoming">
-            <% @upcoming_events.each do |event| %>
-              <%= link_to edit_calendar_event_path(event), class: "calendar-upcoming-item" do %>
-                <span class="calendar-upcoming-line" style="background: <%= calendar_event_color(event) %>"></span>
-                <span>
-                  <span class="calendar-upcoming-title"><%= event.title %></span>
-                  <span class="calendar-upcoming-meta"><%= event.start_time.in_time_zone(current_user.timezone).strftime("%d.%m · %H:%M") %></span>
-                </span>
-              <% end %>
-            <% end %>
-            <% if @upcoming_events.empty? %><div class="calendar-empty-compact">Впереди пока ничего. Хорошее место для нового плана.</div><% end %>
-          </div>
-        </section>
-        <section class="calendar-side-card">
-          <div class="calendar-side-heading"><span>Сферы</span><span class="calendar-shortcut">цвет события</span></div>
-          <div class="calendar-category-list">
-            <% CalendarEvent::LIFE_CATEGORIES.each_value do |category| %>
-              <div class="calendar-category"><span class="calendar-category-label"><span class="calendar-category-dot" style="background: <%= category[:color] %>"></span><%= category[:label] %></span></div>
-            <% end %>
-          </div>
-        </section>
-      </aside>
     </div>
   </div>
   <%= render "calendar_events/quick_create" %>

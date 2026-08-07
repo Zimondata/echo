@@ -1,18 +1,18 @@
 class TelegramWebhookJob < ApplicationJob
   queue_as :default
+  self.log_arguments = false
 
   def perform(update_data)
-    Rails.logger.info "=== TELEGRAM WEBHOOK RECEIVED ==="
-    Rails.logger.info "Update data: #{update_data.inspect}"
-
     update = Telegram::Bot::Types::Update.new(update_data)
+    sender = update.message&.from || update.callback_query&.from
+
+    unless owner_sender?(sender)
+      Rails.logger.warn "Telegram update rejected: non-owner sender"
+      return
+    end
 
     if update.message
-      # Handle regular message
       message = update.message
-      Rails.logger.info "Message text: #{message.text.inspect}"
-      Rails.logger.info "From user: #{message.from.id} (@#{message.from.username})"
-
       user = find_or_create_user(message.from)
       Telegram::MessageHandler.new(user, message).process
     elsif update.callback_query
@@ -32,6 +32,13 @@ class TelegramWebhookJob < ApplicationJob
   end
 
   private
+
+  def owner_sender?(sender)
+    owner_id = ENV["ECHO_OWNER_TELEGRAM_ID"].to_s
+
+    owner_id.present? && sender&.id.present? &&
+      ActiveSupport::SecurityUtils.secure_compare(owner_id, sender.id.to_s)
+  end
 
   def handle_callback_query(callback_query)
     # Get user
@@ -299,7 +306,7 @@ class TelegramWebhookJob < ApplicationJob
         {
           type: 'auth_confirmed',
           user_id: result[:user].id,
-          redirect_url: Rails.application.routes.url_helpers.dashboard_path
+          redirect_url: Rails.application.routes.url_helpers.calendar_events_path(view: "month")
         }
       )
 

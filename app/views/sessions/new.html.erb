@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Echo">
+  <meta name="theme-color" content="#09090f">
+  <link rel="manifest" href="<%= pwa_manifest_path %>">
+  <link rel="apple-touch-icon" href="/icon.png">
   <title>Вход - Echo</title>
   <%= csrf_meta_tags %>
   <%= action_cable_meta_tag %>
@@ -166,6 +171,23 @@
     const sessionToken = '<%= @auth_data[:session_token] %>';
     const expiresAt = new Date('<%= @auth_data[:expires_at].iso8601 %>');
     const qrData = '<%= @auth_data[:qr_data] %>';
+    const csrfToken = document.querySelector('[name="csrf-token"]').content;
+
+    window.completeTelegramAuth = async (token = sessionToken) => {
+      const response = await fetch('/sessions/complete_telegram_auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ session_token: token })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        window.location.href = data.redirect_url;
+      }
+    };
 
     // Wait for DOM and modules to load
     document.addEventListener('DOMContentLoaded', () => {
@@ -195,7 +217,14 @@
       // Добавляем периодическую проверку статуса как fallback
       const checkAuthStatus = async () => {
         try {
-          const response = await fetch(`/telegram_auth/${sessionToken}/status`);
+          const response = await fetch('/telegram_auth/status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({ session_token: sessionToken })
+          });
           const data = await response.json();
           
           console.log('📊 Auth status check:', data);
@@ -210,10 +239,7 @@
             document.querySelector('#auth-status').innerHTML = 
               '<div class="success-message" style="text-align: center; color: #10B981; font-weight: bold;">✅ Авторизация успешна! Перенаправление...</div>';
             
-            // Перенаправляем через 1 секунду
-            setTimeout(() => {
-              window.location.href = `/sessions/complete_telegram_auth?session_token=${sessionToken}`;
-            }, 1000);
+            await window.completeTelegramAuth(sessionToken);
           }
         } catch (error) {
           console.error('❌ Error checking auth status:', error);
@@ -247,45 +273,6 @@
     }
     updateTimer();
 
-    // Polling fallback
-    let pollingInterval;
-    function startPolling() {
-      if (pollingInterval) return; // Already polling
-
-      pollingInterval = setInterval(() => {
-        fetch(`/telegram_auth/${sessionToken}/status`)
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'confirmed') {
-              clearInterval(pollingInterval);
-
-              // Complete auth
-              fetch('/sessions/complete_telegram_auth', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ session_token: sessionToken })
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  window.location.href = data.redirect_url;
-                }
-              });
-            } else if (data.status === 'expired') {
-              clearInterval(pollingInterval);
-              document.getElementById('auth-status').innerHTML = `
-                <p class="text-orange-400">⏱️ Время истекло. <a href="/login" class="text-violet-400 underline">Обновить</a></p>
-              `;
-            }
-          })
-          .catch(error => {
-            console.error('Polling error:', error);
-          });
-      }, 2000);
-    }
   </script>
 </body>
 </html>
