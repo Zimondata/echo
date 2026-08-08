@@ -78,4 +78,36 @@ class TelegramWebhookJobTest < ActiveJob::TestCase
       TelegramWebhookJob.perform_now(update)
     end
   end
+
+  test "drops an owner auth callback from a group before minting a browser handoff" do
+    user = users(:john)
+    ENV["ECHO_OWNER_TELEGRAM_ID"] = user.telegram_id.to_s
+    auth_session = TelegramAuthSession.create!
+    update = {
+      "update_id" => 11,
+      "callback_query" => {
+        "id" => "callback-group",
+        "from" => {
+          "id" => user.telegram_id,
+          "is_bot" => false,
+          "first_name" => user.first_name,
+          "username" => user.username
+        },
+        "message" => {
+          "message_id" => 21,
+          "date" => Time.current.to_i,
+          "chat" => { "id" => -100_123_456, "type" => "group" },
+          "text" => "Подтвердить вход"
+        },
+        "chat_instance" => "instance-group",
+        "data" => "telegram_auth_confirm_#{auth_session.session_token}"
+      }
+    }
+
+    assert_no_difference "TelegramAuthSession.count" do
+      TelegramWebhookJob.perform_now(update)
+    end
+
+    assert_equal "pending", auth_session.reload.status
+  end
 end

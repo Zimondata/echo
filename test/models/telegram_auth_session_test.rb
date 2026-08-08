@@ -70,4 +70,16 @@ class TelegramAuthSessionTest < ActiveSupport::TestCase
     assert_equal 1, results.count(nil)
     refute results.any? { |result| result.is_a?(Exception) }
   end
+
+  test "confirm rejects a stale second claimant" do
+    auth_session = TelegramAuthSession.create!
+    stale_copy = TelegramAuthSession.find(auth_session.id)
+
+    auth_session.confirm!(@user)
+
+    assert_raises(ActiveRecord::RecordNotSaved) do
+      stale_copy.confirm!(@user)
+    end
+    assert_equal "confirmed", stale_copy.reload.status
+  end
 end

@@ -32,12 +32,23 @@ class TelegramAuthSession < ApplicationRecord
   end
 
   def confirm!(user)
-    update!(
-      user: user,
+    now = Time.current
+    claimed = self.class.where(
+      id: id,
+      status: "pending",
+      user_id: nil,
+      telegram_id: nil
+    ).where("expires_at > ?", now).update_all(
+      user_id: user.id,
       telegram_id: user.telegram_id,
-      status: 'confirmed',
-      confirmed_at: Time.current
+      status: "confirmed",
+      confirmed_at: now,
+      updated_at: now
     )
+
+    raise ActiveRecord::RecordNotSaved, "Telegram auth session is no longer claimable" unless claimed == 1
+
+    reload
   end
 
   def expire!

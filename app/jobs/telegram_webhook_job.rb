@@ -5,9 +5,10 @@ class TelegramWebhookJob < ApplicationJob
   def perform(update_data)
     update = Telegram::Bot::Types::Update.new(update_data)
     sender = update.message&.from || update.callback_query&.from
+    chat = update.message&.chat || update.callback_query&.message&.chat
 
-    unless owner_sender?(sender)
-      Rails.logger.warn "Telegram update rejected: non-owner sender"
+    unless owner_sender?(sender) && private_chat_for_sender?(chat, sender)
+      Rails.logger.warn "Telegram update rejected: unauthorized sender or chat"
       return
     end
 
@@ -38,6 +39,11 @@ class TelegramWebhookJob < ApplicationJob
 
     owner_id.present? && sender&.id.present? &&
       ActiveSupport::SecurityUtils.secure_compare(owner_id, sender.id.to_s)
+  end
+
+  def private_chat_for_sender?(chat, sender)
+    chat&.type == "private" && chat.id.present? && sender&.id.present? &&
+      ActiveSupport::SecurityUtils.secure_compare(chat.id.to_s, sender.id.to_s)
   end
 
   def handle_callback_query(callback_query)

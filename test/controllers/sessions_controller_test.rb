@@ -81,8 +81,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "window.location.hash"
     assert_includes response.body, "fragmentParams.get('telegram_auth')"
     assert_includes response.body, "history.replaceState"
-    assert_includes response.body, "window.completeTelegramAuth(handoffToken)"
-    assert_includes response.body, "if (completed) return"
+    assert_includes response.body, "window.__echoTelegramAuthPromise"
     assert_includes response.body, "Ссылка для входа истекла или уже использована"
+
+    clear_index = response.body.index("history.replaceState")
+    first_external_script_index = response.body.index("cdn.tailwindcss.com")
+    assert_operator clear_index, :<, first_external_script_index
   end
 end
