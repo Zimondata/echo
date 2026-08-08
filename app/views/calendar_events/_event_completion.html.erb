@@ -1,0 +1,14 @@
+<% desired_done = !event.done? %>
+<%= button_to toggle_done_calendar_event_path(event),
+              method: :patch,
+              params: {
+                calendar_event: { done: desired_done, lock_version: event.lock_version },
+                view: calendar_view,
+                date: calendar_date
+              },
+              class: "calendar-event-complete-button #{'is-complete' if event.done?}",
+              form: { class: "calendar-event-complete-form", data: { calendar_event_completion: true } },
+              aria: { label: "#{event.done? ? 'Вернуть в план' : 'Отметить выполненным'}: #{event.title}" },
+              title: (event.done? ? "Вернуть в план" : "Отметить выполненным") do %>
+  <span aria-hidden="true"><%= "✓" if event.done? %></span>
+<% end %>

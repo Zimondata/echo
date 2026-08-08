@@ -64,7 +64,9 @@ Rails.application.routes.draw do
   resources :nutrition_entries, path: 'nutrition', only: [:index, :show, :new, :create, :edit, :update, :destroy]
 
   # Calendar Events
-  resources :calendar_events, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+  resources :calendar_events, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+    patch :toggle_done, on: :member
+  end
 
   # Tasks waiting for a slot on the calendar
   resources :tasks, only: [ :index, :create, :update ] do

@@ -194,18 +194,21 @@ button, input, select, textarea { font: inherit; }
 
 .echo-mobile-dock {
   position: fixed;
-  z-index: 50;
-  left: max(10px, env(safe-area-inset-left));
-  right: max(10px, env(safe-area-inset-right));
-  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 100;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: none;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 3px;
-  padding: 6px;
+  padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   border: 1px solid var(--line-strong);
-  border-radius: 18px;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 18px 18px 0 0;
   background: var(--dock-bg);
-  box-shadow: var(--shadow-float);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(18px) saturate(120%);
 }
 .echo-mobile-dock__link {

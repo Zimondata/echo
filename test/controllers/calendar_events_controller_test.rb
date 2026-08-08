@@ -17,6 +17,19 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "unauthenticated completion cannot change an event" do
+    event = calendar_events(:one)
+    original_done = event.done?
+    reset!
+
+    patch toggle_done_calendar_event_url(event), params: {
+      calendar_event: { done: (!original_done).to_s, lock_version: event.lock_version }
+    }
+
+    assert_redirected_to root_path
+    assert_equal original_done, event.reload.done?
+  end
+
   test "index hides another user's and soft-deleted events" do
     @user.calendar_events.create!(
       title: "Удалённое событие",
@@ -314,9 +327,10 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to calendar_events_path(date: "2026-08-03", view: "month")
   end
 
-  test "cannot read or update another user's event" do
+  test "cannot read update or complete another user's event" do
     event = calendar_events(:two)
     original_title = event.title
+    original_done = event.done?
 
     get edit_calendar_event_url(event)
     assert_redirected_to calendar_events_path
@@ -324,6 +338,12 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     patch calendar_event_url(event), params: { calendar_event: { title: "Чужое изменение" } }
     assert_redirected_to calendar_events_path
     assert_equal original_title, event.reload.title
+
+    patch toggle_done_calendar_event_url(event), params: {
+      calendar_event: { done: (!original_done).to_s, lock_version: event.lock_version }
+    }
+    assert_redirected_to calendar_events_path
+    assert_equal original_done, event.reload.done?
   end
 
   test "invalid event re-renders the form" do
@@ -352,6 +372,75 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to calendar_events_path(date: event.start_time.in_time_zone(@user.timezone).to_date.iso8601, view: "day")
     assert_equal "Обновлённая встреча", event.reload.title
     assert_equal "urgent", event.priority
+  end
+
+  test "day view exposes one-tap completion controls on calendar events" do
+    zone = Time.find_zone!(@user.timezone)
+    event = @user.calendar_events.create!(
+      title: "Отметить прямо в плане",
+      start_time: zone.local(2026, 8, 12, 11),
+      end_time: zone.local(2026, 8, 12, 12),
+      event_type: "plan",
+      priority: "medium"
+    )
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    assert_response :success
+    assert_select "form[data-calendar-event-completion][action='#{toggle_done_calendar_event_path(event)}']" do
+      assert_select "input[name='calendar_event[done]'][value='true']"
+      assert_select "input[name='calendar_event[lock_version]'][value='#{event.lock_version}']"
+      assert_select "button[aria-label='Отметить выполненным: Отметить прямо в плане']"
+    end
+  end
+
+  test "sets an owned event done idempotently and preserves calendar context" do
+    event = calendar_events(:one)
+    initial_lock_version = event.lock_version
+    payload = {
+      calendar_event: { done: "true", lock_version: initial_lock_version },
+      view: "day",
+      date: "2026-08-12"
+    }
+
+    patch toggle_done_calendar_event_url(event), params: payload
+
+    assert_redirected_to calendar_events_path(date: "2026-08-12", view: "day")
+    assert_equal "Отмечено выполненным", flash[:notice]
+    assert_predicate event.reload, :done?
+    assert_equal initial_lock_version + 1, event.lock_version
+
+    patch toggle_done_calendar_event_url(event), params: payload
+
+    assert_redirected_to calendar_events_path(date: "2026-08-12", view: "day")
+    assert_predicate event.reload, :done?
+    assert_equal initial_lock_version + 1, event.lock_version
+  end
+
+  test "reopens a completed event and rejects a stale opposite write" do
+    event = calendar_events(:one)
+    event.update!(done: true)
+    completed_lock_version = event.lock_version
+
+    patch toggle_done_calendar_event_url(event), params: {
+      calendar_event: { done: "false", lock_version: completed_lock_version },
+      view: "week",
+      date: "2026-08-12"
+    }
+
+    assert_redirected_to calendar_events_path(date: "2026-08-12", view: "week")
+    assert_equal "Возвращено в план", flash[:notice]
+    assert_not event.reload.done?
+
+    patch toggle_done_calendar_event_url(event), params: {
+      calendar_event: { done: "true", lock_version: completed_lock_version },
+      view: "week",
+      date: "2026-08-12"
+    }
+
+    assert_redirected_to calendar_events_path(date: "2026-08-12", view: "week")
+    assert_equal "План изменился в другой вкладке. Обнови страницу и повтори.", flash[:alert]
+    assert_not event.reload.done?
   end
 
   test "moves an owned timed event through the week drag contract while preserving duration" do

@@ -1,7 +1,8 @@
 class CalendarEventsController < ApplicationController
   VIEWS = %w[month week day].freeze
+  InvalidCompletionRequest = Class.new(StandardError)
 
-  before_action :set_calendar_event, only: %i[show edit update destroy]
+  before_action :set_calendar_event, only: %i[show edit update destroy toggle_done]
   around_action :use_user_time_zone
 
   def index
@@ -70,6 +71,24 @@ class CalendarEventsController < ApplicationController
   def destroy
     @calendar_event.soft_delete!
     redirect_to calendar_events_path, notice: "Событие удалено"
+  end
+
+  def toggle_done
+    desired_state = strict_done_value(completion_params[:done])
+
+    unless @calendar_event.done? == desired_state
+      expected_lock_version = strict_lock_version(completion_params[:lock_version])
+      raise InvalidCompletionRequest unless @calendar_event.lock_version == expected_lock_version
+
+      @calendar_event.lock_version = expected_lock_version
+      @calendar_event.update!(done: desired_state)
+    end
+
+    redirect_to completion_return_path,
+                notice: (desired_state ? "Отмечено выполненным" : "Возвращено в план")
+  rescue ActiveRecord::StaleObjectError, InvalidCompletionRequest, ArgumentError, TypeError
+    redirect_to completion_return_path,
+                alert: "План изменился в другой вкладке. Обнови страницу и повтори."
   end
 
   private
@@ -182,6 +201,36 @@ class CalendarEventsController < ApplicationController
       :color,
       :lock_version
     )
+  end
+
+  def completion_params
+    raw = params[:calendar_event]
+    raise InvalidCompletionRequest unless raw.is_a?(ActionController::Parameters)
+
+    raw.permit(:done, :lock_version)
+  end
+
+  def strict_done_value(value)
+    return true if %w[true 1].include?(value.to_s)
+    return false if %w[false 0].include?(value.to_s)
+
+    raise InvalidCompletionRequest
+  end
+
+  def strict_lock_version(value)
+    string_value = value.to_s
+    raise InvalidCompletionRequest unless string_value.match?(/\A\d+\z/)
+
+    number = Integer(string_value, 10)
+    raise InvalidCompletionRequest unless number.between?(0, (2**63) - 1)
+
+    number
+  end
+
+  def completion_return_path
+    date = parsed_date(params[:date]) || local_event_date(@calendar_event)
+    view = VIEWS.include?(params[:view]) ? params[:view] : "day"
+    calendar_events_path(date: date.iso8601, view: view)
   end
 
   def drag_return_view
