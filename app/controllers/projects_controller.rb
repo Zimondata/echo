@@ -62,7 +62,8 @@ class ProjectsController < ApplicationController
     raise InvalidLockVersion unless string.match?(/\A\d+\z/)
 
     version = Integer(string, 10)
-    raise InvalidLockVersion unless version.between?(0, (2**63) - 1)
+    # Active Record increments lock_version during update, so reserve the signed 64-bit maximum.
+    raise InvalidLockVersion unless version.between?(0, (2**63) - 2)
 
     version
   end

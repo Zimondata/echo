@@ -59,7 +59,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[role='alert']", text: /изменился/
     assert_equal "Свежее имя", project.reload.name
 
-    [ "9" * 200, "-1", "abc", "" ].each do |invalid_revision|
+    [ ((2**63) - 1).to_s, "9" * 200, "-1", "abc", "" ].each do |invalid_revision|
       patch project_path(project), params: { project: { name: "За пределами", lock_version: invalid_revision } }
       assert_response :conflict
       assert_equal "Свежее имя", project.reload.name
