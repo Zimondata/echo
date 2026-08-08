@@ -19,6 +19,9 @@ class TasksController < ApplicationController
       if params[:return_to] == "tasks"
         load_tasks_index(status: "inbox", new_task: @task)
         render :index, status: :unprocessable_entity
+      elsif params[:return_to] == "project"
+        load_project_workspace(new_task: @task)
+        render "projects/show", status: :unprocessable_entity
       else
         @unscheduled_tasks = current_user.tasks.unscheduled.order(:created_at)
         @active_projects = current_user.projects.active.ordered
@@ -255,6 +258,16 @@ class TasksController < ApplicationController
     @active_projects = current_user.projects.active.ordered
   end
 
+  def load_project_workspace(new_task:)
+    @project = current_user.projects.active.find(task_project_id)
+    @tasks = @project.tasks.active
+      .includes(:time_blocks, :project, :task_steps)
+      .order(:due_on, :created_at, :id)
+    @task_groups = @tasks.group_by(&:status)
+    @active_projects = current_user.projects.active.ordered
+    @new_task = new_task
+  end
+
   def task_project_id
     raw = params[:task]
     raw[:project_id] if raw.is_a?(ActionController::Parameters)
@@ -274,6 +287,7 @@ class TasksController < ApplicationController
 
   def task_return_path
     return tasks_path(status: @task&.status || "inbox") if params[:return_to] == "tasks"
+    return project_path(@task.project) if params[:return_to] == "project" && @task&.project
     return dashboard_path if params[:return_to] == "dashboard"
 
     calendar_events_path(calendar_return_params)

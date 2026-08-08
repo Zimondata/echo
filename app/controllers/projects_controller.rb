@@ -5,6 +5,11 @@ class ProjectsController < ApplicationController
     load_projects
   end
 
+  def show
+    @project = current_user.projects.find(params[:id])
+    load_workspace
+  end
+
   def create
     @project = current_user.projects.new(project_params)
     if @project.save
@@ -45,7 +50,17 @@ class ProjectsController < ApplicationController
 
   def load_projects
     @projects = current_user.projects.ordered
+    @project_task_counts = current_user.tasks.active.where(project_id: @projects.map(&:id)).group(:project_id).count
     @project ||= current_user.projects.new(position: @projects.size)
+  end
+
+  def load_workspace
+    @tasks = @project.tasks.active
+      .includes(:time_blocks, :project, :task_steps)
+      .order(:due_on, :created_at, :id)
+    @task_groups = @tasks.group_by(&:status)
+    @active_projects = current_user.projects.active.ordered
+    @new_task = current_user.tasks.new(project: @project)
   end
 
   def project_params

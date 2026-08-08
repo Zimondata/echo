@@ -23,7 +23,9 @@
   <section class="echo-surface">
     <% @projects.each do |project| %>
       <article class="echo-project-row" data-project-id="<%= project.id %>">
-        <div><strong><%= project.name %></strong><p class="echo-section-copy"><%= project.active? ? "Активен" : "В архиве" %></p></div>
+        <% count_label = task_count_label(@project_task_counts[project.id]) %>
+        <div><strong><%= link_to project.name, project_path(project) %></strong><p class="echo-section-copy"><%= project.active? ? count_label : "В архиве · #{count_label}" %></p></div>
+        <%= link_to "Открыть", project_path(project), class: "echo-button echo-button--small" %>
         <details class="echo-project-edit">
           <summary>Переименовать</summary>
           <%= form_with model: project, method: :patch, class: "echo-form-grid echo-project-edit-form" do |form| %>

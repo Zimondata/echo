@@ -1,0 +1,57 @@
+<% content_for :title, "#{@project.name} — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page">
+  <header class="echo-page__heading">
+    <div>
+      <p class="echo-kicker">Проект</p>
+      <h1 class="echo-title"><%= @project.name %></h1>
+      <p class="echo-subtitle"><%= @project.active? ? "Вся работа по одному результату — от входящих до готового." : "Архивный проект. Задачи сохранены, новая работа сюда не добавляется." %></p>
+    </div>
+    <div class="echo-actions">
+      <%= link_to "Все проекты", projects_path, class: "echo-button echo-button--quiet" %>
+      <%= link_to "Открыть план", calendar_events_path(view: "month"), class: "echo-button" %>
+    </div>
+  </header>
+
+  <% if flash[:task_notice] %><div class="echo-notice"><%= flash[:task_notice] %></div><% end %>
+  <% if alert.present? %><div class="echo-notice" role="alert"><%= alert %></div><% end %>
+
+  <% if @project.active? %>
+    <section class="echo-surface echo-surface--accent mb-5">
+      <div class="echo-surface__header">
+        <p class="echo-label echo-label--accent">Добавить в проект</p>
+        <h2 class="echo-section-heading mt-1">Что двигает результат?</h2>
+      </div>
+      <div class="echo-surface__body">
+        <%= render "tasks/quick_capture", task: @new_task, projects: @active_projects, return_to: "project" %>
+      </div>
+    </section>
+  <% end %>
+
+  <% labels = { "inbox" => "Входящие", "next" => "Следующие", "scheduled" => "Запланировано", "waiting" => "Жду", "someday" => "Когда-нибудь", "completed" => "Готово", "dropped" => "Убрано" } %>
+  <% active_statuses = %w[inbox next scheduled waiting someday] %>
+  <div class="echo-someday-sections" data-project-workspace>
+    <% active_statuses.each do |status| %>
+      <% tasks = @task_groups.fetch(status, []) %>
+      <% next if tasks.empty? %>
+      <section class="echo-surface" data-project-status="<%= status %>">
+        <div class="echo-surface__header"><h2 class="echo-section-heading"><%= labels.fetch(status) %> <span class="echo-count"><%= tasks.size %></span></h2></div>
+        <div><%= render partial: "tasks/task_row", collection: tasks, as: :task, locals: { status: status, show_project_label: false } %></div>
+      </section>
+    <% end %>
+
+    <% %w[completed dropped].each do |status| %>
+      <% tasks = @task_groups.fetch(status, []) %>
+      <% next if tasks.empty? %>
+      <details class="echo-surface" data-project-status="<%= status %>">
+        <summary class="echo-surface__header"><h2 class="echo-section-heading"><%= labels.fetch(status) %> <span class="echo-count"><%= tasks.size %></span></h2></summary>
+        <div><%= render partial: "tasks/task_row", collection: tasks, as: :task, locals: { status: status, show_project_label: false } %></div>
+      </details>
+    <% end %>
+
+    <% if @tasks.empty? %>
+      <div class="echo-empty">В проекте пока нет задач. Добавь первый конкретный шаг выше.</div>
+    <% end %>
+  </div>
+</div>

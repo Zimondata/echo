@@ -11,7 +11,7 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     ENV["ECHO_LOCAL_AUTH_BYPASS"] = "1"
     ENV["ECHO_LOCAL_USER_ID"] = @user.id.to_s
 
-    @project = @user.projects.create!(name: "Echo launch")
+    @project = @user.projects.create!(name: "Нейросамурай — контент и запуск")
     @someday = @user.tasks.create!(title: "Разобрать идею", status: "someday", project: @project)
     @someday.task_steps.create!(text: "Открыть заметку", position: 0)
     @unassigned = @user.tasks.create!(title: "Без дома", status: "someday")
@@ -90,6 +90,29 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     assert_mobile_width_without_page_overflow
     page.execute_script("document.documentElement.style.scrollBehavior = 'auto'; arguments[0].scrollIntoView({ block: 'start' })", find("[data-project-id='#{@project.id}']"))
     save_qa_screenshot("projects-rename-mobile.png")
+  end
+
+  test "mobile project workspace opens and keeps new work inside the project" do
+    mobile_sign_in
+    visit projects_path
+
+    within "[data-project-id='#{@project.id}']" do
+      click_link "Открыть"
+    end
+
+    assert_current_path project_path(@project)
+    assert_mobile_width_without_page_overflow
+    assert_selector "[data-project-status='someday'] [data-task-id='#{@someday.id}']"
+    fill_in "Новая задача", with: "Собрать проектный план"
+    click_button "Добавить"
+
+    assert_text "Задача добавлена"
+    created = @user.tasks.find_by!(title: "Собрать проектный план")
+    assert_equal @project, created.project
+    assert_current_path project_path(@project)
+    assert_selector "[data-project-status='inbox'] [data-task-id='#{created.id}']"
+    assert_mobile_width_without_page_overflow
+    save_qa_screenshot("project-workspace-mobile.png")
   end
 
   test "mobile rhythm month renders all recorded states without page overflow" do

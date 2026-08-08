@@ -84,7 +84,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :projects, only: %i[index create update] do
+  resources :projects, only: %i[index show create update] do
     patch :archive, on: :member
   end
 

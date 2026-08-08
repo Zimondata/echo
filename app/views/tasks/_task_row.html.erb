@@ -2,7 +2,7 @@
   <div class="min-w-0">
     <div class="flex flex-wrap items-center gap-2">
       <h3 class="m-0 text-[15px] font-semibold" style="color:var(--ink)"><%= task.title %></h3>
-      <% if task.project %><span class="echo-badge" data-project-label><%= task.project.name %><%= " · архив" if task.project.archived? %></span><% end %>
+      <% if task.project && local_assigns.fetch(:show_project_label, true) %><span class="echo-badge" data-project-label><%= task.project.name %><%= " · архив" if task.project.archived? %></span><% end %>
       <% if task.task_steps.any? %><span class="echo-badge" data-checklist-count><%= task.task_steps.count(&:completed?) %>/<%= task.task_steps.size %></span><% end %>
     </div>
     <p class="mt-1 text-sm leading-6" style="color:var(--ink-muted)"><%= task.next_action.presence || "Нет следующего физического шага — уточни перед планированием" %></p>
