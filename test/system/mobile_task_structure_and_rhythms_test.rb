@@ -177,12 +177,23 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
       mobile: false
     )
     visit calendar_events_path(view: "day", date: day.iso8601)
-    find(".task-lane-summary").click
 
-    assert_selector "[data-task-card]", count: 9
     assert_selector ".calendar-day-checklist__item", count: 4
     assert_selector "details[data-day-timeline-disclosure]:not([open])"
     assert_no_selector ".calendar-day-timeline-shell", visible: true
+    closed_day_gap = page.evaluate_script(<<~JS)
+      document.querySelector(".calendar-day-view").getBoundingClientRect().bottom -
+        document.querySelector("[data-day-timeline-disclosure]").getBoundingClientRect().bottom
+    JS
+    assert_in_delta 0, closed_day_gap, 2
+    save_qa_screenshot("calendar-day-collapsed-desktop.png")
+    find("[data-day-timeline-disclosure] > summary").click
+    assert_selector ".calendar-day-timeline-shell", visible: true
+    assert_in_delta 1008, find(".calendar-day-timeline-shell").evaluate_script("this.getBoundingClientRect().height"), 1
+    find("[data-day-timeline-disclosure] > summary").click
+
+    find(".task-lane-summary").click
+    assert_selector "[data-task-card]", count: 9
     heights = page.evaluate_script("[...document.querySelectorAll('[data-task-card]')].map(card => card.getBoundingClientRect().height)")
     assert heights.all? { |height| height <= 72 }, heights.inspect
     save_qa_screenshot("calendar-day-dense-desktop.png")
@@ -198,6 +209,11 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     visit calendar_events_path(view: "day", date: day.iso8601)
     assert_mobile_width_without_page_overflow
     assert_selector "details[data-day-timeline-disclosure]:not([open])"
+    closed_mobile_day_gap = page.evaluate_script(<<~JS)
+      document.querySelector(".calendar-day-view").getBoundingClientRect().bottom -
+        document.querySelector("[data-day-timeline-disclosure]").getBoundingClientRect().bottom
+    JS
+    assert_in_delta 0, closed_mobile_day_gap, 2
     find(".task-lane-summary").click
     mobile_task_controls = page.evaluate_script(<<~JS)
       [...document.querySelectorAll(".task-form .task-input, .task-form .task-submit")].map(control => ({
@@ -223,6 +239,21 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     JS
     assert mobile_controls.all? { |control| control["width"] >= 44 && control["height"] >= 44 }, mobile_controls.inspect
     save_qa_screenshot("calendar-day-dense-mobile.png")
+
+    scheduled_task = @user.tasks.create!(title: "Задача во времени", status: "scheduled")
+    scheduled_task.time_blocks.create!(
+      starts_at: zone.local(2026, 8, 9, 12),
+      ends_at: zone.local(2026, 8, 9, 13),
+      source: "manual",
+      previous_task_status: "next"
+    )
+    visit calendar_events_path(view: "day", date: day.iso8601)
+    assert_selector ".calendar-day-controls"
+    final_content_gap = page.evaluate_script(<<~JS)
+      document.querySelector(".calendar-day-view").getBoundingClientRect().bottom -
+        document.querySelector(".calendar-day-controls").getBoundingClientRect().bottom
+    JS
+    assert_in_delta 0, final_content_gap, 2
   end
 
   test "mobile rhythm month renders all recorded states without page overflow" do
