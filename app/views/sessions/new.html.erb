@@ -172,25 +172,48 @@
     const expiresAt = new Date('<%= @auth_data[:expires_at].iso8601 %>');
     const qrData = '<%= @auth_data[:qr_data] %>';
     const csrfToken = document.querySelector('[name="csrf-token"]').content;
+    const fragmentParams = new URLSearchParams(window.location.hash.slice(1));
+    const handoffToken = fragmentParams.get('telegram_auth');
+
+    if (handoffToken) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
 
     window.completeTelegramAuth = async (token = sessionToken) => {
-      const response = await fetch('/sessions/complete_telegram_auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
-        },
-        body: JSON.stringify({ session_token: token })
-      });
-      const data = await response.json();
+      try {
+        const response = await fetch('/sessions/complete_telegram_auth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({ session_token: token })
+        });
+        const data = await response.json();
 
-      if (response.ok && data.success) {
-        window.location.href = data.redirect_url;
+        if (response.ok && data.success) {
+          window.location.href = data.redirect_url;
+          return true;
+        }
+      } catch (error) {
+        console.error('❌ Telegram handoff failed:', error);
       }
+
+      return false;
     };
 
     // Wait for DOM and modules to load
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (handoffToken) {
+        document.querySelector('#auth-status').innerHTML =
+          '<div class="success-message" style="text-align: center; color: #10B981; font-weight: bold;">✅ Подтверждение получено. Открываем Echo...</div>';
+        const completed = await window.completeTelegramAuth(handoffToken);
+        if (completed) return;
+
+        document.querySelector('#auth-status').innerHTML =
+          '<div style="text-align: center; color: #F59E0B; font-weight: bold;">Ссылка для входа истекла или уже использована. Подтвердите новый вход ниже.</div>';
+      }
+
       // Generate QR code
       new QRCode(document.getElementById('qr-code-container'), {
         text: qrData,

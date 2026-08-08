@@ -42,17 +42,28 @@ class TelegramAuthService
         Rails.logger.info "Creating new user with telegram_id: #{telegram_user.id}"
       end
 
-      # Update user info if changed
-      user.update(
-        username: telegram_user.username,
-        first_name: telegram_user.first_name,
-        last_name: telegram_user.last_name
-      )
+      handoff_session = nil
+      TelegramAuthSession.transaction do
+        # Update user info if changed
+        user.update!(
+          username: telegram_user.username,
+          first_name: telegram_user.first_name,
+          last_name: telegram_user.last_name
+        )
 
-      session.confirm!(user)
+        session.confirm!(user)
+        handoff_session = TelegramAuthSession.create!(
+          user: user,
+          telegram_id: user.telegram_id,
+          status: "confirmed",
+          confirmed_at: Time.current,
+          expires_at: 5.minutes.from_now,
+          initiated_from: "telegram_handoff"
+        )
+      end
       
       Rails.logger.info "Auth confirmation successful for user: #{user.id}"
-      { success: true, user: user, session: session }
+      { success: true, user: user, session: session, handoff_session: handoff_session }
       
     rescue StandardError => e
       Rails.logger.error "Auth confirmation failed with error: #{e.message}"
@@ -69,5 +80,12 @@ class TelegramAuthService
   def self.generate_qr_data(session_token)
     # Returns deep link for QR encoding
     generate_deep_link(session_token)
+  end
+
+  def self.browser_handoff_url(session_token, app_url:)
+    base_url = app_url.to_s.delete_suffix("/")
+    encoded_token = ERB::Util.url_encode(session_token.to_s)
+
+    "#{base_url}/login#telegram_auth=#{encoded_token}"
   end
 end

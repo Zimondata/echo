@@ -325,7 +325,8 @@ class TelegramWebhookJob < ApplicationJob
         parse_mode: "Markdown"
       )
 
-      # Send new message with dashboard button
+      # Send a one-time browser handoff. The capability stays in the URL fragment,
+      # so it is not sent in the initial HTTP request or written to server access logs.
       Telegram::BotService.client.api.send_message(
         chat_id: chat_id,
         text: "🎉 Добро пожаловать в Echo!\n\nНажмите на кнопку ниже, чтобы перейти на дашборд:",
@@ -335,7 +336,10 @@ class TelegramWebhookJob < ApplicationJob
             [
               {
                 text: "🚀 Перейти на дашборд",
-                url: "#{app_url}/dashboard"
+                url: TelegramAuthService.browser_handoff_url(
+                  result[:handoff_session].session_token,
+                  app_url: app_url
+                )
               }
             ]
           ]
@@ -369,7 +373,10 @@ class TelegramWebhookJob < ApplicationJob
             [
               {
                 text: "🚀 Перейти на дашборд",
-                url: "#{app_url}/dashboard"
+                url: TelegramAuthService.browser_handoff_url(
+                  result[:handoff_session].session_token,
+                  app_url: app_url
+                )
               }
             ]
           ]

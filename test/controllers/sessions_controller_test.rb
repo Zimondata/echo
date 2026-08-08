@@ -73,4 +73,16 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "/telegram_auth/${sessionToken}/status"
     refute_includes response.body, "/sessions/complete_telegram_auth?session_token="
   end
+
+  test "login page consumes a Telegram browser handoff from the URL fragment" do
+    get "/login"
+
+    assert_response :ok
+    assert_includes response.body, "window.location.hash"
+    assert_includes response.body, "fragmentParams.get('telegram_auth')"
+    assert_includes response.body, "history.replaceState"
+    assert_includes response.body, "window.completeTelegramAuth(handoffToken)"
+    assert_includes response.body, "if (completed) return"
+    assert_includes response.body, "Ссылка для входа истекла или уже использована"
+  end
 end
