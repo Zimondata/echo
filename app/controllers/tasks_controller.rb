@@ -251,7 +251,14 @@ class TasksController < ApplicationController
     @tasks = current_user.tasks.active
       .where(status: @status)
       .includes(:time_blocks, :project, :task_steps)
-      .order(:due_on, :created_at)
+      .order(Arel.sql("due_on IS NULL ASC"), :due_on, :created_at, :id)
+    @focus_tasks = if @status == "next"
+      @tasks.reject { |task| task.project&.archived? }.first(3)
+    else
+      []
+    end
+    focus_ids = @focus_tasks.map(&:id)
+    @listed_tasks = @tasks.reject { |task| focus_ids.include?(task.id) }
     @task_groups = @tasks.group_by(&:project) if @status == "someday"
     @task_counts = current_user.tasks.active.group(:status).count
     @new_task = new_task || current_user.tasks.new

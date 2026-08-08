@@ -115,6 +115,37 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     save_qa_screenshot("project-workspace-mobile.png")
   end
 
+  test "mobile next workspace surfaces three compact priorities before the remaining queue" do
+    tasks = [
+      @user.tasks.create!(title: "Трафик · Telegram Ads", status: "next", project: @project, next_action: "Зафиксировать тестовый brief", due_on: Date.new(2026, 8, 10), estimate_minutes: 45),
+      @user.tasks.create!(title: "Рост · Запустить SEO", status: "next", project: @project, next_action: "Собрать первый brief", due_on: Date.new(2026, 8, 11), estimate_minutes: 90),
+      @user.tasks.create!(title: "Контент · YouTube про Hermes", status: "next", project: @project, next_action: "Утвердить hook", due_on: Date.new(2026, 8, 12), estimate_minutes: 45),
+      @user.tasks.create!(title: "Продукт · Buddy", status: "next", project: @project, next_action: "Собрать кликабельный flow", due_on: Date.new(2026, 8, 13), estimate_minutes: 90)
+    ]
+
+    mobile_sign_in
+    visit tasks_path(status: "next")
+
+    assert_mobile_width_without_page_overflow
+    assert_selector "[data-weekly-focus] [data-focus-task]", count: 3
+    assert_selector "[data-task-list] [data-task-id='#{tasks.last.id}']", count: 1
+    assert_selector "[data-workstream]", text: "Трафик"
+    assert_no_selector "[data-weekly-focus] [data-focus-task='#{tasks.last.id}']"
+
+    metrics = page.evaluate_script(<<~JS)
+      [...document.querySelectorAll("[data-weekly-focus] [data-focus-task]")].map(row => ({
+        height: row.getBoundingClientRect().height,
+        actions: [...row.querySelectorAll(".echo-task-actions .echo-button")].map(button => button.getBoundingClientRect().height)
+      }))
+    JS
+    assert metrics.all? { |metric| metric["height"] <= 260 }, metrics.inspect
+    assert metrics.all? { |metric| metric["actions"].length <= 2 }, metrics.inspect
+    assert metrics.flat_map { |metric| metric["actions"] }.all? { |height| height >= 44 }, metrics.inspect
+
+    page.execute_script("document.documentElement.style.scrollBehavior = 'auto'; arguments[0].scrollIntoView({ block: 'start' })", find("[data-weekly-focus]"))
+    save_qa_screenshot("tasks-next-focus-mobile.png")
+  end
+
   test "mobile rhythm month renders all recorded states without page overflow" do
     mobile_sign_in
     visit rhythms_path(month: "2026-08")

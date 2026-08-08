@@ -668,13 +668,30 @@ button, input, select, textarea { font: inherit; }
 .task-optional-grid { display: grid; grid-template-columns: minmax(88px, .35fr) minmax(0, 1fr); gap: 8px; }
 .task-form-errors { padding: 10px 12px; border-radius: 10px; color: var(--danger); background: var(--danger-soft); }
 .task-visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.echo-task-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.echo-weekly-focus { overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: 18px; background: linear-gradient(145deg, color-mix(in srgb, var(--accent-soft) 72%, var(--surface)), var(--surface)); box-shadow: var(--shadow-card); }
+.echo-weekly-focus__header { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 18px 20px 15px; }
+.echo-weekly-focus__header > p { max-width: 280px; margin: 0; color: var(--ink-muted); font-size: 12px; text-align: right; }
+.echo-weekly-focus__list { border-top: 1px solid var(--line); }
+.echo-task-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.echo-task-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 14px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.echo-task-row--focus { grid-template-columns: auto minmax(0, 1fr) auto; background: color-mix(in srgb, var(--surface) 84%, transparent); }
 .echo-task-row:last-child { border-bottom: 0; }
-.echo-task-actions { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: flex-end; gap: 8px; }
+.echo-task-rank { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 9px; color: var(--accent-text); background: var(--accent-soft); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.echo-task-main { min-width: 0; }
+.echo-task-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+.echo-task-title { margin: 0; color: var(--ink); font-size: 15px; font-weight: 720; line-height: 1.3; overflow-wrap: anywhere; }
+.echo-task-next-action { margin: 4px 0 0; color: var(--ink-muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.echo-task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.echo-badge--workstream { color: var(--ink-secondary); background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface-inset)); }
+.echo-badge--workstream-launch, .echo-badge--workstream-traffic { color: var(--fixed); background: var(--fixed-soft); }
+.echo-badge--workstream-growth, .echo-badge--workstream-product { color: var(--accent-text); background: var(--accent-soft); }
+.echo-badge--workstream-content { color: var(--success); background: var(--success-soft); }
+.echo-task-actions { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: flex-end; gap: 7px; }
 .echo-task-details { grid-column: 1 / -1; min-width: 0; }
-.echo-task-details > summary { list-style: none; cursor: pointer; }
+.echo-task-details > summary { width: fit-content; list-style: none; cursor: pointer; }
 .echo-task-details > summary::-webkit-details-marker { display: none; }
-.echo-task-details__body { display: grid; gap: 18px; margin-top: 12px; padding: 14px; border-radius: 12px; background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
+.echo-task-details__body { display: grid; gap: 18px; margin-top: 10px; padding: 14px; border-radius: 12px; background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
+.echo-task-danger-zone { display: flex; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--line); }
 .echo-metadata-grid { display: grid; grid-template-columns: minmax(100px, .5fr) minmax(150px, 1fr) minmax(160px, 1fr); gap: 9px; }
 .echo-checklist { display: grid; gap: 9px; }
 .echo-checklist__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 9px; min-width: 0; }
@@ -752,10 +769,24 @@ button, input, select, textarea { font: inherit; }
   .echo-surface__body { padding: 16px; }
   .echo-form-grid { grid-template-columns: 1fr; }
   .echo-form-grid .echo-button { width: 100%; }
-  .echo-task-row { grid-template-columns: 1fr; padding: 16px; }
-  .echo-task-actions { justify-content: flex-start; }
-  .echo-task-actions form { flex: 1 1 140px; }
-  .echo-task-actions .echo-button { width: 100%; min-height: 44px; }
+  .echo-weekly-focus__header { align-items: flex-start; padding: 15px 14px 12px; }
+  .echo-weekly-focus__header > p { display: none; }
+  .echo-task-row { grid-template-columns: 1fr; gap: 9px; padding: 13px 14px; }
+  .echo-task-row--focus { grid-template-columns: auto minmax(0, 1fr); }
+  .echo-task-row--focus .echo-task-actions,
+  .echo-task-row--focus .echo-task-details { grid-column: 1 / -1; }
+  .echo-task-rank { width: 26px; height: 26px; border-radius: 8px; }
+  .echo-task-heading { margin-bottom: 5px; }
+  .echo-task-title { font-size: 14px; }
+  .echo-task-next-action { display: -webkit-box; margin-top: 4px; overflow: hidden; font-size: 12px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .echo-task-meta { margin-top: 7px; }
+  .echo-task-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; gap: 7px; }
+  .echo-task-actions > * { min-width: 0; }
+  .echo-task-actions form { width: 100%; }
+  .echo-task-actions .echo-button { width: 100%; min-height: 44px; padding-inline: 8px; font-size: 12px; }
+  .echo-task-actions > .echo-button:only-child { grid-column: 1 / -1; }
+  .echo-task-details > summary { min-height: 44px; padding: 7px 10px; }
+  .echo-task-danger-zone .echo-button { width: 100%; min-height: 44px; }
   .echo-metadata-grid { grid-template-columns: 1fr; }
   .echo-checklist__item { grid-template-columns: 1fr; padding: 10px; border-radius: 10px; background: var(--surface); }
   .echo-checklist__item .echo-button { width: 100%; min-height: 44px; }

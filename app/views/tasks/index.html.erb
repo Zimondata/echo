@@ -18,6 +18,23 @@
   <% if flash[:task_notice] %><div class="echo-notice"><%= flash[:task_notice] %></div><% end %>
   <% if alert.present? %><div class="echo-notice" role="alert"><%= alert %></div><% end %>
 
+  <% if @focus_tasks.any? %>
+    <section class="echo-weekly-focus mb-5" data-weekly-focus aria-labelledby="weekly-focus-heading">
+      <div class="echo-weekly-focus__header">
+        <div>
+          <p class="echo-label echo-label--accent">Сначала</p>
+          <h2 id="weekly-focus-heading" class="echo-section-heading mt-1">Три ближайшие задачи</h2>
+        </div>
+        <p>Сроки впереди, затем порядок добавления.</p>
+      </div>
+      <div class="echo-weekly-focus__list">
+        <% @focus_tasks.each_with_index do |task, index| %>
+          <%= render "task_row", task: task, status: @status, focus_rank: index + 1 %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
   <section id="quick-add" class="echo-surface echo-surface--accent mb-5">
     <div class="echo-surface__header">
       <p class="echo-label echo-label--accent">Quick add</p>
@@ -50,9 +67,16 @@
       <% if @tasks.empty? %><div class="echo-empty">Здесь пусто. Ничего не нужно сохранять ради системы.</div><% end %>
     </div>
   <% else %>
-    <section class="echo-surface">
-      <%= render partial: "task_row", collection: @tasks, as: :task, locals: { status: @status } %>
+    <section class="echo-surface" data-task-list>
+      <% if @focus_tasks.any? %>
+        <div class="echo-surface__header echo-task-list-heading">
+          <div><p class="echo-label">Дальше</p><h2 class="echo-section-heading mt-1">Остальная очередь</h2></div>
+          <span class="echo-badge"><%= @listed_tasks.size %></span>
+        </div>
+      <% end %>
+      <%= render partial: "task_row", collection: @listed_tasks, as: :task, locals: { status: @status } %>
       <% if @tasks.empty? %><div class="m-5 echo-empty"><p class="m-0 font-semibold" style="color:var(--ink-secondary)">Здесь пусто</p><p class="mt-2 text-sm">Хорошо. Пустая колонка не требует заполнения ради системы.</p></div><% end %>
+      <% if @tasks.any? && @listed_tasks.empty? %><div class="m-5 echo-empty">Вся ближайшая очередь уже показана выше.</div><% end %>
     </section>
   <% end %>
 </div>

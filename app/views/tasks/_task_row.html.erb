@@ -1,36 +1,38 @@
-<article class="echo-task-row" data-task-id="<%= task.id %>">
-  <div class="min-w-0">
-    <div class="flex flex-wrap items-center gap-2">
-      <h3 class="m-0 text-[15px] font-semibold" style="color:var(--ink)"><%= task.title %></h3>
+<% focus_rank = local_assigns[:focus_rank] %>
+<% workstream = task_workstream(task) %>
+<article class="echo-task-row <%= 'echo-task-row--focus' if focus_rank %>" data-task-id="<%= task.id %>" <% if focus_rank %>data-focus-task="<%= task.id %>"<% end %>>
+  <% if focus_rank %><div class="echo-task-rank" aria-label="Приоритет <%= focus_rank %>"><%= focus_rank %></div><% end %>
+
+  <div class="echo-task-main min-w-0">
+    <div class="echo-task-heading">
+      <% if workstream %><span class="echo-badge echo-badge--workstream <%= task_workstream_class(task) %>" data-workstream><%= workstream %></span><% end %>
       <% if task.project && local_assigns.fetch(:show_project_label, true) %><span class="echo-badge" data-project-label><%= task.project.name %><%= " · архив" if task.project.archived? %></span><% end %>
       <% if task.task_steps.any? %><span class="echo-badge" data-checklist-count><%= task.task_steps.count(&:completed?) %>/<%= task.task_steps.size %></span><% end %>
     </div>
-    <p class="mt-1 text-sm leading-6" style="color:var(--ink-muted)"><%= task.next_action.presence || "Нет следующего физического шага — уточни перед планированием" %></p>
-    <div class="mt-3 flex flex-wrap gap-2">
+    <h3 class="echo-task-title"><%= task_display_title(task) %></h3>
+    <p class="echo-task-next-action"><%= task.next_action.presence || "Нет следующего физического шага — уточни перед планированием" %></p>
+    <div class="echo-task-meta">
       <% if task.estimate_minutes %><span class="echo-badge"><%= task.estimate_minutes %> мин</span><% end %>
       <% if task.due_on %><span class="echo-badge <%= task.due_on < Date.current ? 'echo-badge--fixed' : '' %>">дедлайн <%= l(task.due_on, format: :short) %></span><% end %>
       <% if task.time_blocks.active.any? %><span class="echo-badge echo-badge--accent"><%= task.time_blocks.active.count %> в плане</span><% end %>
     </div>
   </div>
+
   <div class="echo-task-actions">
     <% if task.status == "someday" %>
       <%= button_to "В следующие", move_to_next_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: "someday" }, class: "echo-button echo-button--primary echo-button--small" %>
-      <%= button_to "Убрать", drop_from_someday_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: "someday" }, class: "echo-button echo-button--quiet echo-button--small" %>
-    <% else %>
-      <% if Task::UNSCHEDULED_STATUSES.include?(task.status) %>
-        <%= link_to "Запланировать", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
-        <% completion_form = task.task_steps.any? { |step| !step.completed? } ? { data: { turbo_confirm: "Есть незавершённые шаги. Всё равно завершить задачу?" } } : {} %>
-        <%= button_to "Готово", complete_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: status }, form: completion_form, class: "echo-button echo-button--small" %>
-        <%= button_to "Убрать", drop_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: status }, class: "echo-button echo-button--quiet echo-button--small" %>
-      <% elsif task.status == "scheduled" %>
-        <%= link_to "Открыть в плане", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
-      <% end %>
+    <% elsif Task::UNSCHEDULED_STATUSES.include?(task.status) %>
+      <%= link_to "Запланировать", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
+      <% completion_form = task.task_steps.any? { |step| !step.completed? } ? { data: { turbo_confirm: "Есть незавершённые шаги. Всё равно завершить задачу?" } } : {} %>
+      <%= button_to "Готово", complete_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: status }, form: completion_form, class: "echo-button echo-button--small" %>
+    <% elsif task.status == "scheduled" %>
+      <%= link_to "Открыть в плане", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
     <% end %>
   </div>
 
   <% unless %w[completed dropped].include?(task.status) %>
     <details class="echo-task-details" data-task-details>
-      <summary class="echo-button echo-button--quiet echo-button--small">Детали</summary>
+      <summary class="echo-button echo-button--quiet echo-button--small">Детали и ещё</summary>
       <div class="echo-task-details__body">
         <%= form_with model: task, class: "grid gap-3" do |form| %>
           <%= hidden_field_tag :return_to, "tasks" %>
@@ -60,6 +62,14 @@
             <%= hidden_field_tag "task[lock_version]", task.lock_version %>
             <%= text_field_tag "task_step[text]", nil, class: "echo-input", placeholder: "Новый шаг", required: true, maxlength: 500 %>
             <%= form.submit "Добавить шаг", class: "echo-button" %>
+          <% end %>
+        </div>
+
+        <div class="echo-task-danger-zone">
+          <% if task.status == "someday" %>
+            <%= button_to "Убрать задачу", drop_from_someday_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: "someday" }, class: "echo-button echo-button--quiet echo-button--small" %>
+          <% elsif Task::UNSCHEDULED_STATUSES.include?(task.status) %>
+            <%= button_to "Убрать задачу", drop_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: status }, class: "echo-button echo-button--quiet echo-button--small" %>
           <% end %>
         </div>
       </div>

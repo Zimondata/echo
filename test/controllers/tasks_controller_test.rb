@@ -55,6 +55,54 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "next workspace shows three owner-scoped non-archived priorities and a compact remainder" do
+    active_project = @user.projects.create!(name: "Нейросамурай")
+    archived_project = @user.projects.create!(name: "Старый проект")
+    first = @user.tasks.create!(title: "Трафик · Telegram Ads", status: "next", project: active_project, due_on: Date.new(2026, 8, 10))
+    second = @user.tasks.create!(title: "Рост · Запустить SEO", status: "next", project: active_project, due_on: Date.new(2026, 8, 11))
+    third = @user.tasks.create!(title: "Контент · YouTube", status: "next", project: active_project, due_on: Date.new(2026, 8, 12))
+    remainder = @user.tasks.create!(title: "Продукт · Buddy", status: "next", project: active_project, due_on: Date.new(2026, 8, 13))
+    archived = @user.tasks.create!(title: "Не показывать в фокусе", status: "next", project: archived_project, due_on: Date.new(2026, 8, 1))
+    archived_project.update!(archived_at: Time.current)
+    other_user = users(:moscow_user).tasks.create!(title: "Чужой фокус", status: "next", due_on: Date.new(2026, 8, 1))
+
+    get tasks_url(status: "next")
+
+    assert_response :success
+    assert_select "[data-weekly-focus] [data-focus-task]", count: 3
+    assert_select "[data-weekly-focus] [data-focus-task='#{first.id}']", count: 1
+    assert_select "[data-weekly-focus] [data-focus-task='#{second.id}']", count: 1
+    assert_select "[data-weekly-focus] [data-focus-task='#{third.id}']", count: 1
+    assert_select "[data-weekly-focus] [data-focus-task='#{remainder.id}']", count: 0
+    assert_select "[data-weekly-focus] [data-focus-task='#{archived.id}']", count: 0
+    assert_select "[data-weekly-focus] [data-focus-task='#{other_user.id}']", count: 0
+    assert_select "[data-task-list] [data-task-id='#{remainder.id}']", count: 1
+    assert_select "[data-task-list] [data-task-id='#{archived.id}']", count: 1
+    assert_select "[data-task-list] [data-task-id='#{first.id}']", count: 0
+  end
+
+  test "task row exposes workstream separately and keeps destructive action inside details" do
+    task = @user.tasks.create!(title: "Рост · Запустить SEO", status: "next", next_action: "Собрать первый brief")
+
+    get tasks_url(status: "next")
+
+    assert_response :success
+    assert_select "[data-task-id='#{task.id}']" do
+      assert_select "[data-workstream]", text: "Рост"
+      assert_select "h3", text: "Запустить SEO"
+      assert_select ".echo-task-actions form[action='#{drop_task_path(task)}']", count: 0
+      assert_select "details form[action='#{drop_task_path(task)}']", count: 1
+      assert_select "input[name='task[title]'][value='Рост · Запустить SEO']", count: 1
+    end
+  end
+
+  test "weekly focus is not repeated on non-next status pages" do
+    get tasks_url(status: "inbox")
+
+    assert_response :success
+    assert_select "[data-weekly-focus]", count: 0
+  end
+
   test "accepts the optional next_action, estimate_minutes and due_on fields" do
     post tasks_url, params: {
       task: {
