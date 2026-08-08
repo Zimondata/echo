@@ -6,6 +6,48 @@ import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 const DAY_START_MINUTES = 6 * 60
 const DAY_SPAN_MINUTES = 18 * 60
 const SNAP_MINUTES = 15
+const PLANNER_SCROLL_STORAGE_KEY = "echo:planner-drag-scroll"
+const PLANNER_SCROLL_MAX_AGE_MS = 15_000
+
+function rememberPlannerScroll(view) {
+  try {
+    sessionStorage.setItem(PLANNER_SCROLL_STORAGE_KEY, JSON.stringify({
+      path: window.location.pathname,
+      view,
+      x: window.scrollX,
+      y: window.scrollY,
+      savedAt: Date.now()
+    }))
+  } catch (_error) {
+    // A blocked sessionStorage must never block moving a planner card.
+  }
+}
+
+function restorePlannerScroll() {
+  let saved
+
+  try {
+    saved = JSON.parse(sessionStorage.getItem(PLANNER_SCROLL_STORAGE_KEY))
+    sessionStorage.removeItem(PLANNER_SCROLL_STORAGE_KEY)
+  } catch (_error) {
+    return
+  }
+
+  const currentView = new URLSearchParams(window.location.search).get("view") || "month"
+  if (!saved || saved.path !== window.location.pathname || saved.view !== currentView || Date.now() - saved.savedAt > PLANNER_SCROLL_MAX_AGE_MS) return
+  if (!Number.isFinite(saved.x) || !Number.isFinite(saved.y)) return
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const root = document.documentElement
+    const previousBehavior = root.style.scrollBehavior
+    root.style.scrollBehavior = "auto"
+    window.scrollTo(saved.x, saved.y)
+    root.style.scrollBehavior = previousBehavior
+  }))
+}
+
+document.addEventListener("turbo:load", restorePlannerScroll)
+document.addEventListener("DOMContentLoaded", restorePlannerScroll, { once: true })
 
 class PlannerDragController extends Controller {
   static targets = ["day", "status"]
@@ -292,7 +334,9 @@ class PlannerDragController extends Controller {
     }
     this.addField(form, "view", this.viewValue || "week")
     this.addField(form, "date", date)
+    if (payload.kind === "task") this.addField(form, "planner_drag", "1")
 
+    rememberPlannerScroll(this.viewValue || "week")
     this.element.classList.add("is-planner-submitting")
     this.announce(payload.kind === "task" ? `Ставлю задачу на ${time}` : `Переношу на ${time}`)
     document.body.appendChild(form)

@@ -27,6 +27,12 @@ class TimeBlocksControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to calendar_events_path(view: "day", date: "2026-08-03")
   end
 
+  test "drag scheduling returns to the submitted planner view" do
+    post task_time_blocks_url(@task), params: schedule_params(date: "2026-08-03", time: "14:30").merge(view: "week", planner_drag: "1")
+
+    assert_redirected_to calendar_events_path(view: "week", date: "2026-08-03")
+  end
+
   test "invalid duration rolls back the task transition and preserves the schedule form" do
     assert_no_difference "TimeBlock.count" do
       post task_time_blocks_url(@task), params: schedule_params(duration: "0")

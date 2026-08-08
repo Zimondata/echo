@@ -34,7 +34,8 @@ class TimeBlocksController < ApplicationController
       )
     end
 
-    redirect_to calendar_events_path(view: "day", date: local_date(@time_block)),
+    return_view = params[:planner_drag] == "1" ? safe_view : "day"
+    redirect_to calendar_events_path(view: return_view || "day", date: local_date(@time_block)),
                 notice: "Задача запланирована"
   rescue OverlapRequiresConfirmation
     @schedule_errors = [ "Это время пересекается с другим блоком или событием. Проверь и подтверди наложение." ]
