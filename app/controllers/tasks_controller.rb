@@ -237,7 +237,8 @@ class TasksController < ApplicationController
     raise InvalidLockVersion unless string_value.match?(/\A\d+\z/)
 
     number = Integer(string_value, 10)
-    raise InvalidLockVersion unless number.between?(0, (2**63) - 1)
+    # Active Record increments lock_version on every persisted task mutation.
+    raise InvalidLockVersion unless number.between?(0, (2**63) - 2)
 
     number
   end

@@ -82,4 +82,20 @@ class TaskStepsControllerTest < ActionDispatch::IntegrationTest
     assert_response :conflict
     assert_equal "next", @task.reload.status
   end
+
+  test "largest safe parent lock increments once and signed max blocks checklist mutation" do
+    largest_safe = (2**63) - 2
+    @task.update_column(:lock_version, largest_safe)
+
+    assert_difference "TaskStep.count", 1 do
+      post task_task_steps_path(@task), params: { task: { lock_version: largest_safe }, task_step: { text: "Последний безопасный шаг" } }
+    end
+    assert_equal (2**63) - 1, @task.reload.lock_version
+
+    assert_no_difference "TaskStep.count" do
+      post task_task_steps_path(@task), params: { task: { lock_version: @task.lock_version }, task_step: { text: "Переполнение" } }
+    end
+    assert_response :see_other
+    assert_equal (2**63) - 1, @task.reload.lock_version
+  end
 end

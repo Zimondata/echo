@@ -115,7 +115,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "missing or malformed lock versions cannot write" do
-    [ nil, "abc", 999, "9" * 30 ].each do |submitted_lock|
+    [ nil, "abc", 999, ((2**63) - 1).to_s, "9" * 30 ].each do |submitted_lock|
       task = @user.tasks.create!(title: "Исходный текст", owner_type: "user", status: "inbox")
       payload = { title: "Нельзя записать" }
       payload[:lock_version] = submitted_lock unless submitted_lock.nil?
@@ -125,6 +125,21 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
       assert_response :conflict
       assert_equal "Исходный текст", task.reload.title
     end
+  end
+
+  test "largest safe task lock increments once and signed max is then rejected" do
+    task = @user.tasks.create!(title: "На границе", owner_type: "user", status: "inbox")
+    largest_safe = (2**63) - 2
+    task.update_column(:lock_version, largest_safe)
+
+    patch task_url(task), params: { task: { title: "Последняя безопасная запись", lock_version: largest_safe } }
+    assert_response :redirect
+    assert_equal "Последняя безопасная запись", task.reload.title
+    assert_equal (2**63) - 1, task.lock_version
+
+    patch task_url(task), params: { task: { title: "Переполнение", lock_version: task.lock_version } }
+    assert_response :conflict
+    assert_equal "Последняя безопасная запись", task.reload.title
   end
 
   test "invalid edit returns the task frame and preserves submitted values" do

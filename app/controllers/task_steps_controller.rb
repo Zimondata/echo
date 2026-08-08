@@ -79,6 +79,10 @@ class TaskStepsController < ApplicationController
     string = value.to_s
     raise InvalidLockVersion unless string.match?(/\A\d+\z/)
 
-    Integer(string, 10)
+    version = Integer(string, 10)
+    # The parent task is touched after every checklist mutation, which increments this revision.
+    raise InvalidLockVersion unless version.between?(0, (2**63) - 2)
+
+    version
   end
 end
