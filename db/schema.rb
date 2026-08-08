@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_01_090100) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_08_070200) do
   create_table "activity_entries", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "activity_type", null: false
@@ -289,6 +289,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_01_090100) do
     t.index ["user_id"], name: "index_nutrition_entries_on_user_id"
   end
 
+  create_table "projects", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.datetime "archived_at"
+    t.integer "position", default: 0, null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "archived_at", "position"], name: "index_projects_on_user_id_and_archived_at_and_position"
+    t.index ["user_id"], name: "index_projects_on_user_id"
+  end
+
   create_table "quests", force: :cascade do |t|
     t.integer "entry_id", null: false
     t.string "title", null: false
@@ -376,6 +388,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_01_090100) do
     t.index ["id"], name: "index_solid_cable_messages_on_id", unique: true
   end
 
+  create_table "task_steps", force: :cascade do |t|
+    t.integer "task_id", null: false
+    t.string "text", null: false
+    t.integer "position", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_id", "position"], name: "index_task_steps_on_task_id_and_position"
+    t.index ["task_id"], name: "index_task_steps_on_task_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "title", null: false
@@ -391,8 +414,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_01_090100) do
     t.datetime "completed_at"
     t.datetime "dropped_at"
     t.string "drop_reason", limit: 500
+    t.integer "project_id"
+    t.text "description"
     t.index ["deleted_at"], name: "index_tasks_on_deleted_at"
     t.index ["due_on"], name: "index_tasks_on_due_on"
+    t.index ["project_id"], name: "index_tasks_on_project_id"
+    t.index ["user_id", "project_id"], name: "index_tasks_on_user_id_and_project_id"
     t.index ["user_id", "status"], name: "index_tasks_on_user_id_and_status"
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
@@ -467,12 +494,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_01_090100) do
   add_foreign_key "login_tokens", "users"
   add_foreign_key "nutrition_entries", "entries"
   add_foreign_key "nutrition_entries", "users"
+  add_foreign_key "projects", "users"
   add_foreign_key "quests", "entries"
   add_foreign_key "quests", "users"
   add_foreign_key "reminders", "entries"
   add_foreign_key "reminders", "users"
   add_foreign_key "rhythm_checkins", "rhythms"
   add_foreign_key "rhythms", "users"
+  add_foreign_key "task_steps", "tasks"
+  add_foreign_key "tasks", "projects", on_delete: :nullify
   add_foreign_key "tasks", "users"
   add_foreign_key "telegram_auth_sessions", "users"
   add_foreign_key "time_blocks", "tasks"

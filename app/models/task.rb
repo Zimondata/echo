@@ -8,7 +8,9 @@ class Task < ApplicationRecord
 
   # Associations
   belongs_to :user
+  belongs_to :project, optional: true
   has_many :time_blocks, dependent: :destroy
+  has_many :task_steps, -> { ordered }, dependent: :destroy
 
   # Validations
   validates :title, presence: true, length: { maximum: 255 }
@@ -17,6 +19,8 @@ class Task < ApplicationRecord
   validates :estimate_minutes, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :drop_reason, length: { maximum: 500 }, allow_nil: true
   validate :optionals_must_be_castable
+  validate :project_must_share_owner
+  validate :new_project_assignment_must_be_active
 
   # Callbacks
   before_validation :normalize_text_fields
@@ -33,6 +37,7 @@ class Task < ApplicationRecord
 
   def normalize_text_fields
     self.title = title.strip if title.is_a?(String)
+    self.description = description.strip.presence if description.is_a?(String)
     self.next_action = next_action.strip.presence if next_action.is_a?(String)
     self.drop_reason = drop_reason.strip.presence if drop_reason.is_a?(String)
   end
@@ -43,5 +48,15 @@ class Task < ApplicationRecord
     end
 
     errors.add(:due_on, :invalid) if due_on.nil? && due_on_before_type_cast.present?
+  end
+
+  def project_must_share_owner
+    errors.add(:project, "должен принадлежать владельцу задачи") if project && project.user_id != user_id
+  end
+
+  def new_project_assignment_must_be_active
+    return unless project&.archived? && will_save_change_to_project_id?
+
+    errors.add(:project, "уже находится в архиве")
   end
 end

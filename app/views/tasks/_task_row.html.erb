@@ -1,0 +1,68 @@
+<article class="echo-task-row" data-task-id="<%= task.id %>">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <h3 class="m-0 text-[15px] font-semibold" style="color:var(--ink)"><%= task.title %></h3>
+      <% if task.project %><span class="echo-badge" data-project-label><%= task.project.name %><%= " · архив" if task.project.archived? %></span><% end %>
+      <% if task.task_steps.any? %><span class="echo-badge" data-checklist-count><%= task.task_steps.count(&:completed?) %>/<%= task.task_steps.size %></span><% end %>
+    </div>
+    <p class="mt-1 text-sm leading-6" style="color:var(--ink-muted)"><%= task.next_action.presence || "Нет следующего физического шага — уточни перед планированием" %></p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <% if task.estimate_minutes %><span class="echo-badge"><%= task.estimate_minutes %> мин</span><% end %>
+      <% if task.due_on %><span class="echo-badge <%= task.due_on < Date.current ? 'echo-badge--fixed' : '' %>">дедлайн <%= l(task.due_on, format: :short) %></span><% end %>
+      <% if task.time_blocks.active.any? %><span class="echo-badge echo-badge--accent"><%= task.time_blocks.active.count %> в плане</span><% end %>
+    </div>
+  </div>
+  <div class="echo-task-actions">
+    <% if task.status == "someday" %>
+      <%= button_to "В следующие", move_to_next_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: "someday" }, class: "echo-button echo-button--primary echo-button--small" %>
+      <%= button_to "Убрать", drop_from_someday_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: "someday" }, class: "echo-button echo-button--quiet echo-button--small" %>
+    <% else %>
+      <% if Task::UNSCHEDULED_STATUSES.include?(task.status) %>
+        <%= link_to "Запланировать", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
+        <% completion_form = task.task_steps.any? { |step| !step.completed? } ? { data: { turbo_confirm: "Есть незавершённые шаги. Всё равно завершить задачу?" } } : {} %>
+        <%= button_to "Готово", complete_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version }, return_to: "tasks", status: status }, form: completion_form, class: "echo-button echo-button--small" %>
+        <%= button_to "Убрать", drop_task_path(task), method: :patch, params: { task: { lock_version: task.lock_version, drop_reason: "Убрано вручную" }, return_to: "tasks", status: status }, class: "echo-button echo-button--quiet echo-button--small" %>
+      <% elsif task.status == "scheduled" %>
+        <%= link_to "Открыть в плане", calendar_events_path(view: "week", task_id: task.id), class: "echo-button echo-button--small" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% unless %w[completed dropped].include?(task.status) %>
+    <details class="echo-task-details" data-task-details>
+      <summary class="echo-button echo-button--quiet echo-button--small">Детали</summary>
+      <div class="echo-task-details__body">
+        <%= form_with model: task, class: "grid gap-3" do |form| %>
+          <%= hidden_field_tag :return_to, "tasks" %>
+          <%= hidden_field_tag :status, status %>
+          <%= form.hidden_field :lock_version %>
+          <%= form.text_field :title, class: "echo-input", required: true, maxlength: 255 %>
+          <%= form.text_area :description, class: "echo-textarea", rows: 3, placeholder: "Описание" %>
+          <%= form.text_field :next_action, class: "echo-input", placeholder: "Следующий шаг" %>
+          <div class="echo-metadata-grid">
+            <%= form.number_field :estimate_minutes, class: "echo-input", min: 1, placeholder: "Минуты" %>
+            <%= form.date_field :due_on, class: "echo-input" %>
+            <% project_options = @active_projects.to_a | [task.project].compact %>
+            <%= form.collection_select :project_id, project_options, :id, :name, { include_blank: "Без проекта" }, class: "echo-select" %>
+          </div>
+          <%= form.submit "Сохранить детали", class: "echo-button" %>
+        <% end %>
+
+        <div class="echo-checklist" aria-label="Чек-лист">
+          <% task.task_steps.each do |step| %>
+            <div class="echo-checklist__item">
+              <%= button_to(step.completed? ? "Снять отметку" : "Выполнить", toggle_task_task_step_path(task, step), method: :patch, params: { task: { lock_version: task.lock_version } }, class: "echo-button echo-button--small") %>
+              <span><%= step.text %></span>
+              <%= button_to "Удалить", task_task_step_path(task, step), method: :delete, params: { task: { lock_version: task.lock_version } }, class: "echo-button echo-button--quiet echo-button--small" %>
+            </div>
+          <% end %>
+          <%= form_with url: task_task_steps_path(task), class: "echo-capture-row" do |form| %>
+            <%= hidden_field_tag "task[lock_version]", task.lock_version %>
+            <%= text_field_tag "task_step[text]", nil, class: "echo-input", placeholder: "Новый шаг", required: true, maxlength: 500 %>
+            <%= form.submit "Добавить шаг", class: "echo-button" %>
+          <% end %>
+        </div>
+      </div>
+    </details>
+  <% end %>
+</article>

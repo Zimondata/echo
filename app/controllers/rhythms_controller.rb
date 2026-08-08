@@ -64,14 +64,44 @@ class RhythmsController < ApplicationController
   private
 
   def load_index
-    @rhythms = current_user.rhythms.ordered.includes(:rhythm_checkins)
+    @today = user_today
+    @month_start = selected_month_start
+    @month_end = @month_start.end_of_month
+    @previous_month = @month_start.prev_month
+    @next_month = @month_start.next_month
+    @rhythms = current_user.rhythms.ordered.to_a
     @rhythm ||= current_user.rhythms.new(position: @rhythms.size)
     @active_count = @rhythms.count(&:active?)
-    @today = user_today
-    @return_sources = @rhythms.each_with_object({}) do |rhythm, sources|
-      latest = rhythm.rhythm_checkins.select { |checkin| checkin.local_date <= @today }.max_by(&:local_date)
-      sources[rhythm.id] = latest if latest&.state == "skipped"
+
+    rhythm_ids = @rhythms.map(&:id)
+    @month_checkins = RhythmCheckin
+      .where(rhythm_id: rhythm_ids, local_date: @month_start..@month_end)
+      .order(:local_date)
+      .group_by(&:rhythm_id)
+    @today_checkins = RhythmCheckin.where(rhythm_id: rhythm_ids, local_date: @today).index_by(&:rhythm_id)
+    latest_dates = RhythmCheckin
+      .where(rhythm_id: rhythm_ids, local_date: ..@today)
+      .group(:rhythm_id)
+      .maximum(:local_date)
+    latest_candidates = RhythmCheckin.where(
+      rhythm_id: latest_dates.keys,
+      local_date: latest_dates.values
+    )
+    @return_sources = latest_candidates.each_with_object({}) do |checkin, sources|
+      next unless latest_dates[checkin.rhythm_id] == checkin.local_date && checkin.state == "skipped"
+
+      sources[checkin.rhythm_id] = checkin
     end
+  end
+
+  def selected_month_start
+    raw = params[:month].to_s
+    return @today.beginning_of_month if raw.blank?
+    return @today.beginning_of_month unless raw.match?(/\A\d{4}-(0[1-9]|1[0-2])\z/)
+
+    Date.iso8601("#{raw}-01")
+  rescue Date::Error
+    @today.beginning_of_month
   end
 
   def set_rhythm

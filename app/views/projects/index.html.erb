@@ -1,0 +1,41 @@
+<% content_for :title, "Проекты — Echo" %>
+<%= render "shared/unified_header" %>
+
+<div class="echo-page echo-page--narrow">
+  <header class="echo-page__heading">
+    <div><p class="echo-kicker">Контекст задач</p><h1 class="echo-title">Проекты</h1><p class="echo-subtitle">Лёгкие названия для группировки задач. Архив сохраняет подпись у уже назначенных задач.</p></div>
+    <%= link_to "К задачам", tasks_path, class: "echo-button" %>
+  </header>
+
+  <% if notice.present? %><div class="echo-notice"><%= notice %></div><% end %>
+  <% if alert.present? %><div class="echo-notice" role="alert"><%= alert %></div><% end %>
+
+  <section class="echo-surface echo-surface--accent mb-5">
+    <div class="echo-surface__body">
+      <%= form_with model: @project, class: "echo-capture-row" do |form| %>
+        <%= form.text_field :name, class: "echo-input", placeholder: "Название проекта", required: true, maxlength: 255 %>
+        <%= form.submit "Создать", class: "echo-button echo-button--primary" %>
+      <% end %>
+      <% if @project.errors.any? %><p class="echo-section-copy" style="color:var(--danger)"><%= @project.errors.full_messages.to_sentence %></p><% end %>
+    </div>
+  </section>
+
+  <section class="echo-surface">
+    <% @projects.each do |project| %>
+      <article class="echo-project-row" data-project-id="<%= project.id %>">
+        <div><strong><%= project.name %></strong><p class="echo-section-copy"><%= project.active? ? "Активен" : "В архиве" %></p></div>
+        <details class="echo-project-edit">
+          <summary>Переименовать</summary>
+          <%= form_with model: project, method: :patch, class: "echo-form-grid echo-project-edit-form" do |form| %>
+            <%= form.hidden_field :lock_version, value: project.lock_version %>
+            <%= form.text_field :name, "aria-label": "Новое название проекта", required: true, maxlength: 120 %>
+            <%= form.submit "Сохранить", class: "echo-button echo-button--small" %>
+          <% end %>
+        </details>
+        <% if project.active? %>
+          <%= button_to "В архив", archive_project_path(project), method: :patch, params: { project: { lock_version: project.lock_version } }, class: "echo-button echo-button--quiet" %>
+        <% end %>
+      </article>
+    <% end %>
+  </section>
+</div>

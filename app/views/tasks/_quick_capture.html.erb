@@ -1,0 +1,28 @@
+<%= form_with model: task, url: tasks_path, namespace: local_assigns[:namespace], class: "task-form", data: { shared_quick_capture: true, task_form: true } do |form| %>
+  <% if task.errors.any? %>
+    <div class="task-form-errors" role="alert" data-task-errors><% task.errors.full_messages.each do |message| %><div class="task-form-error"><%= message %></div><% end %></div>
+  <% end %>
+
+  <% if local_assigns[:return_to].present? %><%= hidden_field_tag :return_to, return_to %><% end %>
+  <% if local_assigns[:calendar_view].present? %><%= hidden_field_tag :view, calendar_view %><% end %>
+  <% if local_assigns[:calendar_date].present? %><%= hidden_field_tag :date, calendar_date %><% end %>
+
+  <div class="task-form-row">
+    <%= form.label :title, "Новая задача", class: "task-visually-hidden" %>
+    <%= form.text_field :title, class: "task-input", placeholder: "Что нужно сделать?", maxlength: 255, autocomplete: "off", required: true, autofocus: task.errors.any? %>
+    <%= form.submit "Добавить", class: "task-submit" %>
+  </div>
+
+  <details class="task-capture-details" data-quick-capture-details>
+    <summary>Дополнительно</summary>
+    <div class="task-capture-details__body">
+      <%= form.text_area :description, class: "task-input task-input-compact", placeholder: "Контекст", rows: 2, aria: { label: "Описание" } %>
+      <%= form.text_field :next_action, class: "task-input task-input-compact", placeholder: "Следующий шаг", maxlength: 255, autocomplete: "off", aria: { label: "Следующий шаг" } %>
+      <div class="task-optional-grid">
+        <%= form.number_field :estimate_minutes, class: "task-input task-input-compact", placeholder: "мин", min: 1, step: 1, aria: { label: "Оценка в минутах" } %>
+        <%= form.date_field :due_on, class: "task-input task-input-compact", aria: { label: "Срок" } %>
+      </div>
+      <%= form.collection_select :project_id, projects, :id, :name, { include_blank: "Без проекта" }, class: "task-input task-input-compact", aria: { label: "Проект" } %>
+    </div>
+  </details>
+<% end %>

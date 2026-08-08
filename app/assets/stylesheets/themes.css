@@ -654,6 +654,55 @@ button, input, select, textarea { font: inherit; }
 [data-color-scheme="light"] select,
 [data-color-scheme="light"] textarea { background-color: var(--surface-inset); color: var(--ink); border-color: var(--line-strong); }
 
+/* Tasks: one capture contract, lightweight project context and subordinate steps. */
+.task-form { display: grid; gap: 9px; margin: 0; min-width: 0; }
+.task-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+.task-input { width: 100%; min-width: 0; min-height: 42px; padding: 9px 12px; border: 0; border-radius: 10px; color: var(--ink); background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line-strong); font: inherit; font-size: 13px; }
+.task-input::placeholder { color: var(--ink-faint); }
+.task-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.task-input-compact { min-height: 38px; font-size: 12px; }
+.task-submit { min-height: 42px; padding: 0 16px; border: 0; border-radius: 10px; color: var(--canvas); background: var(--fixed); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.task-capture-details { min-width: 0; }
+.task-capture-details > summary { width: fit-content; color: var(--ink-secondary); font-size: 12px; font-weight: 650; cursor: pointer; }
+.task-capture-details__body { display: grid; gap: 8px; margin-top: 9px; }
+.task-optional-grid { display: grid; grid-template-columns: minmax(88px, .35fr) minmax(0, 1fr); gap: 8px; }
+.task-form-errors { padding: 10px 12px; border-radius: 10px; color: var(--danger); background: var(--danger-soft); }
+.task-visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.echo-task-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.echo-task-row:last-child { border-bottom: 0; }
+.echo-task-actions { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: flex-end; gap: 8px; }
+.echo-task-details { grid-column: 1 / -1; min-width: 0; }
+.echo-task-details > summary { list-style: none; cursor: pointer; }
+.echo-task-details > summary::-webkit-details-marker { display: none; }
+.echo-task-details__body { display: grid; gap: 18px; margin-top: 12px; padding: 14px; border-radius: 12px; background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
+.echo-metadata-grid { display: grid; grid-template-columns: minmax(100px, .5fr) minmax(150px, 1fr) minmax(160px, 1fr); gap: 9px; }
+.echo-checklist { display: grid; gap: 9px; }
+.echo-checklist__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 9px; min-width: 0; }
+.echo-checklist__item span { overflow-wrap: anywhere; }
+.echo-capture-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+.echo-someday-sections { display: grid; gap: 16px; }
+.echo-project-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.echo-project-row:last-child { border-bottom: 0; }
+.echo-project-edit summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.echo-project-edit-form { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 10px; }
+.echo-project-edit-form input[type="text"] { min-width: 0; }
+
+/* Rhythms: read-only month projection, deliberately without streak pressure. */
+.echo-rhythm-month-nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 20px 0 8px; text-align: center; }
+.echo-rhythm-month { display: grid; gap: 12px; margin-top: 22px; }
+.echo-rhythm-month__summary { display: flex; flex-wrap: wrap; gap: 7px; }
+.echo-rhythm-count { padding: 5px 9px; border-radius: 999px; color: var(--ink-secondary); background: var(--surface-inset); font-size: 11px; }
+.echo-rhythm-grid { display: grid; grid-template-columns: repeat(7, minmax(38px, 1fr)); gap: 5px; width: min(720px, 100%); min-width: 0; }
+.echo-rhythm-weekday { padding: 4px; color: var(--ink-muted); font-size: 10px; font-weight: 700; text-align: center; }
+.echo-rhythm-day { display: grid; min-width: 0; min-height: 50px; place-content: center; gap: 4px; border-radius: 10px; color: var(--ink-secondary); background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); font-size: 11px; font-variant-numeric: tabular-nums; }
+.echo-rhythm-day--outside { visibility: hidden; }
+.echo-rhythm-day__mark { width: 7px; height: 7px; margin: 0 auto; border-radius: 50%; background: currentColor; }
+.echo-rhythm-day--full { color: var(--accent); background: var(--accent-soft); }
+.echo-rhythm-day--minimum { color: var(--fixed); background: var(--fixed-soft); }
+.echo-rhythm-day--returned { color: var(--success); background: var(--success-soft); }
+.echo-rhythm-day--skipped { color: var(--ink-muted); background: var(--surface); border: 1px dashed var(--line-strong); box-shadow: none; }
+.echo-rhythm-day.is-today { outline: 2px solid var(--focus); outline-offset: 1px; }
+
 @media (max-width: 1024px) {
   .command-stage { grid-template-columns: minmax(0, 1.35fr) minmax(280px, .75fr); }
   .command-focus__content h2 { font-size: clamp(38px, 5.8vw, 58px); }
@@ -703,6 +752,21 @@ button, input, select, textarea { font: inherit; }
   .echo-surface__body { padding: 16px; }
   .echo-form-grid { grid-template-columns: 1fr; }
   .echo-form-grid .echo-button { width: 100%; }
+  .echo-task-row { grid-template-columns: 1fr; padding: 16px; }
+  .echo-task-actions { justify-content: flex-start; }
+  .echo-task-actions form { flex: 1 1 140px; }
+  .echo-task-actions .echo-button { width: 100%; min-height: 44px; }
+  .echo-metadata-grid { grid-template-columns: 1fr; }
+  .echo-checklist__item { grid-template-columns: 1fr; padding: 10px; border-radius: 10px; background: var(--surface); }
+  .echo-checklist__item .echo-button { width: 100%; min-height: 44px; }
+  .echo-capture-row { grid-template-columns: 1fr; }
+  .echo-capture-row .echo-button { min-height: 44px; }
+  .echo-project-row { align-items: stretch; flex-direction: column; }
+  .echo-project-row .echo-button { width: 100%; min-height: 44px; }
+  .echo-rhythm-month-nav { grid-template-columns: 1fr 1fr; }
+  .echo-rhythm-month-nav > div { grid-column: 1 / -1; grid-row: 1; }
+  .echo-rhythm-grid { grid-template-columns: repeat(7, minmax(34px, 1fr)); gap: 4px; }
+  .echo-rhythm-day { min-height: 46px; border-radius: 8px; }
 }
 
 @media (max-width: 420px) {

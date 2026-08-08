@@ -146,6 +146,7 @@ class CalendarEventsController < ApplicationController
   def load_task_lane
     @task = current_user.tasks.new
     @unscheduled_tasks = current_user.tasks.unscheduled.order(:created_at)
+    @active_projects = current_user.projects.active.ordered
   end
 
   def load_time_blocks

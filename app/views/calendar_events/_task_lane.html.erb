@@ -9,36 +9,12 @@
     <div class="task-lane-body">
       <%= render "tasks/task_feedback", message: flash[:task_notice] %>
 
-      <%= form_with model: task, url: tasks_path, namespace: "new_task", class: "task-form", data: { task_form: true } do |form| %>
-        <% if task.errors.any? %>
-          <div class="task-form-errors" role="alert" data-task-errors>
-            <% task.errors.full_messages.each do |message| %>
-              <div class="task-form-error"><%= message %></div>
-            <% end %>
-          </div>
-        <% end %>
-
-        <%= hidden_field_tag :view, calendar_view %>
-        <%= hidden_field_tag :date, calendar_date %>
-
-        <div class="task-form-row">
-          <%= form.label :title, "Новая задача", class: "task-visually-hidden" %>
-          <%= form.text_field :title, class: "task-input", placeholder: "Что нужно сделать?", maxlength: 255, autocomplete: "off", autofocus: task.errors.any? %>
-          <%= form.submit "Добавить", class: "task-submit" %>
-        </div>
-
-        <p class="task-form-hint">Необязательно: следующий шаг, оценка в минутах, срок.</p>
-
-        <%= form.label :next_action, "Следующий шаг", class: "task-visually-hidden" %>
-        <%= form.text_field :next_action, class: "task-input task-input-compact", placeholder: "Следующий шаг", maxlength: 255, autocomplete: "off" %>
-
-        <div class="task-optional-grid">
-          <%= form.label :estimate_minutes, "Оценка в минутах", class: "task-visually-hidden" %>
-          <%= form.number_field :estimate_minutes, class: "task-input task-input-compact", placeholder: "мин", min: 1, step: 1 %>
-          <%= form.label :due_on, "Срок", class: "task-visually-hidden" %>
-          <%= form.date_field :due_on, class: "task-input task-input-compact" %>
-        </div>
-      <% end %>
+      <%= render "tasks/quick_capture",
+                 task: task,
+                 projects: @active_projects,
+                 namespace: "new_task",
+                 calendar_view: calendar_view,
+                 calendar_date: calendar_date %>
 
       <% if %w[day week].include?(calendar_view) && tasks.any? %>
         <p class="task-drag-hint" data-planner-drag-hint><strong>Перетащи задачу</strong> на нужный час. Кнопка «Запланировать» остаётся для точного ввода.</p>

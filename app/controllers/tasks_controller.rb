@@ -3,14 +3,12 @@ class TasksController < ApplicationController
   TaskStateConflict = Class.new(StandardError)
 
   def index
-    @status = params[:status].presence_in(Task::STATUSES) || "next"
-    @tasks = current_user.tasks.active.where(status: @status).includes(:time_blocks).order(:due_on, :created_at)
-    @task_counts = current_user.tasks.active.group(:status).count
-    @new_task = current_user.tasks.new
+    load_tasks_index
   end
 
   def create
     @task = current_user.tasks.new(task_params)
+    assign_active_project!(@task, task_project_id)
     @task.owner_type = Task::DEFAULT_OWNER_TYPE
     @task.status = Task::DEFAULT_STATUS
     @task.deleted_at = nil
@@ -19,13 +17,11 @@ class TasksController < ApplicationController
       redirect_to task_return_path, flash: { task_notice: "Задача добавлена" }
     else
       if params[:return_to] == "tasks"
-        @status = "inbox"
-        @tasks = current_user.tasks.active.where(status: @status).includes(:time_blocks).order(:due_on, :created_at)
-        @task_counts = current_user.tasks.active.group(:status).count
-        @new_task = @task
+        load_tasks_index(status: "inbox", new_task: @task)
         render :index, status: :unprocessable_entity
       else
         @unscheduled_tasks = current_user.tasks.unscheduled.order(:created_at)
+        @active_projects = current_user.projects.active.ordered
         @calendar_view = safe_view
         @calendar_date = safe_date
         render :create, status: :unprocessable_entity
@@ -36,13 +32,25 @@ class TasksController < ApplicationController
   def update
     task = current_user.tasks.active.find(params[:id])
     submitted = update_task_params
-    task.assign_attributes(submitted.except(:lock_version))
+    task.assign_attributes(submitted.except(:lock_version, :project_id))
+    assign_active_project!(task, submitted[:project_id]) if submitted.key?(:project_id)
     ensure_editable_state!(task)
     task.lock_version = strict_lock_version(submitted[:lock_version])
     task.save!
 
-    redirect_to calendar_events_path(calendar_return_params), flash: { task_notice: "Задача обновлена" }
+    if params[:return_to] == "tasks"
+      redirect_to tasks_path(status: safe_task_status), flash: { task_notice: "Задача обновлена" }
+    else
+      redirect_to calendar_events_path(calendar_return_params), flash: { task_notice: "Задача обновлена" }
+    end
   rescue ActiveRecord::StaleObjectError, InvalidLockVersion, TaskStateConflict
+    if params[:return_to] == "tasks"
+      load_tasks_index(status: safe_task_status)
+      flash.now[:alert] = "Задача изменена в другой вкладке. Проверь свежую версию и повтори."
+      render :index, status: :conflict
+      return
+    end
+
     @submitted_task = task
     @server_task = current_user.tasks.active.find(params[:id])
     @conflict = true
@@ -50,6 +58,13 @@ class TasksController < ApplicationController
     set_calendar_context
     render :update, status: :conflict
   rescue ActiveRecord::RecordInvalid
+    if params[:return_to] == "tasks"
+      load_tasks_index(status: safe_task_status)
+      flash.now[:alert] = task.errors.full_messages.to_sentence
+      render :index, status: :unprocessable_entity
+      return
+    end
+
     @submitted_task = task
     @server_task = current_user.tasks.active.find(params[:id])
     @open_action = :edit
@@ -101,20 +116,34 @@ class TasksController < ApplicationController
     render :update, status: :unprocessable_entity
   end
 
+  def move_to_next
+    transition_someday!(status: "next")
+    redirect_to tasks_path(status: "someday"), flash: { task_notice: "Задача перенесена в следующие" }
+  rescue ActiveRecord::StaleObjectError, InvalidLockVersion, TaskStateConflict
+    render_lifecycle_conflict(@transition_task || current_user.tasks.active.find(params[:id]))
+  end
+
+  def drop_from_someday
+    transition_someday!(status: "dropped", dropped_at: Time.current, drop_reason: drop_params[:drop_reason])
+    redirect_to tasks_path(status: "someday"), flash: { task_notice: "Задача убрана" }
+  rescue ActiveRecord::StaleObjectError, InvalidLockVersion, TaskStateConflict
+    render_lifecycle_conflict(@transition_task || current_user.tasks.active.find(params[:id]))
+  end
+
   private
 
   def task_params
     raw_task = params[:task]
     return {} unless raw_task.is_a?(ActionController::Parameters)
 
-    raw_task.permit(:title, :next_action, :estimate_minutes, :due_on)
+    raw_task.permit(:title, :description, :next_action, :estimate_minutes, :due_on)
   end
 
   def update_task_params
     raw_task = params[:task]
     return {} unless raw_task.is_a?(ActionController::Parameters)
 
-    raw_task.permit(:title, :next_action, :estimate_minutes, :due_on, :lock_version)
+    raw_task.permit(:title, :description, :next_action, :estimate_minutes, :due_on, :project_id, :lock_version)
   end
 
   def lifecycle_params
@@ -165,15 +194,30 @@ class TasksController < ApplicationController
     raise ActiveRecord::RecordNotFound
   end
 
+  def transition_someday!(attributes)
+    @transition_task = current_user.tasks.active.find(params[:id])
+    raise ActiveRecord::RecordNotFound unless @transition_task.status == "someday"
+
+    expected = strict_lock_version(lifecycle_params[:lock_version])
+    raise InvalidLockVersion unless @transition_task.lock_version == expected
+
+    @transition_task.assign_attributes(attributes)
+    @transition_task.lock_version = expected
+    @transition_task.save!
+  end
+
   def ensure_editable_state!(task)
-    return if Task::UNSCHEDULED_STATUSES.include?(task.status)
-
     raise TaskStateConflict if %w[completed dropped].include?(task.status)
-
-    raise ActiveRecord::RecordNotFound
   end
 
   def render_lifecycle_conflict(task, drop_reason: nil, open_action: nil)
+    if params[:return_to] == "tasks"
+      load_tasks_index(status: safe_task_status)
+      flash.now[:alert] = "Задача изменена в другой вкладке. Проверь свежую версию и повтори."
+      render :index, status: :conflict
+      return
+    end
+
     @submitted_task = task
     @server_task = current_user.tasks.active.find(params[:id])
     @conflict = true
@@ -196,6 +240,31 @@ class TasksController < ApplicationController
     raise InvalidLockVersion unless number.between?(0, (2**63) - 1)
 
     number
+  end
+
+  def load_tasks_index(status: nil, new_task: nil)
+    @status = status.presence_in(Task::STATUSES) || params[:status].presence_in(Task::STATUSES) || "next"
+    @tasks = current_user.tasks.active
+      .where(status: @status)
+      .includes(:time_blocks, :project, :task_steps)
+      .order(:due_on, :created_at)
+    @task_groups = @tasks.group_by(&:project) if @status == "someday"
+    @task_counts = current_user.tasks.active.group(:status).count
+    @new_task = new_task || current_user.tasks.new
+    @active_projects = current_user.projects.active.ordered
+  end
+
+  def task_project_id
+    raw = params[:task]
+    raw[:project_id] if raw.is_a?(ActionController::Parameters)
+  end
+
+  def assign_active_project!(task, project_id)
+    if project_id.blank?
+      task.project = nil
+    elsif task.project_id.to_s != project_id.to_s
+      task.project = current_user.projects.active.find(project_id)
+    end
   end
 
   def safe_task_status

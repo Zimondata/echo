@@ -1,0 +1,30 @@
+<% checkins = month_checkins.index_by(&:local_date) %>
+<% state_counts = month_checkins.each_with_object(Hash.new(0)) { |checkin, counts| counts[checkin.state] += 1 } %>
+<% month_names = %w[январь февраль март апрель май июнь июль август сентябрь октябрь ноябрь декабрь] %>
+
+<section class="echo-rhythm-month" data-rhythm-month="<%= month_start.strftime('%Y-%m') %>" aria-label="Карта записанных событий за <%= month_names[month_start.month - 1] %> <%= month_start.year %>">
+  <div class="echo-rhythm-month__summary" aria-label="Отметки за выбранный месяц">
+    <% { "full" => "Полностью", "minimum" => "Минимум", "returned" => "Вернулся", "skipped" => "Пропуск" }.each do |state, label| %>
+      <span class="echo-rhythm-count" data-state-count="<%= state %>"><%= label %>: <strong><%= state_counts[state] %></strong></span>
+    <% end %>
+  </div>
+
+  <div class="echo-rhythm-grid" role="grid" aria-label="Дни месяца">
+    <% %w[Пн Вт Ср Чт Пт Сб Вс].each do |weekday| %><span class="echo-rhythm-weekday" role="columnheader"><%= weekday %></span><% end %>
+    <% (month_start.cwday - 1).times do %><span class="echo-rhythm-day echo-rhythm-day--outside" aria-hidden="true"></span><% end %>
+    <% (month_start..month_start.end_of_month).each do |date| %>
+      <% checkin = checkins[date] %>
+      <% state = checkin&.state || "blank" %>
+      <% label = checkin ? rhythm_state_label(checkin.state) : "Нет записи" %>
+      <span class="echo-rhythm-day echo-rhythm-day--<%= state %> <%= 'is-today' if date == today %>"
+            role="gridcell"
+            data-rhythm-day="<%= date.iso8601 %>"
+            data-rhythm-state="<%= state %>"
+            title="<%= date.strftime('%d.%m.%Y') %> — <%= label %>"
+            aria-label="<%= date.strftime('%d.%m.%Y') %>: <%= label %>">
+        <time datetime="<%= date.iso8601 %>"><%= date.day %></time>
+        <% if checkin %><span class="echo-rhythm-day__mark" aria-hidden="true"></span><% end %>
+      </span>
+    <% end %>
+  </div>
+</section>

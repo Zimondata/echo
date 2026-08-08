@@ -9,7 +9,18 @@
 
   <% if notice.present? || alert.present? %><div class="echo-notice"><%= notice || alert %></div><% end %>
 
-  <% if @rhythms.active.size < Rhythm::MAX_ACTIVE_PER_USER %>
+  <% month_names = %w[январь февраль март апрель май июнь июль август сентябрь октябрь ноябрь декабрь] %>
+  <section class="echo-rhythm-month-nav" aria-label="Выбранный месяц">
+    <%= link_to "← Назад", rhythms_path(month: @previous_month.strftime("%Y-%m")), class: "echo-button echo-button--quiet" %>
+    <div>
+      <p class="echo-label">Карта записанных событий</p>
+      <h2 class="echo-section-heading"><%= month_names[@month_start.month - 1].capitalize %> <%= @month_start.year %></h2>
+    </div>
+    <%= link_to "Вперёд →", rhythms_path(month: @next_month.strftime("%Y-%m")), class: "echo-button echo-button--quiet" %>
+  </section>
+  <p class="echo-section-copy mb-5">Пустой день означает только отсутствие записи. «Вернулся» — факт возвращения после пропуска, а не отметка полной или минимальной версии.</p>
+
+  <% if @active_count < Rhythm::MAX_ACTIVE_PER_USER %>
     <section class="echo-surface echo-surface--accent mb-5">
       <div class="echo-surface__header"><h2 class="echo-section-heading">Новый ритм</h2><p class="echo-section-copy">Например: назови практику и опиши её достаточную и самую маленькую версии.</p></div>
       <div class="echo-surface__body">
@@ -26,7 +37,7 @@
 
   <div class="grid gap-4">
     <% @rhythms.each do |rhythm| %>
-      <% today_checkin = rhythm.rhythm_checkins.find { |item| item.local_date == @today } %>
+      <% today_checkin = @today_checkins[rhythm.id] %>
       <% return_source = @return_sources[rhythm.id] %>
       <article class="echo-surface" id="rhythm-<%= rhythm.id %>" data-rhythm-id="<%= rhythm.id %>">
         <div class="echo-surface__header flex items-start justify-between gap-4">
@@ -49,6 +60,8 @@
             <% end %>
           <% end %>
 
+          <%= render "rhythms/month_map", rhythm: rhythm, month_start: @month_start, month_checkins: @month_checkins.fetch(rhythm.id, []), today: @today %>
+
           <details class="mt-5">
             <summary class="echo-button echo-button--quiet">Изменить</summary>
             <%= form_with model: rhythm, class: "mt-3 grid gap-3" do |form| %>
@@ -60,8 +73,6 @@
             <% end %>
           </details>
 
-          <% history = rhythm.rhythm_checkins.sort_by(&:local_date).reverse.first(7) %>
-          <% if history.any? %><div class="mt-5 flex flex-wrap gap-2" aria-label="Последние семь отметок"><% history.each do |checkin| %><span class="echo-badge"><%= checkin.local_date.strftime("%d.%m") %> · <%= rhythm_state_label(checkin.state) %></span><% end %></div><% end %>
         </div>
       </article>
     <% end %>

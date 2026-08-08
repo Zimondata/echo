@@ -73,10 +73,19 @@ Rails.application.routes.draw do
     member do
       patch :complete
       patch :drop
+      patch :move_to_next
+      patch :drop_from_someday
+    end
+    resources :task_steps, only: %i[create destroy] do
+      patch :toggle, on: :member
     end
     resources :time_blocks, only: %i[create edit update destroy] do
       post :undo_reschedule, on: :member
     end
+  end
+
+  resources :projects, only: %i[index create update] do
+    patch :archive, on: :member
   end
 
   # Rhythms are persisted depth inside Plan, not a permanent destination.

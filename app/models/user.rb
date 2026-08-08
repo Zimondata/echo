@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :activity_entries, dependent: :destroy
   has_many :quests, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :projects, dependent: :destroy
   has_many :rhythms, dependent: :destroy
   has_many :captures, dependent: :destroy
   has_many :agent_runs, dependent: :destroy
