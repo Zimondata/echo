@@ -31,29 +31,31 @@
     <% end %>
     <% if local_assigns[:schedule_conflict] %><div data-schedule-conflict hidden></div><% end %>
 
-    <div class="task-card-heading">
-      <div class="task-card-title"><%= live_task.title %></div>
-      <span class="task-drag-handle"
-            aria-hidden="true"
-            title="Перетащи на нужный час"
-            <%= "hidden" unless drag_enabled %>
-            data-planner-drag-kind="task"
-            data-planner-drag-task-id="<%= live_task.id %>"
-            data-planner-drag-task-lock-version="<%= live_task.lock_version %>"
-            data-planner-drag-duration="<%= drag_duration %>"
-            data-planner-drag-create-url="<%= task_time_blocks_path(live_task) %>"
-            draggable="<%= drag_enabled %>"
-            data-action="<%= "dragstart->planner-drag#start dragend->planner-drag#finish" if drag_enabled %>">⋮⋮</span>
-    </div>
-    <% if live_task.next_action.present? %>
-      <div class="task-card-next">Следующий шаг: <%= live_task.next_action %></div>
-    <% end %>
-    <% if live_task.estimate_minutes.present? || live_task.due_on.present? %>
-      <div class="task-card-meta">
-        <% if live_task.estimate_minutes.present? %><span><%= live_task.estimate_minutes %> мин</span><% end %>
-        <% if live_task.due_on.present? %><span>до <%= live_task.due_on.strftime("%d.%m") %></span><% end %>
+    <div class="task-card-copy">
+      <div class="task-card-heading">
+        <div class="task-card-title"><%= live_task.title %></div>
+        <% if live_task.estimate_minutes.present? || live_task.due_on.present? %>
+          <div class="task-card-meta">
+            <% if live_task.estimate_minutes.present? %><span><%= live_task.estimate_minutes %> мин</span><% end %>
+            <% if live_task.due_on.present? %><span>до <%= live_task.due_on.strftime("%d.%m") %></span><% end %>
+          </div>
+        <% end %>
+        <span class="task-drag-handle"
+              aria-hidden="true"
+              title="Перетащи на нужный час"
+              <%= "hidden" unless drag_enabled %>
+              data-planner-drag-kind="task"
+              data-planner-drag-task-id="<%= live_task.id %>"
+              data-planner-drag-task-lock-version="<%= live_task.lock_version %>"
+              data-planner-drag-duration="<%= drag_duration %>"
+              data-planner-drag-create-url="<%= task_time_blocks_path(live_task) %>"
+              draggable="<%= drag_enabled %>"
+              data-action="<%= "dragstart->planner-drag#start dragend->planner-drag#finish" if drag_enabled %>">⋮⋮</span>
       </div>
-    <% end %>
+      <% if live_task.next_action.present? %>
+        <div class="task-card-next">Следующий шаг: <%= live_task.next_action %></div>
+      <% end %>
+    </div>
 
     <div class="task-card-actions">
       <details class="task-card-scheduler" <%= "open" if schedule_open %>>
@@ -91,55 +93,60 @@
         <% end %>
       </details>
 
-      <details class="task-card-editor" <%= "open" if edit_open %>>
-        <summary class="task-card-action">Изменить</summary>
-        <%= form_with model: task,
-                      url: task_path(live_task),
-                      method: :patch,
-                      namespace: "edit_task_#{live_task.id}",
-                      class: "task-edit-form",
-                      data: { turbo_frame: dom_id(live_task) } do |form| %>
-          <%= form.hidden_field :lock_version, value: live_task.lock_version %>
-          <%= hidden_field_tag :view, calendar_view, id: nil %>
-          <%= hidden_field_tag :date, calendar_date, id: nil %>
+      <details class="task-card-more" <%= "open" if edit_open || drop_open %>>
+        <summary class="task-card-action">Ещё</summary>
+        <div class="task-card-more-panel">
+          <details class="task-card-editor" <%= "open" if edit_open %>>
+            <summary class="task-card-action">Изменить</summary>
+            <%= form_with model: task,
+                          url: task_path(live_task),
+                          method: :patch,
+                          namespace: "edit_task_#{live_task.id}",
+                          class: "task-edit-form",
+                          data: { turbo_frame: dom_id(live_task) } do |form| %>
+              <%= form.hidden_field :lock_version, value: live_task.lock_version %>
+              <%= hidden_field_tag :view, calendar_view, id: nil %>
+              <%= hidden_field_tag :date, calendar_date, id: nil %>
 
-          <%= form.label :title, "Название", class: "task-edit-label" %>
-          <%= form.text_field :title, class: "task-input task-input-compact", maxlength: 255, autocomplete: "off" %>
-          <%= form.label :next_action, "Следующий шаг", class: "task-edit-label" %>
-          <%= form.text_field :next_action, class: "task-input task-input-compact", maxlength: 255, autocomplete: "off" %>
-          <div class="task-optional-grid">
-            <%= form.label :estimate_minutes, "Оценка в минутах", class: "task-visually-hidden" %>
-            <%= form.number_field :estimate_minutes, class: "task-input task-input-compact", placeholder: "мин", min: 1, step: 1 %>
-            <%= form.label :due_on, "Срок", class: "task-visually-hidden" %>
-            <%= form.date_field :due_on, class: "task-input task-input-compact" %>
-          </div>
-          <%= form.submit "Сохранить", class: "task-card-primary" %>
-        <% end %>
-      </details>
+              <%= form.label :title, "Название", class: "task-edit-label" %>
+              <%= form.text_field :title, class: "task-input task-input-compact", maxlength: 255, autocomplete: "off" %>
+              <%= form.label :next_action, "Следующий шаг", class: "task-edit-label" %>
+              <%= form.text_field :next_action, class: "task-input task-input-compact", maxlength: 255, autocomplete: "off" %>
+              <div class="task-optional-grid">
+                <%= form.label :estimate_minutes, "Оценка в минутах", class: "task-visually-hidden" %>
+                <%= form.number_field :estimate_minutes, class: "task-input task-input-compact", placeholder: "мин", min: 1, step: 1 %>
+                <%= form.label :due_on, "Срок", class: "task-visually-hidden" %>
+                <%= form.date_field :due_on, class: "task-input task-input-compact" %>
+              </div>
+              <%= form.submit "Сохранить", class: "task-card-primary" %>
+            <% end %>
+          </details>
 
-      <%= form_with url: complete_task_path(live_task), method: :patch,
-                    namespace: "complete_task_#{live_task.id}", class: "task-inline-action",
-                    data: { turbo_frame: dom_id(live_task), turbo_confirm: "Отметить задачу выполненной?" } do |form| %>
-        <%= form.hidden_field :lock_version, name: "task[lock_version]", value: live_task.lock_version %>
-        <%= hidden_field_tag :view, calendar_view, id: nil %>
-        <%= hidden_field_tag :date, calendar_date, id: nil %>
-        <%= form.submit "Готово", class: "task-card-action task-card-complete" %>
-      <% end %>
+          <%= form_with url: complete_task_path(live_task), method: :patch,
+                        namespace: "complete_task_#{live_task.id}", class: "task-inline-action",
+                        data: { turbo_frame: dom_id(live_task), turbo_confirm: "Отметить задачу выполненной?" } do |form| %>
+            <%= form.hidden_field :lock_version, name: "task[lock_version]", value: live_task.lock_version %>
+            <%= hidden_field_tag :view, calendar_view, id: nil %>
+            <%= hidden_field_tag :date, calendar_date, id: nil %>
+            <%= form.submit "Готово", class: "task-card-action task-card-complete" %>
+          <% end %>
 
-      <details class="task-card-dropper" <%= "open" if drop_open %>>
-        <summary class="task-card-action task-card-drop">Убрать</summary>
-        <%= form_with url: drop_task_path(live_task), method: :patch,
-                      namespace: "drop_task_#{live_task.id}", class: "task-drop-form",
-                      data: { turbo_frame: dom_id(live_task) } do |form| %>
-          <%= form.hidden_field :lock_version, name: "task[lock_version]", value: live_task.lock_version %>
-          <%= hidden_field_tag :view, calendar_view, id: nil %>
-          <%= hidden_field_tag :date, calendar_date, id: nil %>
-          <%= form.label :drop_reason, "Почему убираем?", class: "task-edit-label" %>
-          <%= form.text_field :drop_reason, name: "task[drop_reason]", value: local_assigns[:drop_reason],
-                              class: "task-input task-input-compact", maxlength: 500,
-                              placeholder: "Причина необязательна" %>
-          <%= form.submit "Убрать из очереди", class: "task-card-danger" %>
-        <% end %>
+          <details class="task-card-dropper" <%= "open" if drop_open %>>
+            <summary class="task-card-action task-card-drop">Убрать</summary>
+            <%= form_with url: drop_task_path(live_task), method: :patch,
+                          namespace: "drop_task_#{live_task.id}", class: "task-drop-form",
+                          data: { turbo_frame: dom_id(live_task) } do |form| %>
+              <%= form.hidden_field :lock_version, name: "task[lock_version]", value: live_task.lock_version %>
+              <%= hidden_field_tag :view, calendar_view, id: nil %>
+              <%= hidden_field_tag :date, calendar_date, id: nil %>
+              <%= form.label :drop_reason, "Почему убираем?", class: "task-edit-label" %>
+              <%= form.text_field :drop_reason, name: "task[drop_reason]", value: local_assigns[:drop_reason],
+                                  class: "task-input task-input-compact", maxlength: 500,
+                                  placeholder: "Причина необязательна" %>
+              <%= form.submit "Убрать из очереди", class: "task-card-danger" %>
+            <% end %>
+          </details>
+        </div>
       </details>
     </div>
   </div>

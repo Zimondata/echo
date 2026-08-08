@@ -148,7 +148,11 @@ module CalendarEventsHelper
 
   def calendar_day_item_time(item)
     starts_at = item[:start].strftime("%H:%M")
-    ends_at = item[:end] == item[:day_end] ? "24:00" : item[:end].strftime("%H:%M")
+    ends_at = if item[:end] == item[:day_end] && item[:day_end].to_date > item[:day_start].to_date
+      "24:00"
+    else
+      item[:end].strftime("%H:%M")
+    end
     prefix = item[:source_start] < item[:day_start] ? "↤ " : ""
     suffix = item[:source_end] > item[:day_end] ? " ↦" : ""
     "#{prefix}#{starts_at}–#{ends_at}#{suffix}"
@@ -188,7 +192,7 @@ module CalendarEventsHelper
 
   def calendar_current_time_top(timezone)
     now = Time.current.in_time_zone(timezone)
-    minutes = [[now.hour * 60 + now.min, 6 * 60].max, 24 * 60].min
+    minutes = [ [ now.hour * 60 + now.min, 6 * 60 ].max, 24 * 60 ].min
     (((minutes - 6 * 60) / 60.0) * 56).round
   end
 

@@ -124,7 +124,14 @@
   .calendar-day-all-day-label { padding: 14px 10px; border-right: 1px solid rgba(255,255,255,.055); color: #6f6f79; font-size: 9px; text-align: right; text-transform: uppercase; }
   .calendar-day-all-day-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
   .calendar-day-all-day-item { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 8px; color: #f1f1f3; background: color-mix(in srgb, var(--event-color) 16%, #17171e); box-shadow: inset 3px 0 0 var(--event-color), inset 0 0 0 1px rgba(255,255,255,.045); font-size: 11px; font-weight: 650; text-decoration: none; }
-  .calendar-day-timeline-shell { position: relative; display: grid; grid-template-columns: 72px minmax(0,1fr); height: 1008px; background-color: var(--surface); background-image: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 52%, transparent) 27px, color-mix(in srgb, var(--line) 52%, transparent) 28px, transparent 28px, transparent 55px, var(--line) 55px, var(--line) 56px); background-size: 100% 56px; }
+  .calendar-day-timeline-disclosure { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .calendar-day-timeline-disclosure > summary { min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 18px; color: var(--ink-secondary); cursor: pointer; list-style: none; }
+  .calendar-day-timeline-disclosure > summary::-webkit-details-marker { display: none; }
+  .calendar-day-timeline-disclosure > summary > span { font-size: 11px; font-weight: 750; }
+  .calendar-day-timeline-disclosure > summary > small { flex: 1; color: var(--ink-muted); font-size: 9px; }
+  .calendar-day-timeline-disclosure > summary::after { content: "▾"; color: var(--ink-muted); transition: transform .15s ease; }
+  .calendar-day-timeline-disclosure[open] > summary::after { transform: rotate(180deg); }
+  .calendar-day-timeline-shell { position: relative; display: grid; grid-template-columns: 72px minmax(0,1fr); height: 1008px; border-top: 1px solid var(--line); background-color: var(--surface); background-image: linear-gradient(to bottom, transparent 27px, color-mix(in srgb, var(--line) 52%, transparent) 27px, color-mix(in srgb, var(--line) 52%, transparent) 28px, transparent 28px, transparent 55px, var(--line) 55px, var(--line) 56px); background-size: 100% 56px; }
   .calendar-day-times { position: relative; border-right: 1px solid rgba(255,255,255,.055); }
   .calendar-day-time-label { position: absolute; right: 11px; transform: translateY(-6px); color: #52525c; font-size: 9px; font-variant-numeric: tabular-nums; }
   .calendar-day-column { position: relative; min-width: 0; }
@@ -241,6 +248,8 @@
     .calendar-day-column .calendar-week-event-timed, .calendar-day-column .calendar-week-time-block { left: 5px; right: 5px; }
     .calendar-day-control-list .calendar-agenda-event { grid-template-columns: 62px 3px minmax(0,1fr); }
     .calendar-day-control-list .calendar-agenda-meta { grid-column: 3; justify-content: flex-start; }
+    .calendar-day-checklist__edit { min-height: 44px; }
+    .calendar-event-complete-button { width: 44px; height: 44px; }
     .calendar-mobile-only { display: inline-flex; }
     .calendar-quick-dialog { width: 100%; max-width: none; max-height: calc(100vh - 12px); margin: auto 0 0; border-radius: 20px 20px 0 0; }
     .calendar-quick-shell { padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
@@ -545,23 +554,27 @@
               </div>
             <% end %>
 
-            <% if outside_timed_events.any? || outside_blocks.any? %>
-              <div class="calendar-day-all-day calendar-day-outside-grid" data-day-outside-grid>
-                <div class="calendar-day-all-day-label">00:00–06:00</div>
-                <div class="calendar-day-all-day-items">
-                  <% outside_timed_events.each do |item| %>
-                    <% event = item[:record] %>
-                    <%= link_to "#{calendar_day_item_time(item)} · #{event.title}", edit_calendar_event_path(event), class: "calendar-day-all-day-item", style: "--event-color: #{calendar_event_color(event)}" %>
-                  <% end %>
-                  <% outside_blocks.each do |item| %>
-                    <% block = item[:record] %>
-                    <%= link_to "#{calendar_day_item_time(item)} · #{block.task.title}", edit_task_time_block_path(block.task, block), class: "calendar-day-all-day-item calendar-day-outside-task" %>
-                  <% end %>
+            <details class="calendar-day-timeline-disclosure" data-day-timeline-disclosure>
+              <summary>
+                <span>Шкала времени</span>
+                <small>Открыть для точного планирования и перетаскивания</small>
+              </summary>
+              <% if outside_timed_events.any? || outside_blocks.any? %>
+                <div class="calendar-day-all-day calendar-day-outside-grid" data-day-outside-grid>
+                  <div class="calendar-day-all-day-label">00:00–06:00</div>
+                  <div class="calendar-day-all-day-items">
+                    <% outside_timed_events.each do |item| %>
+                      <% event = item[:record] %>
+                      <%= link_to "#{calendar_day_item_time(item)} · #{event.title}", edit_calendar_event_path(event), class: "calendar-day-all-day-item", style: "--event-color: #{calendar_event_color(event)}" %>
+                    <% end %>
+                    <% outside_blocks.each do |item| %>
+                      <% block = item[:record] %>
+                      <%= link_to "#{calendar_day_item_time(item)} · #{block.task.title}", edit_task_time_block_path(block.task, block), class: "calendar-day-all-day-item calendar-day-outside-task" %>
+                    <% end %>
+                  </div>
                 </div>
-              </div>
-            <% end %>
-
-            <div class="calendar-day-timeline-shell">
+              <% end %>
+              <div class="calendar-day-timeline-shell">
               <div class="calendar-day-times">
                 <% (6..23).each do |hour| %><span class="calendar-day-time-label" style="top: <%= (hour - 6) * 56 %>px"><%= format("%02d:00", hour) %></span><% end %>
               </div>
@@ -608,6 +621,7 @@
                 <% end %>
               </div>
             </div>
+            </details>
             <% if blocks.any? %>
               <details class="calendar-day-controls" <%= "open" if flash[:time_block_reschedule_undo].present? %>>
                 <summary>Управление задачами во времени (<%= blocks.size %>)</summary>

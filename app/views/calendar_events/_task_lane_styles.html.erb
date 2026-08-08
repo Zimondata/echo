@@ -24,26 +24,30 @@
   .task-input-compact { min-height: 32px; font-size: 11px; }
   .task-submit { min-height: 38px; padding: 0 14px; border: 0; border-radius: 9px; color: #1c1405; background: #f5b544; font-family: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
   .task-submit:hover { background: #ffc65f; }
-  .task-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+  .task-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
   .task-card-shell, .task-card-shell turbo-frame { display: block; min-width: 0; }
-  .task-card { display: grid; grid-template-columns: 3px minmax(0,1fr); gap: 10px; padding: 10px; border-radius: 10px; background: #17171e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.045); }
-  .task-card-heading { display: flex; min-width: 0; align-items: flex-start; gap: 8px; }
+  .task-card { display: grid; grid-template-columns: 3px minmax(0,1fr); gap: 9px; padding: 8px 9px; border-radius: 9px; background: #17171e; box-shadow: inset 0 0 0 1px rgba(255,255,255,.045); }
+  .task-card-content { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px 12px; }
+  .task-card-copy { min-width: 0; }
+  .task-card-heading { display: flex; min-width: 0; align-items: center; gap: 8px; }
   .task-card-heading .task-card-title { flex: 1; min-width: 0; }
   .task-drag-handle { display: inline-flex; width: 28px; min-width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 7px; color: #9f91c7; background: rgba(124,58,237,.13); font-size: 13px; letter-spacing: -3px; cursor: grab; user-select: none; }
   .task-drag-handle[hidden] { display: none; }
   .task-drag-handle:active { cursor: grabbing; }
   .task-drag-handle.is-dragging { opacity: .42; }
-  .task-drag-hint { margin: -5px 0 12px; color: #85858f; font-size: 10px; line-height: 1.45; }
+  .task-drag-hint { margin: -5px 0 9px; color: #85858f; font-size: 10px; line-height: 1.45; }
   .task-drag-hint strong { color: #d9ccff; font-weight: 650; }
   .task-card-mark { border-radius: 99px; background: repeating-linear-gradient(to bottom, #f5b544 0 4px, transparent 4px 9px); }
-  .task-card-content { min-width: 0; }
-  .task-card-title { color: #e7e7eb; font-size: 12px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
-  .task-card-next { margin-top: 4px; color: #92929c; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
-  .task-card-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 5px; color: #757580; font-size: 10px; }
-  .task-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 9px; min-width: 0; }
-  .task-card-editor, .task-card-dropper, .task-card-scheduler { min-width: 0; }
-  .task-card-editor[open], .task-card-dropper[open], .task-card-scheduler[open] { flex: 1 0 100%; order: 5; }
-  .task-card-editor > summary::-webkit-details-marker, .task-card-dropper > summary::-webkit-details-marker, .task-card-scheduler > summary::-webkit-details-marker { display: none; }
+  .task-card-title { overflow: hidden; color: #e7e7eb; font-size: 12px; font-weight: 650; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+  .task-card-next { margin-top: 3px; overflow: hidden; color: #92929c; font-size: 10px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+  .task-card-meta { display: flex; flex: 0 0 auto; gap: 8px; margin: 0; color: #757580; font-size: 9px; white-space: nowrap; }
+  .task-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-width: 0; }
+  .task-card-content:has(.task-card-actions details[open]) .task-card-actions { grid-column: 1 / -1; width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .task-card-editor, .task-card-dropper, .task-card-scheduler, .task-card-more { min-width: 0; }
+  .task-card-scheduler[open], .task-card-more[open] { flex: 1 0 100%; order: 5; }
+  .task-card-more-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 7px; padding: 8px; border-radius: 9px; background: #111116; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .task-card-editor[open], .task-card-dropper[open] { flex: 1 0 100%; order: 5; }
+  .task-card-editor > summary::-webkit-details-marker, .task-card-dropper > summary::-webkit-details-marker, .task-card-scheduler > summary::-webkit-details-marker, .task-card-more > summary::-webkit-details-marker { display: none; }
   .task-card-action { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; margin: 0; padding: 0 9px; border: 0; border-radius: 8px; color: #aaaab4; background: #202028; font: inherit; font-size: 10px; font-weight: 650; line-height: 1; text-decoration: none; cursor: pointer; list-style: none; }
   .task-card-action:hover { color: #f1f1f4; background: #292932; }
   .task-card-complete { color: #bff4ce; background: rgba(34,197,94,.12); }
@@ -52,7 +56,7 @@
   .task-edit-form, .task-drop-form, .task-schedule-form { display: grid; gap: 7px; margin-top: 8px; padding: 10px; border-radius: 9px; background: #111116; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
   .task-schedule-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; }
   .task-schedule-grid label { display: grid; gap: 5px; }
-  .task-schedule-grid .task-schedule-lock { display: flex; min-height: 32px; align-items: center; gap: 7px; color: #aaaab4; font-size: 10px; }
+  .task-schedule-lock { display: flex; min-height: 32px; align-items: center; gap: 7px; color: #aaaab4; font-size: 10px; }
   .task-schedule-lock input { width: 16px; height: 16px; margin: 0; }
   .task-schedule-zone { color: #70707b; font-size: 9px; }
   .task-overlap-warning { padding: 8px 9px; border-radius: 8px; color: #ffe0a3; background: rgba(245,181,68,.1); box-shadow: inset 0 0 0 1px rgba(245,181,68,.24); font-size: 10px; line-height: 1.4; }
@@ -77,9 +81,13 @@
 
   @media (max-width: 720px) {
     .task-drag-hint, .task-drag-handle { display: none; }
+    .task-card-content { grid-template-columns: 1fr; }
+    .task-card-actions { grid-column: 1; justify-content: flex-start; }
+    .task-card-next { display: -webkit-box; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .task-input, .task-input-compact, .task-submit { min-height: 44px; }
     .task-card-action, .task-card-primary, .task-card-danger { min-height: 44px; }
     .task-card-action { padding-inline: 12px; }
-    .task-schedule-grid .task-schedule-lock { min-height: 44px; }
+    .task-schedule-lock { min-height: 44px; }
   }
   /* Native dark/light bridge for the Planner task lane. */
   .task-lane { background: var(--surface); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line); }
@@ -103,8 +111,8 @@
   .task-card-complete { color: var(--success); background: var(--success-soft); }
   .task-card-schedule { color: var(--accent); background: var(--accent-soft); }
   .task-card-drop { color: var(--danger); }
-  .task-edit-form, .task-drop-form, .task-schedule-form { background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
-  .task-schedule-grid .task-schedule-lock { color: var(--ink-secondary); }
+  .task-edit-form, .task-drop-form, .task-schedule-form, .task-card-more-panel { background: var(--surface-inset); box-shadow: inset 0 0 0 1px var(--line); }
+  .task-schedule-lock { color: var(--ink-secondary); }
   .task-overlap-warning, .task-conflict { color: var(--fixed); background: var(--fixed-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fixed) 28%, var(--line)); }
   .task-card-errors, .task-form-errors { color: var(--danger); background: var(--danger-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 28%, var(--line)); }
   .task-form-notice { color: var(--success); background: var(--success-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 28%, var(--line)); }

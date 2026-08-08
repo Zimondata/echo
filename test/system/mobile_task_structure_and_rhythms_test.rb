@@ -146,6 +146,85 @@ class MobileTaskStructureAndRhythmsTest < ApplicationSystemTestCase
     save_qa_screenshot("tasks-next-focus-mobile.png")
   end
 
+  test "day plan stays dense while exact timeline remains available on demand" do
+    zone = Time.find_zone!(@user.timezone)
+    day = Date.new(2026, 8, 9)
+    9.times do |index|
+      @user.tasks.create!(
+        title: "Задача без времени #{index + 1}",
+        status: "next",
+        next_action: "Следующий конкретный шаг для задачи #{index + 1}",
+        due_on: day
+      )
+    end
+    [ [ 5, "Подъём" ], [ 7, "Море" ], [ 10, "Плавание" ], [ 19, "Семья" ] ].each do |hour, title|
+      @user.calendar_events.create!(
+        title: title,
+        start_time: zone.local(2026, 8, 9, hour),
+        end_time: zone.local(2026, 8, 9, hour + 1),
+        event_type: "plan",
+        priority: "medium"
+      )
+    end
+
+    mobile_sign_in
+    page.driver.browser.manage.window.resize_to(1280, 800)
+    page.driver.browser.execute_cdp(
+      "Emulation.setDeviceMetricsOverride",
+      width: 1280,
+      height: 800,
+      deviceScaleFactor: 1,
+      mobile: false
+    )
+    visit calendar_events_path(view: "day", date: day.iso8601)
+    find(".task-lane-summary").click
+
+    assert_selector "[data-task-card]", count: 9
+    assert_selector ".calendar-day-checklist__item", count: 4
+    assert_selector "details[data-day-timeline-disclosure]:not([open])"
+    assert_no_selector ".calendar-day-timeline-shell", visible: true
+    heights = page.evaluate_script("[...document.querySelectorAll('[data-task-card]')].map(card => card.getBoundingClientRect().height)")
+    assert heights.all? { |height| height <= 72 }, heights.inspect
+    save_qa_screenshot("calendar-day-dense-desktop.png")
+
+    page.driver.browser.manage.window.resize_to(390, 844)
+    page.driver.browser.execute_cdp(
+      "Emulation.setDeviceMetricsOverride",
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true
+    )
+    visit calendar_events_path(view: "day", date: day.iso8601)
+    assert_mobile_width_without_page_overflow
+    assert_selector "details[data-day-timeline-disclosure]:not([open])"
+    find(".task-lane-summary").click
+    mobile_task_controls = page.evaluate_script(<<~JS)
+      [...document.querySelectorAll(".task-form .task-input, .task-form .task-submit")].map(control => ({
+        width: control.getBoundingClientRect().width,
+        height: control.getBoundingClientRect().height
+      }))
+    JS
+    assert mobile_task_controls.all? { |control| control["width"] >= 44 && control["height"] >= 44 }, mobile_task_controls.inspect
+    first("[data-task-card]").find("summary", text: "Запланировать").click
+    mobile_scheduler_controls = page.evaluate_script(<<~JS)
+      [...document.querySelectorAll(".task-card-scheduler[open] .task-schedule-form .task-input, .task-card-scheduler[open] .task-schedule-form .task-card-primary, .task-card-scheduler[open] .task-schedule-form .task-schedule-lock")].map(control => ({
+        width: control.getBoundingClientRect().width,
+        height: control.getBoundingClientRect().height
+      }))
+    JS
+    assert mobile_scheduler_controls.all? { |control| control["width"] >= 44 && control["height"] >= 44 }, mobile_scheduler_controls.inspect
+    find(".task-lane-summary").click
+    mobile_controls = page.evaluate_script(<<~JS)
+      [...document.querySelectorAll(".calendar-event-complete-button, .calendar-day-checklist__edit")].map(control => ({
+        width: control.getBoundingClientRect().width,
+        height: control.getBoundingClientRect().height
+      }))
+    JS
+    assert mobile_controls.all? { |control| control["width"] >= 44 && control["height"] >= 44 }, mobile_controls.inspect
+    save_qa_screenshot("calendar-day-dense-mobile.png")
+  end
+
   test "mobile rhythm month renders all recorded states without page overflow" do
     mobile_sign_in
     visit rhythms_path(month: "2026-08")

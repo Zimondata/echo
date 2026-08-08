@@ -141,6 +141,27 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "day view keeps the spatial timeline collapsed and labels a five-to-six event honestly" do
+    zone = Time.find_zone!(@user.timezone)
+    @user.calendar_events.create!(
+      title: "Ранний подъём",
+      start_time: zone.local(2026, 8, 12, 5),
+      end_time: zone.local(2026, 8, 12, 6),
+      event_type: "plan",
+      priority: "medium"
+    )
+
+    get calendar_events_url(date: "2026-08-12", view: "day")
+
+    assert_response :success
+    assert_select "details[data-day-timeline-disclosure]", count: 1 do
+      assert_select "summary", text: /Шкала времени/
+      assert_select "[data-day-outside-grid] a", text: /05:00–06:00 · Ранний подъём/
+    end
+    assert_select "details[data-day-timeline-disclosure][open]", count: 0
+    assert_no_match "05:00–24:00", response.body
+  end
+
   test "day view renders the selected date as an hourly timeline even when empty" do
     get calendar_events_url(date: "2026-08-12", view: "day")
 
@@ -588,6 +609,23 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-task-card]", text: /Собрать материалы для отчёта/
     assert_select "[data-task-card]", text: /Подготовить вопросы к созвону/
     assert_no_match "Придумать название для подкаста", response.body
+  end
+
+  test "task cards keep scheduling visible and move secondary actions behind one disclosure" do
+    get calendar_events_url
+
+    assert_response :success
+    tasks(:next_task).then do |task|
+      assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(task)}" do
+        assert_select "details.task-card-scheduler > summary", text: "Запланировать", count: 1
+        assert_select "details.task-card-more", count: 1 do
+          assert_select "> summary", text: "Ещё", count: 1
+          assert_select "form[action='#{task_path(task)}']", count: 1
+          assert_select "form[action='#{complete_task_path(task)}']", count: 1
+          assert_select "form[action='#{drop_task_path(task)}']", count: 1
+        end
+      end
+    end
   end
 
   test "task cards expose edit complete and drop controls without duplicate DOM ids" do
