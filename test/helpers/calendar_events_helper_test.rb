@@ -43,8 +43,15 @@ class CalendarEventsHelperTest < ActionView::TestCase
 
     short_item, long_item = calendar_day_timeline_layout([ short_event, long_event ], [], date, zone.name)
 
-    assert_includes calendar_day_item_style(short_item), "width: calc(30.000%"
-    assert_includes calendar_day_item_style(long_item), "left: calc(30.000%"
-    assert_includes calendar_day_item_style(long_item), "width: calc(70.000%"
+    short_style = calendar_day_item_style(short_item)
+    long_style = calendar_day_item_style(long_item)
+
+    assert_includes short_style, "--desktop-lane-width: 30.000%"
+    assert_includes long_style, "--desktop-lane-left: 30.000%"
+    assert_includes long_style, "--desktop-lane-width: 70.000%"
+    assert_includes short_style, "left: calc(0.000% + 4px)"
+    assert_includes short_style, "width: calc(50.000% - 8px)"
+    assert_includes long_style, "left: calc(50.000% + 4px)"
+    assert_includes long_style, "width: calc(50.000% - 8px)"
   end
 end

@@ -156,10 +156,12 @@ module CalendarEventsHelper
   def calendar_day_item_style(item)
     top = (((item[:start] - item[:day_start]) / 1.hour) * 56).round
     height = [ (((item[:end] - item[:start]) / 1.hour) * 56).round, 32 ].max
-    lane_width = (item[:lane_width_ratio] || (1.0 / item[:lanes])) * 100
-    lane_left = (item[:lane_left_ratio] || ((1.0 / item[:lanes]) * item[:lane])) * 100
+    equal_lane_width = (1.0 / item[:lanes]) * 100
+    equal_lane_left = equal_lane_width * item[:lane]
+    desktop_lane_width = (item[:lane_width_ratio] || (1.0 / item[:lanes])) * 100
+    desktop_lane_left = (item[:lane_left_ratio] || ((1.0 / item[:lanes]) * item[:lane])) * 100
     color = item[:kind] == "calendar-event" ? "--event-color: #{calendar_event_color(item[:record])}; " : ""
-    "#{color}top: #{top}px; height: #{height}px; left: calc(#{format('%.3f', lane_left)}% + 4px); right: auto; width: calc(#{format('%.3f', lane_width)}% - 8px)"
+    "#{color}--desktop-lane-left: #{format('%.3f', desktop_lane_left)}%; --desktop-lane-width: #{format('%.3f', desktop_lane_width)}%; top: #{top}px; height: #{height}px; left: calc(#{format('%.3f', equal_lane_left)}% + 4px); right: auto; width: calc(#{format('%.3f', equal_lane_width)}% - 8px)"
   end
 
   def calendar_day_item_time(item)

@@ -205,6 +205,14 @@
   .calendar-quick-secondary { color: var(--ink-secondary); background: var(--surface-inset); }
   .calendar-quick-submit { color: var(--accent-ink); background: var(--accent); }
 
+  @media (min-width: 701px) {
+    .calendar-day-column .calendar-week-event-timed,
+    .calendar-day-column .calendar-week-time-block {
+      left: calc(var(--desktop-lane-left) + 4px) !important;
+      width: calc(var(--desktop-lane-width) - 8px) !important;
+    }
+  }
+
 
   @media (max-width: 700px) {
     .calendar-frame { padding: 16px 10px calc(96px + env(safe-area-inset-bottom)); overflow-x: clip; }
