@@ -134,14 +134,30 @@ module CalendarEventsHelper
         item[:lane] = lane
       end
       items.each { |item| item[:lanes] = lane_ends.length }
+      actual_overlap = items.combination(2).any? do |left_item, right_item|
+        left_item[:start] < right_item[:end] && right_item[:start] < left_item[:end]
+      end
+      if lane_ends.length == 2 && !actual_overlap
+        lane_durations = items.group_by { |item| item[:lane] }.transform_values do |lane_items|
+          lane_items.sum { |item| [ item[:end] - item[:start], 5.minutes ].max }
+        end
+        duration_total = lane_durations.values.sum
+        first_lane_ratio = (lane_durations.fetch(0) / duration_total).clamp(0.3, 0.7)
+        lane_widths = { 0 => first_lane_ratio, 1 => 1.0 - first_lane_ratio }
+        items.each do |item|
+          item[:lane_width_ratio] = lane_widths.fetch(item[:lane])
+          item[:lane_left_ratio] = item[:lane].zero? ? 0.0 : lane_widths.fetch(0)
+        end
+      end
+      items
     end
   end
 
   def calendar_day_item_style(item)
     top = (((item[:start] - item[:day_start]) / 1.hour) * 56).round
     height = [ (((item[:end] - item[:start]) / 1.hour) * 56).round, 32 ].max
-    lane_width = 100.0 / item[:lanes]
-    lane_left = lane_width * item[:lane]
+    lane_width = (item[:lane_width_ratio] || (1.0 / item[:lanes])) * 100
+    lane_left = (item[:lane_left_ratio] || ((1.0 / item[:lanes]) * item[:lane])) * 100
     color = item[:kind] == "calendar-event" ? "--event-color: #{calendar_event_color(item[:record])}; " : ""
     "#{color}top: #{top}px; height: #{height}px; left: calc(#{format('%.3f', lane_left)}% + 4px); right: auto; width: calc(#{format('%.3f', lane_width)}% - 8px)"
   end

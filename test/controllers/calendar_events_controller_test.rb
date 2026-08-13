@@ -295,7 +295,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     styles = css_select("[data-day-layout-item]").filter_map { |node| node["style"] if node.text.match?(/Коротк/) }
     assert_equal 2, styles.size
     assert_equal 2, styles.uniq.size
-    assert styles.all? { |style| style.include?("width: calc(50.000") }
+    assert styles.any? { |style| style.include?("width: calc(30.000") }
+    assert styles.any? { |style| style.include?("left: calc(30.000") && style.include?("width: calc(70.000") }
   end
 
   test "invalid date and view fall back without crashing" do
