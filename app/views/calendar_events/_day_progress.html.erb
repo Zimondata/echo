@@ -1,0 +1,46 @@
+<% total = events.size %>
+<% completed = events.count(&:done?) %>
+<% percentage = total.positive? ? ((completed.to_f / total) * 100).round : 0 %>
+<% state = if total.zero?
+             "fog"
+           elsif completed == total
+             "harbor"
+           elsif completed.positive?
+             "trace"
+           else
+             "route"
+           end %>
+<% state_copy = {
+     "fog" => ["Тихая гавань", "Маршрут ещё не отмечен", "Свободный день тоже остаётся свободным"],
+     "route" => ["Маршрут отмечен", "Путь на сегодня виден", "Первый след появится после выполненного события"],
+     "trace" => ["След появился", "#{completed} из #{total} событий", "Ты уже двигаешься по своему маршруту"],
+     "harbor" => ["Гавань на сегодня", "#{completed} из #{total} событий", "Маршрут пройден — без серии и без долга на завтра"]
+   }.fetch(state) %>
+
+<div class="calendar-day-progress calendar-day-progress--<%= state %>"
+     data-day-progress
+     data-progress-state="<%= state %>"
+     data-completed="<%= completed %>"
+     data-total="<%= total %>">
+  <%= image_tag "echo-harbor/harbor-route.webp",
+                class: "calendar-day-progress__image",
+                alt: "",
+                aria: { hidden: true } %>
+  <div class="calendar-day-progress__veil" aria-hidden="true"></div>
+  <div class="calendar-day-progress__content">
+    <span class="calendar-day-progress__kicker"><%= state_copy[0] %></span>
+    <strong class="calendar-day-progress__headline" data-day-progress-copy><%= state_copy[1] %></strong>
+    <span class="calendar-day-progress__hint"><%= state_copy[2] %></span>
+    <% if total.positive? %>
+      <div class="calendar-day-progress__track"
+           data-day-progress-bar
+           role="progressbar"
+           aria-label="Отмечено в плане: <%= completed %> из <%= total %> событий"
+           aria-valuenow="<%= percentage %>"
+           aria-valuemin="0"
+           aria-valuemax="100">
+        <span style="width: <%= percentage %>%"></span>
+      </div>
+    <% end %>
+  </div>
+</div>

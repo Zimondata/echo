@@ -769,4 +769,33 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-task-lane-empty]", text: "Добавь задачу здесь. Она останется в этом списке, пока ты не назначишь ей дату и время."
     assert_select "[data-task-card]", count: 0
   end
+
+  test "day view shows neutral completion progress for only the selected plan" do
+    zone = Time.find_zone!(@user.timezone)
+    date = Date.new(2026, 9, 14)
+    @user.calendar_events.create!(title: "Готово", start_time: zone.local(2026, 9, 14, 9), end_time: zone.local(2026, 9, 14, 10), event_type: "plan", priority: "medium", done: true)
+    @user.calendar_events.create!(title: "В работе", start_time: zone.local(2026, 9, 14, 11), end_time: zone.local(2026, 9, 14, 12), event_type: "plan", priority: "medium", done: false)
+    @user.calendar_events.create!(title: "Другой день", start_time: zone.local(2026, 9, 15, 11), end_time: zone.local(2026, 9, 15, 12), event_type: "plan", priority: "medium", done: true)
+    users(:moscow_user).calendar_events.create!(title: "Чужое", start_time: zone.local(2026, 9, 14, 13), end_time: zone.local(2026, 9, 14, 14), event_type: "plan", priority: "medium", done: true)
+
+    get calendar_events_url(date: date.iso8601, view: "day")
+
+    assert_response :success
+    assert_select "[data-day-progress][data-progress-state='trace'][data-completed='1'][data-total='2']", count: 1 do
+      assert_select "img.calendar-day-progress__image[src*='harbor-route']", count: 1
+      assert_select "[data-day-progress-copy]", text: /1 из 2 событий/
+      assert_select "[data-day-progress-bar][aria-valuenow='50'][aria-valuemin='0'][aria-valuemax='100']", count: 1
+    end
+  end
+
+  test "day view shows a pressure-free fog state when the selected plan has no events" do
+    get calendar_events_url(date: "2030-01-15", view: "day")
+
+    assert_response :success
+    assert_select "[data-day-progress][data-progress-state='fog'][data-completed='0'][data-total='0']", count: 1 do
+      assert_select "[data-day-progress-copy]", text: "Маршрут ещё не отмечен"
+      assert_select ".calendar-day-progress__hint", text: "Свободный день тоже остаётся свободным"
+      assert_select "[data-day-progress-bar]", count: 0
+    end
+  end
 end
