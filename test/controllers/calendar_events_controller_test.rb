@@ -707,10 +707,14 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-planner-drag-kind='task'][data-planner-drag-task-id='#{task.id}'][data-planner-drag-duration='45'][draggable='true']"
     assert_select "[data-planner-drag-kind='time-block'][data-planner-drag-time-block-id='#{block.id}'][data-planner-drag-duration='60'][draggable='true']"
     assert_select "[data-planner-drag-kind='time-block'][data-planner-drag-time-block-id='#{locked_block.id}'][draggable='false']"
-    assert_select "[data-planner-drag-kind='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-duration='60'][draggable='true'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart'][data-action*='pointermove->planner-drag#pointerMove'][data-action*='pointerup->planner-drag#pointerEnd']"
+    assert_select "[data-planner-drag-kind='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-duration='60'][draggable='true']" do
+      assert_select "[data-planner-touch-handle][data-action*='pointerdown->planner-drag#pointerStart'][data-action*='pointermove->planner-drag#pointerMove'][data-action*='pointerup->planner-drag#pointerEnd']", count: 1
+    end
     assert_select "[data-planner-drag-target='day'][data-action*='drop->planner-drag#drop']", count: 7
     assert_select "[data-week-timeline-viewport] [data-calendar-day][data-planner-drag-target='day']", count: 7
-    assert_select "[data-week-timeline-viewport] [data-week-layout-item='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-event-lock-version='#{event.lock_version}'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart']", count: 1
+    assert_select "[data-week-timeline-viewport] [data-week-layout-item='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-event-lock-version='#{event.lock_version}']", count: 1 do
+      assert_select "[data-planner-touch-handle][data-action*='pointerdown->planner-drag#pointerStart']", count: 1
+    end
     assert_select "[data-planner-drag-hint]", text: /Перетащи задачу/
   end
 

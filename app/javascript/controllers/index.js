@@ -102,23 +102,31 @@ class PlannerDragController extends Controller {
     }
   }
 
+  stopHandleClick(event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   pointerStart(event) {
     if (event.pointerType === "mouse" || event.button !== 0) return
 
-    const source = event.currentTarget
+    const captureTarget = event.currentTarget
+    const source = captureTarget.closest("[data-planner-drag-kind]")
+    if (!source) return
     const payload = this.payloadFrom(source)
     if (!payload || (payload.kind === "time-block" && payload.locked === "1")) return
 
     this.cancelPointerDrag()
     this.pointerDrag = {
       pointerId: event.pointerId,
+      captureTarget,
       source,
       payload,
       startX: event.clientX,
       startY: event.clientY,
       active: false
     }
-    source.setPointerCapture?.(event.pointerId)
+    captureTarget.setPointerCapture?.(event.pointerId)
   }
 
   pointerMove(event) {
@@ -191,7 +199,7 @@ class PlannerDragController extends Controller {
     const drag = this.pointerDrag
     if (drag) {
       drag.source.classList.remove("is-dragging", "is-pointer-dragging")
-      if (drag.source.hasPointerCapture?.(drag.pointerId)) drag.source.releasePointerCapture(drag.pointerId)
+      if (drag.captureTarget.hasPointerCapture?.(drag.pointerId)) drag.captureTarget.releasePointerCapture(drag.pointerId)
     }
     if (this.pointerDropTarget) this.resetDay(this.pointerDropTarget)
     this.pointerDrag = null

@@ -95,7 +95,7 @@
   .calendar-week-event-timed:hover { z-index: 3; filter: brightness(1.13); }
   .calendar-week-event-timed[draggable="true"] { cursor: grab; }
   .calendar-week-event-timed[draggable="true"]:active { cursor: grabbing; }
-  [data-planner-touch-enabled="true"] { touch-action: none; -webkit-user-select: none; user-select: none; }
+  .planner-touch-drag-handle { display: none; }
   .is-pointer-dragging { z-index: 30 !important; opacity: .42 !important; pointer-events: none; }
   .calendar-week-event-timed.is-dragging { opacity: .38; }
   .calendar-week-time-block { position: absolute; z-index: 2; left: 5px; right: 5px; overflow: hidden; padding: 7px 7px 5px 9px; border-radius: 8px; color: #f4f4f6; background: rgba(124,58,237,.16); box-shadow: inset 3px 0 0 #a78bfa, inset 0 0 0 1px rgba(167,139,250,.2); text-decoration: none; }
@@ -217,6 +217,7 @@
 
 
   @media (max-width: 700px) {
+    .planner-touch-drag-handle { position: absolute; z-index: 4; top: 3px; right: 3px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; color: var(--ink-muted); background: color-mix(in srgb, var(--surface-raised) 82%, transparent); font-size: 13px; line-height: 1; touch-action: none; -webkit-user-select: none; user-select: none; }
     .calendar-frame { padding: 16px 10px calc(96px + env(safe-area-inset-bottom)); overflow-x: clip; }
     .calendar-toolbar { display: block; margin-bottom: 12px; }
     .calendar-title-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; }
@@ -237,6 +238,7 @@
     .calendar-day-link { width: 24px; height: 24px; border-radius: 7px; font-size: 10px; }
     .calendar-month-events { gap: 3px; margin-top: 4px; }
     .calendar-event-chip { display: block; padding: 4px; border-radius: 5px; background: #181820; box-shadow: inset 2px 0 0 var(--event-color); }
+    .calendar-week-event-timed { padding-right: 36px; }
     .calendar-event-accent, .calendar-event-time { display: none; }
     .calendar-event-title { overflow: hidden; display: block; color: var(--ink-secondary); font-size: 8px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
     .calendar-more { margin-top: 3px; font-size: 8px; }
@@ -443,8 +445,7 @@
                                     planner_drag_duration: item.duration_minutes || 60,
                                     planner_drag_local_time: item.all_day? ? "00:00" : item.start_time.in_time_zone(current_user.timezone).strftime("%H:%M"),
                                     planner_drag_update_url: calendar_event_path(item),
-                                    planner_touch_enabled: calendar_event_draggable?(item),
-                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(item))
+                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(item))
                                   } do %>
                         <span class="calendar-event-accent" style="background: <%= calendar_event_color(item) %>"></span>
                         <span class="calendar-event-copy">
@@ -506,9 +507,9 @@
                                     planner_drag_event_lock_version: event.lock_version,
                                     planner_drag_duration: event.duration_minutes || 60,
                                     planner_drag_update_url: calendar_event_path(event),
-                                    planner_touch_enabled: calendar_event_draggable?(event),
-                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
                                   } do %>
+                        <%= render "calendar_events/touch_drag_handle" if calendar_event_draggable?(event) %>
                         <div class="calendar-week-event-time"><%= calendar_day_item_time(item) %></div>
                         <div class="calendar-week-event-title"><%= event.title %></div>
                       <% end %>
@@ -624,9 +625,9 @@
                                   planner_drag_event_lock_version: event.lock_version,
                                   planner_drag_duration: event.duration_minutes || 60,
                                   planner_drag_update_url: calendar_event_path(event),
-                                  planner_touch_enabled: calendar_event_draggable?(event),
-                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish click->planner-drag#guardClick" if calendar_event_draggable?(event))
                                 } do %>
+                      <%= render "calendar_events/touch_drag_handle" if calendar_event_draggable?(event) %>
                       <div class="calendar-week-event-time"><%= calendar_day_item_time(item) %></div>
                       <div class="calendar-week-event-title"><%= event.title %></div>
                     <% end %>
