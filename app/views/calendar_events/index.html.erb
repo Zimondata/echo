@@ -65,7 +65,8 @@
   .calendar-more { display: block; margin-top: 5px; color: #8b5cf6; text-decoration: none; font-size: 10px; font-weight: 650; }
   .calendar-week-desktop { display: block; overflow: auto; }
   .calendar-week-head { display: grid; grid-template-columns: 58px repeat(7,minmax(0,1fr)); position: sticky; top: 0; z-index: 4; min-width: 760px; background: #0f0f14; border-bottom: 1px solid rgba(255,255,255,.06); }
-  .calendar-week-head-spacer { border-right: 1px solid rgba(255,255,255,.055); }
+  .calendar-week-head-spacer { position: sticky; left: 0; z-index: 6; border-right: 1px solid rgba(255,255,255,.055); background: #0f0f14; }
+  .calendar-week-all-day-label { display: block; padding-top: 27px; color: #6f6f79; font-size: 8px; text-align: center; text-transform: uppercase; }
   .calendar-week-head-day { min-height: 72px; padding: 9px 7px; border-right: 1px solid rgba(255,255,255,.055); color: inherit; text-align: center; text-decoration: none; }
   .calendar-week-head-day:last-child { border-right: 0; }
   .calendar-week-head-day.today { background: rgba(124,58,237,.06); }
@@ -76,7 +77,7 @@
   .calendar-week-timeline { position: relative; display: grid; grid-template-columns: 58px repeat(7,minmax(0,1fr)); min-width: 760px; height: 1008px; background-color: var(--surface); background-image: linear-gradient(to bottom, transparent 27px, rgba(255,255,255,.025) 27px, rgba(255,255,255,.025) 28px, transparent 28px, transparent 55px, rgba(255,255,255,.065) 55px, rgba(255,255,255,.065) 56px); background-size: 100% 56px; }
   .calendar-current-time-line { position: absolute; z-index: 8; left: 58px; right: 0; height: 2px; background: #ef4444; pointer-events: none; }
   .calendar-current-time-line::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
-  .calendar-week-times { position: relative; border-right: 1px solid rgba(255,255,255,.055); }
+  .calendar-week-times { position: sticky; left: 0; z-index: 3; border-right: 1px solid rgba(255,255,255,.055); background: #0f0f14; }
   .calendar-week-time-label { position: absolute; right: 9px; transform: translateY(-6px); color: #52525c; font-size: 9px; font-variant-numeric: tabular-nums; }
   .calendar-week-column { position: relative; border-right: 1px solid rgba(255,255,255,.055); }
   .calendar-week-column.is-planner-drop-target { background: rgba(124,58,237,.07); }
@@ -119,20 +120,7 @@
   .calendar-day-header { display: flex; justify-content: space-between; gap: 18px; padding: 20px 22px 17px; border-bottom: 1px solid rgba(255,255,255,.06); }
   .calendar-day-heading { margin: 0; color: #f4f4f5; font-size: 20px; letter-spacing: -.02em; }
   .calendar-day-summary { margin-top: 5px; color: #777782; font-size: 12px; }
-  .calendar-day-progress { position: relative; width: min(410px, 45vw); min-height: 126px; align-self: center; overflow: hidden; border-radius: 16px; background: #101923; box-shadow: inset 0 0 0 1px rgba(255,255,255,.11), 0 14px 34px rgba(0,0,0,.24); isolation: isolate; }
-  .calendar-day-progress__image { position: absolute; z-index: -2; inset: 0 auto 0 0; width: 58%; height: 100%; object-fit: cover; object-position: center; filter: saturate(.82) brightness(.72); transform: scale(1.015); transform-origin: left center; }
-  .calendar-day-progress__veil { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(5,12,18,.04) 0%, rgba(5,12,18,.2) 34%, rgba(5,12,18,.9) 63%, rgba(5,12,18,.98) 100%); }
-  .calendar-day-progress__content { width: 51%; margin-left: auto; display: grid; align-content: center; min-height: 126px; padding: 16px 17px 14px; }
-  .calendar-day-progress__kicker { color: #e5aa55; font-size: 10px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
-  .calendar-day-progress__headline { margin-top: 5px; color: #f4f1eb; font-size: 13px; font-weight: 760; line-height: 1.25; }
-  .calendar-day-progress__hint { margin-top: 4px; color: #aeb8c1; font-size: 10px; line-height: 1.35; }
-  .calendar-day-progress__track { height: 3px; margin-top: 11px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.13); }
-  .calendar-day-progress__track span { display: block; height: 100%; border-radius: inherit; background: #e7aa54; box-shadow: 0 0 10px rgba(231,170,84,.46); transition: width 180ms ease-out; }
-  .calendar-day-progress--fog .calendar-day-progress__image { filter: saturate(.55) brightness(.48); }
-  .calendar-day-progress--fog .calendar-day-progress__track span { opacity: 0; }
-  .calendar-day-progress--harbor .calendar-day-progress__image { filter: saturate(.92) brightness(.88); }
-  .calendar-day-progress--harbor .calendar-day-progress__track span { background: #f2bd69; box-shadow: 0 0 13px rgba(242,189,105,.58); }
-  @media (prefers-reduced-motion: reduce) { .calendar-day-progress__track span { transition: none; } }
+
   .calendar-day-all-day { display: grid; grid-template-columns: 72px minmax(0,1fr); min-height: 46px; border-bottom: 1px solid rgba(255,255,255,.06); background: #0f0f14; }
   .calendar-day-all-day-label { padding: 14px 10px; border-right: 1px solid rgba(255,255,255,.055); color: #6f6f79; font-size: 9px; text-align: right; text-transform: uppercase; }
   .calendar-day-all-day-items { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
@@ -252,8 +240,7 @@
     .calendar-event-accent, .calendar-event-time { display: none; }
     .calendar-event-title { overflow: hidden; display: block; color: var(--ink-secondary); font-size: 8px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
     .calendar-more { margin-top: 3px; font-size: 8px; }
-    .calendar-week-desktop { display: none; }
-    .calendar-week { display: block; }
+    .calendar-week-desktop { display: block; overflow-x: auto; overscroll-behavior-inline: contain; }
     .calendar-week-day { min-height: auto; padding: 13px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.055); }
     .calendar-week-day-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; text-align: left; }
     .calendar-week-day-number { order: -1; margin-top: 0; }
@@ -261,11 +248,7 @@
     .calendar-week-empty { color: #555560; font-size: 11px; }
     .calendar-day-header { align-items: flex-start; flex-wrap: wrap; }
     .calendar-day-heading { font-size: 17px; }
-    .calendar-day-progress { width: 100%; min-width: 0; min-height: 142px; flex: 1 0 100%; order: 3; }
-    .calendar-day-progress__content { width: 58%; min-height: 142px; padding: 15px 14px; }
-    .calendar-day-progress__veil { background: linear-gradient(90deg, rgba(5,12,18,.04) 0%, rgba(5,12,18,.25) 31%, rgba(5,12,18,.91) 58%, rgba(5,12,18,.98) 100%); }
-    .calendar-day-progress__headline { font-size: 12px; }
-    .calendar-day-progress__hint { font-size: 10px; }
+
     .calendar-day-all-day, .calendar-day-timeline-shell { grid-template-columns: 52px minmax(0,1fr); }
     .calendar-day-all-day-label { padding-inline: 4px; font-size: 8px; }
     .calendar-day-time-label { right: 7px; font-size: 8px; }
@@ -479,20 +462,21 @@
             <% end %>
           </div>
         <% elsif @calendar_view == "week" %>
-          <div class="calendar-week-desktop">
+          <div class="calendar-week-desktop" data-week-timeline-viewport tabindex="0" aria-label="Недельный календарь; прокручивается по горизонтали на узком экране">
             <div class="calendar-week-head">
-              <div class="calendar-week-head-spacer"></div>
+              <div class="calendar-week-head-spacer"><span class="calendar-week-all-day-label">Весь день</span></div>
               <% @calendar_days.each do |date| %>
                 <% all_day_events = @events_by_date.fetch(date, []).select(&:all_day?) %>
                 <%= link_to calendar_view_path("day", date), class: "calendar-week-head-day #{'today' if date == Time.current.in_time_zone(current_user.timezone).to_date}" do %>
                   <span class="calendar-week-head-name"><%= CalendarEventsHelper::SHORT_WEEKDAYS[date.cwday - 1] %></span>
                   <span class="calendar-week-head-number"><%= date.day %></span>
-                  <% all_day_events.first(1).each do |event| %><span class="calendar-all-day-chip"><%= event.title %></span><% end %>
+                  <% all_day_events.first(2).each do |event| %><span class="calendar-all-day-chip"><%= event.title %></span><% end %>
+                  <% if all_day_events.size > 2 %><span class="calendar-all-day-chip">+<%= all_day_events.size - 2 %> ещё</span><% end %>
                 <% end %>
               <% end %>
             </div>
             <div class="calendar-week-timeline">
-              <div class="calendar-week-times">
+              <div class="calendar-week-times" data-week-time-gutter>
                 <% (6..23).each do |hour| %><span class="calendar-week-time-label" style="top: <%= (hour - 6) * 56 %>px"><%= format("%02d:00", hour) %></span><% end %>
               </div>
               <% if @calendar_days.include?(Time.current.in_time_zone(current_user.timezone).to_date) %>
@@ -501,74 +485,44 @@
               <% @calendar_days.each do |date| %>
                 <% timed_events = @events_by_date.fetch(date, []).reject(&:all_day?) %>
                 <% timed_blocks = @time_blocks_by_date.fetch(date, []) %>
+                <% week_layout = calendar_week_timeline_layout(timed_events, timed_blocks, date, current_user.timezone) %>
                 <div class="calendar-week-column <%= 'today' if date == Time.current.in_time_zone(current_user.timezone).to_date %>"
                      data-calendar-day="<%= date.iso8601 %>"
                      data-planner-drag-target="day"
                      data-action="click->calendar-quick-create#openWeek dragover->planner-drag#over dragleave->planner-drag#leave drop->planner-drag#drop">
-                  <% timed_events.each do |event| %>
-                    <%= link_to edit_calendar_event_path(event),
-                                class: "calendar-week-event-timed",
-                                style: calendar_week_event_style(event, current_user.timezone),
-                                draggable: calendar_event_draggable?(event),
-                                title: (calendar_event_draggable?(event) ? "Перетащи, чтобы изменить время" : "Открой событие, чтобы изменить время"),
-                                data: {
-                                  event_title: event.title,
-                                  planner_drag_kind: "calendar-event",
-                                  planner_drag_event_id: event.id,
-                                  planner_drag_event_lock_version: event.lock_version,
-                                  planner_drag_duration: event.duration_minutes || 60,
-                                  planner_drag_update_url: calendar_event_path(event),
-                                  planner_touch_enabled: calendar_event_draggable?(event),
-                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
-                                } do %>
-                      <div class="calendar-week-event-time"><%= calendar_event_time(event, current_user.timezone) %></div>
-                      <div class="calendar-week-event-title"><%= event.title %></div>
+                  <% week_layout.each do |item| %>
+                    <% if item[:kind] == "calendar-event" %>
+                      <% event = item[:record] %>
+                      <%= link_to edit_calendar_event_path(event),
+                                  class: "calendar-week-event-timed",
+                                  style: calendar_week_item_style(item),
+                                  draggable: calendar_event_draggable?(event),
+                                  title: (calendar_event_draggable?(event) ? "Перетащи, чтобы изменить время" : "Открой событие, чтобы изменить время"),
+                                  data: {
+                                    week_layout_item: "calendar-event",
+                                    event_title: event.title,
+                                    planner_drag_kind: "calendar-event",
+                                    planner_drag_event_id: event.id,
+                                    planner_drag_event_lock_version: event.lock_version,
+                                    planner_drag_duration: event.duration_minutes || 60,
+                                    planner_drag_update_url: calendar_event_path(event),
+                                    planner_touch_enabled: calendar_event_draggable?(event),
+                                    action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
+                                  } do %>
+                        <div class="calendar-week-event-time"><%= calendar_day_item_time(item) %></div>
+                        <div class="calendar-week-event-title"><%= event.title %></div>
+                      <% end %>
+                    <% else %>
+                      <%= render "calendar_events/time_block_week",
+                                 time_block: item[:record],
+                                 timeline_style: calendar_week_item_style(item),
+                                 time_label: calendar_day_item_time(item),
+                                 week_layout_item: "time-block" %>
                     <% end %>
                   <% end %>
-                  <% timed_blocks.each do |time_block| %><%= render "calendar_events/time_block_week", time_block: time_block %><% end %>
                 </div>
               <% end %>
             </div>
-          </div>
-
-          <div class="calendar-week">
-            <% @calendar_days.each do |date| %>
-              <% events = @events_by_date.fetch(date, []) %>
-              <% blocks = @time_blocks_by_date.fetch(date, []) %>
-              <section class="calendar-week-day <%= 'today' if date == Time.current.in_time_zone(current_user.timezone).to_date %>"
-                       data-calendar-mobile-day="<%= date.iso8601 %>"
-                       data-planner-drag-target="day"
-                       data-calendar-date="<%= date.iso8601 %>">
-                <%= link_to calendar_view_path("day", date), class: "calendar-week-day-head" do %>
-                  <span class="calendar-week-day-name"><%= CalendarEventsHelper::SHORT_WEEKDAYS[date.cwday - 1] %></span>
-                  <span class="calendar-week-day-number"><%= date.day %></span>
-                <% end %>
-                <div class="calendar-week-events">
-                  <% events.each do |event| %>
-                    <%= link_to edit_calendar_event_path(event),
-                                class: "calendar-week-event",
-                                style: "--event-color: #{calendar_event_color(event)}",
-                                draggable: calendar_event_draggable?(event),
-                                data: {
-                                  event_title: event.title,
-                                  planner_drag_kind: "calendar-event",
-                                  planner_drag_event_id: event.id,
-                                  planner_drag_event_lock_version: event.lock_version,
-                                  planner_drag_local_time: event.start_time.in_time_zone(current_user.timezone).strftime("%H:%M"),
-                                  planner_drag_duration: event.duration_minutes || 60,
-                                  planner_drag_update_url: calendar_event_path(event),
-                                  planner_touch_enabled: calendar_event_draggable?(event),
-                                  action: ("dragstart->planner-drag#start dragend->planner-drag#finish pointerdown->planner-drag#pointerStart pointermove->planner-drag#pointerMove pointerup->planner-drag#pointerEnd pointercancel->planner-drag#pointerCancel click->planner-drag#guardClick" if calendar_event_draggable?(event))
-                                } do %>
-                      <div class="calendar-week-event-time"><%= calendar_event_time(event, current_user.timezone) %></div>
-                      <div class="calendar-week-event-title"><%= event.title %></div>
-                    <% end %>
-                  <% end %>
-                  <% blocks.each do |time_block| %><%= render "calendar_events/time_block_mobile", time_block: time_block %><% end %>
-                  <% if events.empty? && blocks.empty? %><div class="calendar-week-empty">Свободно</div><% end %>
-                </div>
-              </section>
-            <% end %>
           </div>
         <% else %>
           <% events = @events_by_date.fetch(@current_date, []) %>
@@ -584,7 +538,6 @@
                 <h2 class="calendar-day-heading"><%= calendar_day_heading(@current_date) %></h2>
                 <div class="calendar-day-summary"><%= events.empty? && blocks.empty? ? "День свободен" : "#{events.size} событий · #{blocks.size} задач во времени" %></div>
               </div>
-              <%= render "calendar_events/day_progress", events: events %>
               <button type="button" class="calendar-icon-link calendar-mobile-only" aria-label="Создать" data-action="calendar-quick-create#open" data-quick-create-date="<%= @current_date.iso8601 %>" data-quick-create-time="09:00">＋</button>
             </header>
 

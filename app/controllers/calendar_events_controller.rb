@@ -7,7 +7,7 @@ class CalendarEventsController < ApplicationController
 
   def index
     @user = current_user
-    @calendar_view = VIEWS.include?(params[:view]) ? params[:view] : "month"
+    @calendar_view = VIEWS.include?(params[:view]) ? params[:view] : "week"
     @current_date = parsed_date(params[:date]) || legacy_month_date || user_today
 
     configure_date_range
@@ -15,8 +15,6 @@ class CalendarEventsController < ApplicationController
     load_time_blocks
     load_task_lane
     prepare_quick_create
-    @rhythms = current_user.rhythms.active.ordered.includes(:rhythm_checkins)
-    @rhythm_today = user_today
   end
 
   def show

@@ -3,7 +3,7 @@ class SessionsController < ApplicationController
   layout false, only: [:new]
 
   def new
-    redirect_to calendar_events_path(view: "month") if current_user
+    redirect_to calendar_events_path(view: "week") if current_user
 
     # Check if there's an active session in the last 10 minutes
     # This prevents creating a new session on every page refresh
@@ -48,7 +48,7 @@ class SessionsController < ApplicationController
              )
       
       session[:user_id] = user.id
-      redirect_to calendar_events_path(view: "month"), notice: "Успешно вошли в систему!"
+      redirect_to calendar_events_path(view: "week"), notice: "Успешно вошли в систему!"
     else
       redirect_to root_path, alert: 'Недоступно в продакшене'
     end
@@ -63,7 +63,7 @@ class SessionsController < ApplicationController
       # Clear pending auth token since we successfully logged in
       session.delete(:pending_auth_token)
 
-      render json: { success: true, redirect_url: calendar_events_path(view: "month") }
+      render json: { success: true, redirect_url: calendar_events_path(view: "week") }
     else
       render json: { error: 'Invalid or expired session' }, status: :unauthorized
     end

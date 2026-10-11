@@ -312,7 +312,7 @@ class TelegramWebhookJob < ApplicationJob
         {
           type: 'auth_confirmed',
           user_id: result[:user].id,
-          redirect_url: Rails.application.routes.url_helpers.calendar_events_path(view: "month")
+          redirect_url: Rails.application.routes.url_helpers.calendar_events_path(view: "week")
         }
       )
 

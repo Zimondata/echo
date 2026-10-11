@@ -24,13 +24,13 @@ class ProductSurfacesTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "signed-in root opens the monthly Plan without the external showcase" do
+  test "signed-in root opens the weekly Plan without the external showcase" do
     get root_path
 
-    assert_redirected_to calendar_events_path(view: "month")
+    assert_redirected_to calendar_events_path(view: "week")
     follow_redirect!
     assert_response :success
-    assert_select "[data-calendar-view='month']", count: 1
+    assert_select "[data-calendar-view='week']", count: 1
     assert_not_includes response.body, "fonts.googleapis.com"
     assert_not_includes response.body, "unpkg.com"
   end
@@ -45,9 +45,9 @@ class ProductSurfacesTest < ActionDispatch::IntegrationTest
     assert_select "nav[aria-label='Мобильная навигация'] [data-permanent-destination]", count: 5 do |links|
       assert_equal expected, links.map { |link| link.text.strip }
     end
-    assert_select "nav[aria-label='Основная навигация'] a[href='#{calendar_events_path(view: "month")}']", text: "План", count: 1
+    assert_select "nav[aria-label='Основная навигация'] a[href='#{calendar_events_path(view: "week")}']", text: "План", count: 1
     assert_select "nav[aria-label='Основная навигация'] a[href='#{tasks_path}']", text: "Задачи", count: 1
-    assert_select "a.echo-brand[href='#{calendar_events_path(view: "month")}']", count: 1
+    assert_select "a.echo-brand[href='#{calendar_events_path(view: "week")}']", count: 1
     assert_select "[data-permanent-destination]", text: /Главная|Входящие|Агенты|Обзоры|Настройки/, count: 0
     assert_select "header a[href^='#{inbox_path}']", count: 0
   end

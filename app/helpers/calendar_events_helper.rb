@@ -153,6 +153,10 @@ module CalendarEventsHelper
     end
   end
 
+  def calendar_week_timeline_layout(events, time_blocks, date, timezone)
+    calendar_day_timeline_layout(events, time_blocks, date, timezone)
+  end
+
   def calendar_day_item_style(item)
     top = (((item[:start] - item[:day_start]) / 1.hour) * 56).round
     height = [ (((item[:end] - item[:start]) / 1.hour) * 56).round, 32 ].max
@@ -162,6 +166,10 @@ module CalendarEventsHelper
     desktop_lane_left = (item[:lane_left_ratio] || ((1.0 / item[:lanes]) * item[:lane])) * 100
     color = item[:kind] == "calendar-event" ? "--event-color: #{calendar_event_color(item[:record])}; " : ""
     "#{color}--desktop-lane-left: #{format('%.3f', desktop_lane_left)}%; --desktop-lane-width: #{format('%.3f', desktop_lane_width)}%; top: #{top}px; height: #{height}px; left: calc(#{format('%.3f', equal_lane_left)}% + 4px); right: auto; width: calc(#{format('%.3f', equal_lane_width)}% - 8px)"
+  end
+
+  def calendar_week_item_style(item)
+    calendar_day_item_style(item)
   end
 
   def calendar_day_item_time(item)

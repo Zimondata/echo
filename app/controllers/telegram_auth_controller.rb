@@ -41,7 +41,7 @@ class TelegramAuthController < ApplicationController
       render json: {
         status: 'confirmed',
         user_id: session.user_id,
-        redirect_url: calendar_events_path(view: "month"),
+        redirect_url: calendar_events_path(view: "week"),
         message: 'Авторизация успешна!'
       }
     elsif session.status == 'pending'

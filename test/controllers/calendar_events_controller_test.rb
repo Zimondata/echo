@@ -138,7 +138,19 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
       assert_select "[data-current-time-line][style*='top: #{expected_top}px']", count: 1
       assert_select "[data-calendar-day]", count: 7
       assert_select "[data-event-title]", text: /Глубокая работа/
+      assert_select "[data-week-timeline-viewport]", count: 1
+      assert_select "[data-week-time-gutter]", count: 1
+      assert_select "[data-week-layout-item]", text: /Глубокая работа/
+      assert_select "[data-free-window]", count: 0
     end
+  end
+
+  test "calendar defaults to the weekly timeline" do
+    get calendar_events_url
+
+    assert_response :success
+    assert_select "[data-calendar-view='week']", count: 1
+    assert_select "[data-calendar-day]", count: 7
   end
 
   test "day view keeps the spatial timeline collapsed and labels a five-to-six event honestly" do
@@ -295,15 +307,16 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     styles = css_select("[data-day-layout-item]").filter_map { |node| node["style"] if node.text.match?(/Коротк/) }
     assert_equal 2, styles.size
     assert_equal 2, styles.uniq.size
-    assert styles.any? { |style| style.include?("width: calc(30.000") }
-    assert styles.any? { |style| style.include?("left: calc(30.000") && style.include?("width: calc(70.000") }
+    assert styles.all? { |style| style.include?("--desktop-lane-width: 50.000%") }
+    assert styles.any? { |style| style.include?("--desktop-lane-left: 0.000%") }
+    assert styles.any? { |style| style.include?("--desktop-lane-left: 50.000%") }
   end
 
   test "invalid date and view fall back without crashing" do
     get calendar_events_url(date: "not-a-date", view: "timeline")
 
     assert_response :success
-    assert_select "[data-calendar-view='month']"
+    assert_select "[data-calendar-view='week']"
   end
 
   test "creates a user-owned event from the manual form" do
@@ -696,8 +709,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-planner-drag-kind='time-block'][data-planner-drag-time-block-id='#{locked_block.id}'][draggable='false']"
     assert_select "[data-planner-drag-kind='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-duration='60'][draggable='true'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart'][data-action*='pointermove->planner-drag#pointerMove'][data-action*='pointerup->planner-drag#pointerEnd']"
     assert_select "[data-planner-drag-target='day'][data-action*='drop->planner-drag#drop']", count: 7
-    assert_select ".calendar-week .calendar-week-day[data-planner-drag-target='day'][data-calendar-date]", count: 7
-    assert_select ".calendar-week .calendar-week-event[data-planner-drag-event-id='#{event.id}'][data-planner-drag-event-lock-version='#{event.lock_version}'][data-planner-drag-local-time='#{event.start_time.in_time_zone(@user.timezone).strftime("%H:%M")}'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart']", count: 1
+    assert_select "[data-week-timeline-viewport] [data-calendar-day][data-planner-drag-target='day']", count: 7
+    assert_select "[data-week-timeline-viewport] [data-week-layout-item='calendar-event'][data-planner-drag-event-id='#{event.id}'][data-planner-drag-event-lock-version='#{event.lock_version}'][data-planner-touch-enabled='true'][data-action*='pointerdown->planner-drag#pointerStart']", count: 1
     assert_select "[data-planner-drag-hint]", text: /Перетащи задачу/
   end
 
@@ -770,7 +783,7 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-task-card]", count: 0
   end
 
-  test "day view shows neutral completion progress for only the selected plan" do
+  test "day view contains no decorative progress gamification" do
     zone = Time.find_zone!(@user.timezone)
     date = Date.new(2026, 9, 14)
     @user.calendar_events.create!(title: "Готово", start_time: zone.local(2026, 9, 14, 9), end_time: zone.local(2026, 9, 14, 10), event_type: "plan", priority: "medium", done: true)
@@ -781,21 +794,8 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     get calendar_events_url(date: date.iso8601, view: "day")
 
     assert_response :success
-    assert_select "[data-day-progress][data-progress-state='trace'][data-completed='1'][data-total='2']", count: 1 do
-      assert_select "img.calendar-day-progress__image[src*='harbor-route']", count: 1
-      assert_select "[data-day-progress-copy]", text: /1 из 2 событий/
-      assert_select "[data-day-progress-bar][aria-valuenow='50'][aria-valuemin='0'][aria-valuemax='100']", count: 1
-    end
-  end
-
-  test "day view shows a pressure-free fog state when the selected plan has no events" do
-    get calendar_events_url(date: "2030-01-15", view: "day")
-
-    assert_response :success
-    assert_select "[data-day-progress][data-progress-state='fog'][data-completed='0'][data-total='0']", count: 1 do
-      assert_select "[data-day-progress-copy]", text: "Маршрут ещё не отмечен"
-      assert_select ".calendar-day-progress__hint", text: "Свободный день тоже остаётся свободным"
-      assert_select "[data-day-progress-bar]", count: 0
-    end
+    assert_select "[data-day-progress]", count: 0
+    assert_select "[data-ambient-voyage]", count: 0
+    assert_no_match(/harbor-route|Тихая гавань|Маршрут отмечен|Гавань на сегодня/, response.body)
   end
 end

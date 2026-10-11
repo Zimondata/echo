@@ -15,7 +15,9 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     analyzer = Ai::DailyHealthAnalyzer.method(:analyze_day)
     Ai::DailyHealthAnalyzer.define_singleton_method(:analyze_day) { |*| raise "analyzer must not be called" }
     begin
-      get health_path
+      travel_to Time.find_zone!(@user.timezone).local(2026, 8, 3, 12) do
+        get health_path
+      end
     ensure
       Ai::DailyHealthAnalyzer.define_singleton_method(:analyze_day, analyzer)
     end

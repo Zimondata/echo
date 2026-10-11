@@ -193,9 +193,8 @@ class TimeBlocksControllerTest < ActionDispatch::IntegrationTest
     get calendar_events_url(view: "week", date: "2026-08-04")
     assert_response :success
     assert_select "[data-calendar-day='2026-08-03'] [data-time-block-id='#{block.id}']", count: 1
-    assert_select "[data-calendar-mobile-day='2026-08-03'] [data-time-block-id='#{block.id}']", count: 1
     assert_select "[data-calendar-day='2026-08-04'] [data-time-block-id='#{block.id}']", count: 0
-    assert_select "[data-calendar-mobile-day='2026-08-04'] [data-time-block-id='#{block.id}']", count: 0
+    assert_select "[data-calendar-mobile-day]", count: 0
 
     get calendar_events_url(view: "day", date: "2026-08-04")
     assert_select "[data-time-block-id='#{block.id}']", count: 0
